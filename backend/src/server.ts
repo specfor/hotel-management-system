@@ -6,7 +6,6 @@ import logger from "jet-logger";
 
 import BaseRouter from "@src/routes";
 
-import Paths from "@src/common/constants/Paths";
 import ENV from "@src/common/constants/ENV";
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import { RouteError } from "@src/common/util/route-errors";
@@ -38,7 +37,7 @@ if (ENV.NodeEnv === NodeEnvs.Production) {
 }
 
 // Add APIs, must be after middleware
-app.use(Paths.Base, BaseRouter);
+app.use("/api", BaseRouter);
 
 // Add error handler
 app.use((err: Error, _: Request, res: Response, next: NextFunction) => {

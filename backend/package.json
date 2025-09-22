@@ -7,6 +7,7 @@
     "dev": "cross-env NODE_ENV=development ts-node ./src/index.ts",
     "dev:hot": "nodemon --exec \"npm run dev\" --watch ./src --ext .ts",
     "lint": "eslint .",
+    "migrate": "ts-node ./scripts/migrate.ts",
     "start": "cross-env NODE_ENV=production node -r ./config.js ./dist",
     "test": "cross-env NODE_ENV=test vitest",
     "type-check": "tsc --noEmit"
@@ -15,6 +16,7 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
+    "@types/pg": "^8.15.5",
     "cookie-parser": "^1.4.7",
     "dayjs": "^1.11.18",
     "dotenv": "^17.2.2",
@@ -27,7 +29,8 @@
     "jet-validators": "^1.4.3",
     "jsonfile": "^6.2.0",
     "module-alias": "^2.2.3",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

@@ -1,8 +1,7 @@
-import jetEnv, { num } from 'jet-env';
-import { isEnumVal } from 'jet-validators';
+import jetEnv, { num, str } from "jet-env";
+import { isEnumVal } from "jet-validators";
 
-import { NodeEnvs } from '.';
-
+import { NodeEnvs } from ".";
 
 /******************************************************************************
                                  Setup
@@ -11,8 +10,15 @@ import { NodeEnvs } from '.';
 const ENV = jetEnv({
   NodeEnv: isEnumVal(NodeEnvs),
   Port: num,
+  Host: str,
+  Db: {
+    Host: str,
+    Port: num,
+    Name: str,
+    User: str,
+    Password: str,
+  },
 });
-
 
 /******************************************************************************
                             Export default
