@@ -3,7 +3,7 @@ dist/
 temp/
 **/**/*.log
 config.js
-
+.idea/
 config/.env.development
 config/.env.production
 config/.env.test
