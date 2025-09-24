@@ -7,4 +7,3 @@ export function getUsers(req: Request, res: Response): void {
   let users = getUsersDb();
   jsonResponse(res, true, HttpStatusCodes.OK, { users });
 }
-0;
