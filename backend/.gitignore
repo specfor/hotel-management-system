@@ -4,7 +4,6 @@ temp/
 **/**/*.log
 config.js
 .idea/
-config/.env
 config/.env.development
 config/.env.production
 config/.env.test
