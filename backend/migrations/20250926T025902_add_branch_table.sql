@@ -8,6 +8,15 @@
 
 -- Add your SQL statements here
 -- Example:
+DROP TABLE IF EXISTS branch;
+
+CREATE TABLE branch (
+  branch_id SERIAL PRIMARY KEY,
+  branch_name VARCHAR(100),
+  city VARCHAR(100),
+  address VARCHAR(100)
+);
+
 -- CREATE TABLE example_table (
 --   id SERIAL PRIMARY KEY,
 --   name VARCHAR(255) NOT NULL,
