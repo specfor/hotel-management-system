@@ -1,5 +1,5 @@
--- Migration: add_room_type_table
--- Created: 2025-09-26T03:36:01.743Z
+-- Migration: create_revenue_table
+-- Created: 2025-09-26T03:22:29.228Z
 -- Description: Add description here
 
 -- =====================================================
@@ -8,16 +8,18 @@
 
 -- Add your SQL statements here
 -- Example:
-CREATE TABLE room_type (
-  type_id SERIAL PRIMARY KEY,
+CREATE TABLE revenue (
+  record_id SERIAL PRIMARY KEY,
   branch_id INT ,
-  type_name VARCHAR(50)  ,
-  daily_rate DECIMAL(10,2)  ,
-  late_checkout_rate DECIMAL(10,2)  ,
-  capacity INT  ,
-  amenities VARCHAR(255) ,
-  CONSTRAINT fk_room_type_branch FOREIGN KEY (branch_id) REFERENCES branch(branch_id)
+  month INT ,
+  calculated_data_time TIMESTAMP ,
+  amount NUMERIC(11,2) CHECK (amount >= 0),
+  CONSTRAINT fk_revenue_branch FOREIGN KEY (branch_id) REFERENCES branch(branch_id)
 );
+-- Composite index for filtering revenue data by month and branch_id. 
+--Optimizes queries that filter by month alone or month+branch_id combinations.
+CREATE INDEX idx_revenue_month_branch_id ON revenue(month, branch_id);
+
 
 -- CREATE TABLE example_table (
 --   id SERIAL PRIMARY KEY,

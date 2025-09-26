@@ -1,5 +1,5 @@
--- Migration: add_branch_table
--- Created: 2025-09-26T02:59:02.391Z
+-- Migration: create_booking_table
+-- Created: 2025-09-26T03:57:47.591Z
 -- Description: Add description here
 
 -- =====================================================
@@ -8,13 +8,22 @@
 
 -- Add your SQL statements here
 -- Example:
-DROP TABLE IF EXISTS branch;
+CREATE TYPE booking_status_enum AS ENUM ('Booked', 'Checked-In', 'Checked-Out', 'Cancelled');
+CREATE TYPE payment_method_enum AS ENUM ('Cash','Credit Card','Debit Card','Bank Transfer','Online Wallet');
 
-CREATE TABLE branch (
-  branch_id SERIAL PRIMARY KEY,
-  branch_name VARCHAR(100),
-  city VARCHAR(100),
-  address VARCHAR(100)
+CREATE TABLE booking (
+  booking_id SERIAL PRIMARY KEY,
+  user_id INT,
+  guest_id INT,
+  room_id INT,
+  booking_status booking_status_enum,
+  payment_method payment_method_enum,
+  date_time TIMESTAMP,
+  check_in TIMESTAMP,
+  check_out TIMESTAMP,
+  CONSTRAINT fk_booking_user FOREIGN KEY (user_id) REFERENCES "user"(staff_id) ON DELETE SET NULL,
+  CONSTRAINT fk_booking_guest FOREIGN KEY (guest_id) REFERENCES guest(guest_id) ON DELETE CASCADE,
+  CONSTRAINT fk_booking_room FOREIGN KEY (room_id) REFERENCES room(room_id) ON DELETE CASCADE
 );
 
 -- CREATE TABLE example_table (

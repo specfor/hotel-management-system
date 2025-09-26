@@ -1,5 +1,5 @@
--- Migration: create_user_table
--- Created: 2025-09-24T08:07:08.634Z
+-- Migration: create_discount_table
+-- Created: 2025-09-26T03:50:30.776Z
 -- Description: Add description here
 
 -- =====================================================
@@ -8,11 +8,23 @@
 
 -- Add your SQL statements here
 -- Example:
-CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+
+CREATE TABLE discount (
+  discount_id SERIAL PRIMARY KEY,
+  branch_id INT,
+  discount_name VARCHAR(50),
+  discount_rate DECIMAL(5,2),
+  discount_condition VARCHAR(100),
+  valid_from DATE,
+  valid_to DATE,
+  CONSTRAINT fk_discount_branch FOREIGN KEY (branch_id) REFERENCES branch(branch_id)
 );
+
+-- CREATE TABLE example_table (
+--   id SERIAL PRIMARY KEY,
+--   name VARCHAR(255) NOT NULL,
+--   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- );
 
 -- =====================================================
 -- NOTES
