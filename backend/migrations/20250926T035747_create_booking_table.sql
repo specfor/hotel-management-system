@@ -14,8 +14,8 @@ CREATE TYPE payment_method_enum AS ENUM ('Cash','Credit Card','Debit Card','Bank
 CREATE TABLE booking (
   booking_id SERIAL PRIMARY KEY,
   user_id INT,
-  guest_id INT,
-  room_id INT,
+  guest_id INT NOT NULL,
+  room_id INT NOT NULL,
   booking_status booking_status_enum,
   payment_method payment_method_enum,
   date_time TIMESTAMP,
@@ -25,6 +25,11 @@ CREATE TABLE booking (
   CONSTRAINT fk_booking_guest FOREIGN KEY (guest_id) REFERENCES guest(guest_id) ON DELETE CASCADE,
   CONSTRAINT fk_booking_room FOREIGN KEY (room_id) REFERENCES room(room_id) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_booking_room_dates ON booking(room_id, check_in, check_out);
+CREATE INDEX idx_booking_guestid ON booking(guest_id);
+CREATE INDEX idx_booking_status ON booking(booking_status);
+
 
 -- CREATE TABLE example_table (
 --   id SERIAL PRIMARY KEY,

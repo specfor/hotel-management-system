@@ -19,6 +19,9 @@ CREATE TABLE guest (
   password VARCHAR(255)
 );
 
+CREATE UNIQUE INDEX idx_guest_nic ON guest(NIC);
+CREATE UNIQUE INDEX idx_guest_email ON guest(email);
+
 -- CREATE TABLE example_table (
 --   id SERIAL PRIMARY KEY,
 --   name VARCHAR(255) NOT NULL,

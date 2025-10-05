@@ -13,7 +13,7 @@ CREATE TABLE log (
     user_id INT,
     action VARCHAR(256),
     date_time TIMESTAMP,
-    rec_id INT,
+    action_rec_id INT,
     CONSTRAINT fk_log_user FOREIGN KEY (user_id) REFERENCES "user"(staff_id)
 );
 

@@ -6,6 +6,39 @@
 -- UP MIGRATION
 -- =====================================================
 
+CREATE TABLE final_bill (
+    bill_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,                
+    booking_id INT NOT NULL,              
+    room_charges NUMERIC(10,2) NOT NULL DEFAULT 0,
+    total_service_charges NUMERIC(10,2) NOT NULL DEFAULT 0,
+    total_tax NUMERIC(10,2) NOT NULL DEFAULT 0,
+    total_discount NUMERIC(10,2) NOT NULL DEFAULT 0,
+    late_checkout_charge NUMERIC(10,2) NOT NULL DEFAULT 0,
+    total_amount NUMERIC(10,2) GENERATED ALWAYS AS (
+        room_charges + total_service_charges + total_tax + late_checkout_charge - total_discount
+    ) STORED,
+    paid_amount NUMERIC(10,2) NOT NULL DEFAULT 0,
+    outstanding_amount NUMERIC(10,2) GENERATED ALWAYS AS (
+        total_amount - paid_amount
+    ) STORED,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES "user"(staff_id) ON DELETE CASCADE,
+    CONSTRAINT fk_booking FOREIGN KEY (booking_id) REFERENCES booking(booking_id) ON DELETE CASCADE,
+    
+    CONSTRAINT chk_paid_amount CHECK (paid_amount >= 0),
+    CONSTRAINT chk_room_charges CHECK (room_charges >= 0),
+    CONSTRAINT chk_total_service_charges CHECK (total_service_charges >= 0),
+    CONSTRAINT chk_total_tax CHECK (total_tax >= 0),
+    CONSTRAINT chk_total_discount CHECK (total_discount >= 0),
+    CONSTRAINT chk_late_checkout_charge CHECK (late_checkout_charge >= 0)
+);
+
+CREATE INDEX idx_bill_bookingids ON final_bill(booking_id);
+CREATE INDEX idx_bill_outstanding ON final_bill(outstanding_amount);
+
+
 -- Add your SQL statements here
 -- Example:
 -- CREATE TABLE example_table (

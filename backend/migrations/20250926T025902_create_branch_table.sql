@@ -17,6 +17,8 @@ CREATE TABLE branch (
   address VARCHAR(100)
 );
 
+CREATE INDEX idx_branch_city ON branch(city);
+
 -- CREATE TABLE example_table (
 --   id SERIAL PRIMARY KEY,
 --   name VARCHAR(255) NOT NULL,

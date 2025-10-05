@@ -19,6 +19,8 @@ CREATE TABLE room_type (
   CONSTRAINT fk_room_type_branch FOREIGN KEY (branch_id) REFERENCES branch(branch_id)
 );
 
+CREATE INDEX idx_roomtype_branchid ON room_type(branch_id);
+
 -- CREATE TABLE example_table (
 --   id SERIAL PRIMARY KEY,
 --   name VARCHAR(255) NOT NULL,

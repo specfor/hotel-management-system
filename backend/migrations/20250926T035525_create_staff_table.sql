@@ -20,6 +20,9 @@ CREATE TABLE staff (
   CONSTRAINT fk_staff_branch FOREIGN KEY (branch_id) REFERENCES branch(branch_id)
 );
 
+CREATE INDEX idx_staff_branchid ON staff(branch_id);
+
+
 -- CREATE TABLE example_table (
 --   id SERIAL PRIMARY KEY,
 --   name VARCHAR(255) NOT NULL,

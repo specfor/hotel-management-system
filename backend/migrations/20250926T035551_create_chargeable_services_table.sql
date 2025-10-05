@@ -17,6 +17,9 @@ CREATE TABLE chargable_services (
   CONSTRAINT fk_chargable_services_branch FOREIGN KEY (branch_id) REFERENCES branch(branch_id)
 );
 
+CREATE INDEX idx_service_branch_name ON chargable_services(branch_id, service_name);
+
+
 -- CREATE TABLE example_table (
 --   id SERIAL PRIMARY KEY,
 --   name VARCHAR(255) NOT NULL,

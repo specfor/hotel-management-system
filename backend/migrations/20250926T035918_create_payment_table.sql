@@ -16,6 +16,11 @@ CREATE TABLE payment (
   date_time TIMESTAMP
 );
 
+CREATE INDEX idx_payment_billid ON payment(bill_id);
+CREATE INDEX idx_payment_datetime ON payment(date_time);
+
+
+
 -- CREATE TABLE example_table (
 --   id SERIAL PRIMARY KEY,
 --   name VARCHAR(255) NOT NULL,

@@ -18,6 +18,11 @@ CREATE TABLE service_usage (
   CONSTRAINT fk_service_usage_service FOREIGN KEY (service_id) REFERENCES chargable_services(service_id)
 );
 
+CREATE INDEX idx_serviceusage_serviceid on service_usage(service_id);
+CREATE INDEX idx_serviceusage_bookingid on service_usage(booking_id);
+CREATE INDEX idx_serviceusage_datetime on service_usage(date_time);
+
+
 -- CREATE TABLE example_table (
 --   id SERIAL PRIMARY KEY,
 --   name VARCHAR(255) NOT NULL,
