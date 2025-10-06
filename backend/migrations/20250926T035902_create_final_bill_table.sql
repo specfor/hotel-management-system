@@ -15,13 +15,9 @@ CREATE TABLE final_bill (
     total_tax NUMERIC(10,2) NOT NULL DEFAULT 0,
     total_discount NUMERIC(10,2) NOT NULL DEFAULT 0,
     late_checkout_charge NUMERIC(10,2) NOT NULL DEFAULT 0,
-    total_amount NUMERIC(10,2) GENERATED ALWAYS AS (
-        room_charges + total_service_charges + total_tax + late_checkout_charge - total_discount
-    ) STORED,
+    total_amount NUMERIC(10,2),                         -- use a trigger to calculate this
     paid_amount NUMERIC(10,2) NOT NULL DEFAULT 0,
-    outstanding_amount NUMERIC(10,2) GENERATED ALWAYS AS (
-        total_amount - paid_amount
-    ) STORED,
+    outstanding_amount NUMERIC(10,2),                   -- use a trigger to calculate this
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES "user"(staff_id) ON DELETE CASCADE,
