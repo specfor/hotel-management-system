@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { getUsers } from "@src/controllers/userController";
-import { getGuests } from "@src/controllers/guestController";
+import { getAllGuests, getGuestByID, addNewGuest} from "@src/controllers/guestController";
 
 /******************************************************************************
                                 Setup
@@ -13,9 +13,13 @@ const apiRouter = Router();
 apiRouter.get("/users", getUsers);
 
 // Get all guests
-apiRouter.get("/guests", getGuests);
+apiRouter.get("/guests", getAllGuests);
+// Get guest by ID
+apiRouter.get("/guests/:id", getGuestByID);
+// Add new guest
+apiRouter.post("/guests", addNewGuest);
 
-apiRouter.use("/api", apiRouter);
+// apiRouter.use("/api", apiRouter);
 
 /******************************************************************************
                                 Export default

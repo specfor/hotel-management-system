@@ -1,10 +1,21 @@
-export interface GuestPublic {
+export interface GuestRepo {
   guestId: number;
-  nic: number | null;
+  nic: string | null;
   name: string | null;
   age: number | null;
-  contactNo: number | null;
+  contactNo: string | null;
+  email: string | null;
+  password: string | null;              
+}
+
+export interface GuestPublic {
+  guestId: number;
+  nic: string | null;
+  name: string | null;
+  age: number | null;
+  contactNo: string | null;
   email: string | null;
 }
+
 
 
