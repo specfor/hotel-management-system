@@ -17,5 +17,9 @@ export interface GuestPublic {
   email: string | null;
 }
 
+export interface GuestPassword {
+  guestId: number;
+  password: string;
+}
 
 

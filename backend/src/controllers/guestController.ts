@@ -1,7 +1,7 @@
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import { jsonResponse } from "@src/common/util/response";
 import { Request, Response } from "express";
-import { getAllGuests_repo, getGuestByID_repo, addNewGuest_repo } from "@src/repos/guestRepo";
+import { getAllGuests_repo, getGuestByID_repo, addNewGuest_repo, updateGuestInfo_repo, changeGuestPassword_repo} from "@src/repos/guestRepo";
 
 /**
  * Handles the HTTP request to retrieve all guests.
@@ -33,13 +33,31 @@ export async function getGuestByID(req: Request, res: Response): Promise<void> {
 }
 
 export async function addNewGuest(req: Request, res: Response): Promise<void> {
-  console.log(req.body)
+  
   const guest = await addNewGuest_repo(req.body);
-  if (!guest) {
-    jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, { error: "Guest not found" });
-    return;
-  }
+  
   jsonResponse(res, true, HttpStatusCodes.OK, { guest });
 }
 
+export async function updateGuestInfo(req: Request, res: Response): Promise<void> {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) {
+    jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, { error: "Invalid guest ID" });
+    return;
+  }
+  const guest = await updateGuestInfo_repo(req.body);
+  
+  jsonResponse(res, true, HttpStatusCodes.OK, { guest });
+}
+
+export async function changeGuestPassword(req: Request, res: Response): Promise<void> {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) {
+    jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, { error: "Invalid guest ID" });
+    return;
+  }
+  await changeGuestPassword_repo(req.body);
+  
+  jsonResponse(res, true, HttpStatusCodes.OK, {});
+}
 
