@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { getUsers } from "@src/controllers/userController";
-import { getAllGuests, getGuestByID, addNewGuest, updateGuestInfo, changeGuestPassword} from "@src/controllers/guestController";
+import { getAllGuests, getGuestByID, addNewGuest, updateGuestInfo, changeGuestPassword, deleteGuest} from "@src/controllers/guestController";
 
 /******************************************************************************
                                 Setup
@@ -22,6 +22,8 @@ apiRouter.post("/guests", addNewGuest);
 apiRouter.put("/guests/:id", updateGuestInfo);
 // Change password
 apiRouter.put("/guests/:id/psw", changeGuestPassword);
+// Delete guest
+apiRouter.delete("/guests/:id", deleteGuest);
 
 // apiRouter.use("/api", apiRouter);
 

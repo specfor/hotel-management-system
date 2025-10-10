@@ -90,14 +90,22 @@ export async function changeGuestPassword_repo(record: GuestPassword): Promise<v
   if (!db.isReady()) {
     await db.connect();
   }
-
-  await db.query(
-    `UPDATE guest
+  const query = `UPDATE guest
       SET
         password = $1
       WHERE guest_id = $2;`
-      , [record.password, record.guestId]
-  );
+  const values = [record.password, record.guestId]
+  await db.query(query, values);
+}
+
+
+export async function deleteGuest_repo(id: number): Promise<void> {
+  if (!db.isReady()) {
+    await db.connect();
+  }
+  const query  = 'DELETE FROM guest WHERE guest_id = $1'
+  const values = [id]
+  await db.query(query, values);
 }
 
 
@@ -125,7 +133,7 @@ export async function changeGuestPassword_repo(record: GuestPassword): Promise<v
 // | POST      | `/guests`              | Add a new guest             | Done -bug -fixed
 // | PUT/PATCH | `/guests/:id`          | Update guest info           | Done
 // | PUT/PATCH | `/guests/:id/psw`      | Change password             | Done
-// | DELETE    | `/guests/:id`          | Soft delete guest           |
+// | DELETE    | `/guests/:id`          | Soft delete guest           | Done
 // | GET       | `/guests/:id/bookings` | View guest’s bookings       |
 // | GET       | `/guests/:id/services` | View guest’s service usages |
 // | GET       | `/guests/:id/bills`    | View bills and dues         |

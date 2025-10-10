@@ -1,7 +1,7 @@
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import { jsonResponse } from "@src/common/util/response";
 import { Request, Response } from "express";
-import { getAllGuests_repo, getGuestByID_repo, addNewGuest_repo, updateGuestInfo_repo, changeGuestPassword_repo} from "@src/repos/guestRepo";
+import { getAllGuests_repo, getGuestByID_repo, addNewGuest_repo, updateGuestInfo_repo, changeGuestPassword_repo, deleteGuest_repo} from "@src/repos/guestRepo";
 
 /**
  * Handles the HTTP request to retrieve all guests.
@@ -57,6 +57,17 @@ export async function changeGuestPassword(req: Request, res: Response): Promise<
     return;
   }
   await changeGuestPassword_repo(req.body);
+  
+  jsonResponse(res, true, HttpStatusCodes.OK, {});
+}
+
+export async function deleteGuest(req: Request, res: Response): Promise<void> {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) {
+    jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, { error: "Invalid guest ID" });
+    return;
+  }
+  await deleteGuest_repo(id);
   
   jsonResponse(res, true, HttpStatusCodes.OK, {});
 }
