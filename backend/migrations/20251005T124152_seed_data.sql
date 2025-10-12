@@ -9,10 +9,10 @@
 -- =========================
 -- 1. Branches
 -- =========================
-INSERT INTO branch (branch_id, branch_name, city, address) VALUES
-(1, 'Colombo Central', 'Colombo', '123 Main St'),
-(2, 'Kandy Lakeview', 'Kandy', '45 Lake Rd'),
-(3, 'Galle Fort', 'Galle', '12 Fort Street');
+INSERT INTO branch (branch_name, city, address) VALUES
+('Colombo Central', 'Colombo', '123 Main St'),
+('Kandy Lakeview', 'Kandy', '45 Lake Rd'),
+('Galle Fort', 'Galle', '12 Fort Street');
 
 -- =========================
 -- 2. Room Types

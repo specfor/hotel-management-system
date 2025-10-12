@@ -16,6 +16,10 @@ apiRouter.use("/api", apiRouter);
 
 // endpoints for branch
 apiRouter.get("/branch", branchController.getAllBranches);
+apiRouter.get("/branch/:branchID", branchController.getBranchByID);
+apiRouter.post("/branch", branchController.createBranch);
+apiRouter.put("/branch/:branchID", branchController.updateBranch);
+apiRouter.delete("/branch/:branchID", branchController.deleteBranch);
 
 /******************************************************************************
                                 Export default
