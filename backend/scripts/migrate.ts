@@ -112,32 +112,32 @@ Examples:
 
   try {
     switch (command) {
-      case "init":
-        logger.info("🚀 Initializing migration manager...");
-        await migrationManager.initialize();
-        logger.info("✅ Migration manager initialized successfully");
-        break;
+    case "init":
+      logger.info("🚀 Initializing migration manager...");
+      await migrationManager.initialize();
+      logger.info("✅ Migration manager initialized successfully");
+      break;
 
-      case "run":
-        logger.info("🚀 Running migrations...");
-        await migrationManager.initialize();
-        await migrationManager.runMigrations();
-        break;
+    case "run":
+      logger.info("🚀 Running migrations...");
+      await migrationManager.initialize();
+      await migrationManager.runMigrations();
+      break;
 
-      case "status":
-        logger.info("📊 Checking migration status...");
-        await migrationManager.initialize();
-        await migrationManager.getStatus();
-        break;
+    case "status":
+      logger.info("📊 Checking migration status...");
+      await migrationManager.initialize();
+      await migrationManager.getStatus();
+      break;
 
-      case "create":
-        await createMigration(arg);
-        break;
+    case "create":
+      await createMigration(arg);
+      break;
 
-      default:
-        logger.err(`❌ Unknown command: ${command}`);
-        logger.info("Run 'npm run migrate' to see available commands");
-        process.exit(1);
+    default:
+      logger.err(`❌ Unknown command: ${command}`);
+      logger.info("Run 'npm run migrate' to see available commands");
+      process.exit(1);
     }
   } catch (error) {
     logger.err("❌ Migration command failed:");

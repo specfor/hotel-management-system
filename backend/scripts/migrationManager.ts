@@ -190,7 +190,7 @@ export class MigrationManager {
           WHERE table_name = $1
         );
       `,
-        [this.migrationsTable]
+        [this.migrationsTable],
       );
 
       return result.rows[0].exists;
@@ -327,7 +327,7 @@ export class MigrationManager {
       }));
     } catch (error) {
       // If table doesn't exist, return empty array
-      if ((error as any).code === "42P01") {
+      if ((error).code === "42P01") {
         return [];
       }
       throw error;
@@ -342,7 +342,7 @@ export class MigrationManager {
     const executedMigrations = await this.getExecutedMigrations();
 
     const executedMap = new Map(
-      executedMigrations.filter((m) => m.status === MigrationStatus.SUCCESS).map((m) => [m.filename, m])
+      executedMigrations.filter((m) => m.status === MigrationStatus.SUCCESS).map((m) => [m.filename, m]),
     );
 
     return allMigrations.filter((migration) => {
@@ -386,7 +386,7 @@ export class MigrationManager {
           status = EXCLUDED.status,
           executed_at = NOW()
       `,
-        [migration.filename, migration.checksum, MigrationStatus.PENDING]
+        [migration.filename, migration.checksum, MigrationStatus.PENDING],
       );
 
       logger.info(`🔄 Executing migration: ${migration.filename}`);
@@ -403,7 +403,7 @@ export class MigrationManager {
         SET status = $1, execution_time_ms = $2, executed_at = NOW()
         WHERE filename = $3
       `,
-        [MigrationStatus.SUCCESS, executionTime, migration.filename]
+        [MigrationStatus.SUCCESS, executionTime, migration.filename],
       );
 
       // Commit transaction
@@ -424,7 +424,7 @@ export class MigrationManager {
         SET status = $1, error_message = $2, execution_time_ms = $3, executed_at = NOW()
         WHERE filename = $4
       `,
-        [MigrationStatus.FAILED, errorMessage, executionTime, migration.filename]
+        [MigrationStatus.FAILED, errorMessage, executionTime, migration.filename],
       );
 
       logger.err(`❌ Migration ${migration.filename} failed: ${errorMessage}`);

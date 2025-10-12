@@ -86,5 +86,5 @@ export default tseslint.config(
       "n/no-unpublished-import": 0,
       "prefer-const": "warn",
     },
-  }
+  },
 );
