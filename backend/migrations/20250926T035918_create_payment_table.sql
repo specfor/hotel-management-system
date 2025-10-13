@@ -1,5 +1,5 @@
--- Migration: create_user_table
--- Created: 2025-09-24T08:07:08.634Z
+-- Migration: create_payment_table
+-- Created: 2025-09-26T03:59:18.529Z
 -- Description: Add description here
 
 -- =====================================================
@@ -8,11 +8,24 @@
 
 -- Add your SQL statements here
 -- Example:
-CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+CREATE TABLE payment (
+  payment_id SERIAL PRIMARY KEY,
+  bill_id INT,
+  paid_method VARCHAR(50),
+  paid_amount DECIMAL(10,2),
+  date_time TIMESTAMP
 );
+
+CREATE INDEX idx_payment_billid ON payment(bill_id);
+CREATE INDEX idx_payment_datetime ON payment(date_time);
+
+
+
+-- CREATE TABLE example_table (
+--   id SERIAL PRIMARY KEY,
+--   name VARCHAR(255) NOT NULL,
+--   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- );
 
 -- =====================================================
 -- NOTES
