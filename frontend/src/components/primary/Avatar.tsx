@@ -1,5 +1,5 @@
 import React from "react";
-import type { AvatarProps } from "./types";
+import type { AvatarProps } from "../../types";
 
 const Avatar: React.FC<AvatarProps> = ({
   src,

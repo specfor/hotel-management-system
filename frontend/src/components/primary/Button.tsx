@@ -1,5 +1,5 @@
 import React from "react";
-import type { ButtonProps } from "./types";
+import type { ButtonProps } from "../../types";
 
 const Button: React.FC<ButtonProps> = ({
   variant = "primary",

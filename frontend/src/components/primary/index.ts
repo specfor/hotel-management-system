@@ -18,4 +18,4 @@ export type {
   BadgeProps,
   AvatarProps,
   LoadingSpinnerProps,
-} from "./types";
+} from "../../types";

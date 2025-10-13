@@ -1,3 +1,5 @@
+// Primary UI component types and interfaces
+
 export type ComponentSize = "sm" | "md" | "lg";
 export type ComponentVariant = "primary" | "secondary" | "outline" | "ghost";
 export type ComponentState = "default" | "hover" | "active" | "disabled";

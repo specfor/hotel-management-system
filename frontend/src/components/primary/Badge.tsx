@@ -1,5 +1,5 @@
 import React from "react";
-import type { BadgeProps } from "./types";
+import type { BadgeProps } from "../../types";
 
 const Badge: React.FC<BadgeProps> = ({
   children,
