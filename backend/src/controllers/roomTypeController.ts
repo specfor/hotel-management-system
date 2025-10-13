@@ -11,14 +11,14 @@ export async function getAllRoomTypes(req:Request, res: Response):Promise<void>{
     const roomTypeArr = await getAllRoomTypesDB();
 
     if(!roomTypeArr){
-      return jsonResponse(res, true, HttpStatusCodes.OK, {message: "No room types stored or query execution failed"});
+      return jsonResponse({ res, success: true, status: HttpStatusCodes.OK, data: { message: "No room types stored or query execution failed" } });
     }else{
-      return jsonResponse(res, true, HttpStatusCodes.OK, roomTypeArr);
+      return jsonResponse({ res, success: true, status: HttpStatusCodes.OK, data: roomTypeArr });
     }
 
   }catch(err){
     console.log(err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error"});
+    return jsonResponse({ res, success: false, status: HttpStatusCodes.INTERNAL_SERVER_ERROR, data: { message: "Server error" } });
   }
 
 }
@@ -29,14 +29,14 @@ export async function getRoomTypesByBranch(req:Request, res: Response):Promise<v
     const roomTypeArr = await getRoomTypesByBranchDB(roomTypeIDInt);
 
     if(!roomTypeArr){
-      return jsonResponse(res, true, HttpStatusCodes.OK, {message: "No room types stored or query execution failed"});
+      return jsonResponse({ res, success: true, status: HttpStatusCodes.OK, data: { message: "No room types stored or query execution failed" } });
     }else{
-      return jsonResponse(res, true, HttpStatusCodes.OK, roomTypeArr);
+      return jsonResponse({ res, success: true, status: HttpStatusCodes.OK, data: roomTypeArr });
     }
 
   }catch(err){
     console.log(err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error"});
+    return jsonResponse({ res, success: false, status: HttpStatusCodes.INTERNAL_SERVER_ERROR, data: { message: "Server error" } });
   }
 }
 
@@ -50,37 +50,37 @@ export async function createRoomType(req: Request, res: Response):Promise<void>{
     const capacityInt: number = parseInt(capacity, 10);
 
     if(isNaN(branchIDInt)){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Branch ID is not a number"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.BAD_REQUEST, data: { message: "Branch ID is not a number" } });
     }
 
     if(!(await getBranchByIdDB(branchIDInt))){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Branch ID is not valid"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.BAD_REQUEST, data: { message: "Branch ID is not valid" } });
     }
 
     if(isNaN(dailyRateInt)){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Daily rate is not a number"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.BAD_REQUEST, data: { message: "Daily rate is not a number" } });
     }
 
     if(isNaN(lateCheckoutRateInt)){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Late checkout rate is not a number"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.BAD_REQUEST, data: { message: "Late checkout rate is not a number" } });
     }
 
     if(isNaN(capacityInt)){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Capacity is not a number"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.BAD_REQUEST, data: { message: "Capacity is not a number" } });
     }
 
     const roomType = await createRoomTypeDB(branchIDInt, roomTypeName, dailyRateInt, lateCheckoutRateInt, capacityInt, amentities);
 
     if(!roomType){
-      return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Room type was not created"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.INTERNAL_SERVER_ERROR, data: { message: "Room type was not created" } });
     }else{
 
-      return jsonResponse(res, true, HttpStatusCodes.CREATED, {message: "Room type created successfully", roomType});
+      return jsonResponse({ res, success: true, status: HttpStatusCodes.CREATED, data: { message: "Room type created successfully", roomType } });
     }
 
   }catch(err){
     console.log(err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error"});
+    return jsonResponse({ res, success: false, status: HttpStatusCodes.INTERNAL_SERVER_ERROR, data: { message: "Server error" } });
   }
 }
 
@@ -92,28 +92,28 @@ export async function updateRoomType(req: Request, res: Response): Promise<void>
     const{dailyRate, lateCheckoutRate, capacity, amenities} = req.body;
 
     if(isNaN(branchIDInt)){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Branch ID is not a number"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.BAD_REQUEST, data: { message: "Branch ID is not a number" } });
     }
 
     if(!(await getBranchByIdDB(branchIDInt))){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Branch ID is not valid"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.BAD_REQUEST, data: { message: "Branch ID is not valid" } });
     }
 
     if(!dailyRate && !lateCheckoutRate && !capacity && !amenities){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "At least one field should be not null"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.BAD_REQUEST, data: { message: "At least one field should be not null" } });
     }
 
     const roomType = await updateRoomTypeDB(branchIDInt, roomTypeName, dailyRate, lateCheckoutRate, capacity, amenities);
 
     if(!roomType){
-      return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Updating unsuccessful"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.INTERNAL_SERVER_ERROR, data: { message: "Updating unsuccessful" } });
     }else{
-      return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Room type updated successfully"});
+      return jsonResponse({ res, success: true, status: HttpStatusCodes.OK, data: { message: "Room type updated successfully" } });
     }
 
   }catch(err){
     console.log(err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error"});
+    return jsonResponse({ res, success: false, status: HttpStatusCodes.INTERNAL_SERVER_ERROR, data: { message: "Server error" } });
   }
 }
 
@@ -123,24 +123,24 @@ export async function deleteRoomType(req: Request, res: Response): Promise<void>
     const roomTypeName: string = req.params.roomTypeName;
 
     if(isNaN(branchIDInt)){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Branch ID is not a number"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.BAD_REQUEST, data: { message: "Branch ID is not a number" } });
     }
 
     if(!(await getBranchByIdDB(branchIDInt))){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Branch ID is not valid"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.BAD_REQUEST, data: { message: "Branch ID is not valid" } });
     }
 
     const deleted = await deleteRoomTypeDB(branchIDInt, roomTypeName);
 
     if (!deleted) {
-      return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {message: "Deletion unsuccessful"});
+      return jsonResponse({ res, success: false, status: HttpStatusCodes.NOT_FOUND, data: { message: "Deletion unsuccessful" } });
     }else{
-      return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Deleted successfully"});
+      return jsonResponse({ res, success: true, status: HttpStatusCodes.OK, data: { message: "Deleted successfully" } });
     }
 
   }catch(err){
     console.log(err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error"});
+    return jsonResponse({ res, success: false, status: HttpStatusCodes.INTERNAL_SERVER_ERROR, data: { message: "Server error" } });
   }
 }
 

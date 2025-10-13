@@ -5,5 +5,5 @@ import { Request, Response } from "express";
 export function getUsers(req: Request, res: Response): void {
   // Logic to get users from database or service
   let users = getUsersDb();
-  jsonResponse(res, true, HttpStatusCodes.OK, { users });
+  jsonResponse({ res, success: true, status: HttpStatusCodes.OK, data: { users } });
 }
