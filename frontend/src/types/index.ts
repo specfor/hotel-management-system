@@ -1,7 +1,14 @@
 // Central export for all type definitions
 
 // Component types
-export type { NotificationItem, NotificationProps, UserProfile, HeaderProps } from "./components";
+export type {
+  NotificationItem,
+  NotificationProps,
+  UserProfile,
+  HeaderProps,
+  NavigationItem,
+  SidebarProps,
+} from "./components";
 
 // UI component types
 export type {

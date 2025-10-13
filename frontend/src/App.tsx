@@ -1,7 +1,14 @@
+import { useState } from "react";
+import { BrowserRouter as Router } from "react-router-dom";
 import Header from "./components/Header";
+import Sidebar from "./components/Sidebar";
+import AppRouter from "./components/AppRouter";
+import { navigationItems } from "./config";
 import type { UserProfile, NotificationItem } from "./types";
 
 function App() {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+
   // Mock user data
   const mockUser: UserProfile = {
     id: "1",
@@ -60,16 +67,37 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header
-        hotelName="Grand Plaza Hotel"
-        user={mockUser}
-        notifications={mockNotifications}
-        onNotificationClick={handleNotificationClick}
-        onProfileClick={handleProfileClick}
-        onLogout={handleLogout}
-      />
-    </div>
+    <Router>
+      <div className="min-h-screen bg-gray-50 flex">
+        {/* Sidebar */}
+        <Sidebar
+          navigationItems={navigationItems}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col">
+          <Header
+            hotelName="Grand Plaza Hotel"
+            user={mockUser}
+            notifications={mockNotifications}
+            onNotificationClick={handleNotificationClick}
+            onProfileClick={handleProfileClick}
+            onLogout={handleLogout}
+          />
+
+          {/* Page Content */}
+          <div className="flex justify-center">
+            <div className="container">
+              <main className="flex-1">
+                <AppRouter />
+              </main>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Router>
   );
 }
 

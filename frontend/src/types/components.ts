@@ -34,3 +34,18 @@ export interface HeaderProps {
   onProfileClick?: () => void;
   onLogout?: () => void;
 }
+
+export interface NavigationItem {
+  id: string;
+  label: string;
+  path: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string | number;
+}
+
+export interface SidebarProps {
+  navigationItems: NavigationItem[];
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+  className?: string;
+}
