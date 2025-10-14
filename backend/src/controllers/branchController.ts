@@ -1,9 +1,10 @@
+/* eslint-disable max-len */
 import {BranchPublic} from "@src/types/branchTypes";
 import {createBranchDB, getAllBranchesDB, getBranchByIdDB, updateBranchDB, deleteBranchDB} from "@src/repos/branchRepo";
 import {jsonResponse} from "@src/common/util/response";
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import * as console from "node:console";
-import {Request} from "express";
+import {Request, Response} from "express";
 
 export async function getAllBranches(req: Request, res: Response): Promise<void>{
   try{
