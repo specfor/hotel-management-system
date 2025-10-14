@@ -136,18 +136,18 @@ export async function deleteRoomDB(roomID: number): Promise<boolean> {
   }
 }
 
-export async function getBranchIdOfRoom(roomID: number):Promise<>{
-    try {
-        const sql = `
+export async function getBranchIdOfRoom(roomID: number):Promise<{branchID: number}>{
+  try {
+    const sql = `
             SELECT branch_id AS "branchID"
             FROM room
             WHERE room_id = $1;
         `;
 
-        const result = await db.query(sql, [roomID]);
-        return result.rows[0];
-    } catch (err) {
-        console.error(err);
-        return false;
-    }
+    const result = await db.query(sql, [roomID]);
+    return result.rows[0];
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
 }
