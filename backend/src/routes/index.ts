@@ -1,10 +1,10 @@
+ 
 import { Router } from "express";
-
 import { getUsers } from "@src/controllers/userController";
 import * as branchController from "@src/controllers/branchController";
 import * as roomTypeController from "@src/controllers/roomTypeController";
 import * as paymentController from "@src/controllers/paymentController";
-
+import * as roomController from "@src/controllers/roomController";
 
 /******************************************************************************
                                 Setup
@@ -37,6 +37,13 @@ apiRouter.get("/payment/:id", paymentController.getPaymentByID);
 apiRouter.post("/payment", paymentController.addNewPayment);
 apiRouter.put("/payment/:id", paymentController.updatePayment);
 apiRouter.delete("/payment/:id", paymentController.deletePayment);
+
+// endpoints for room
+apiRouter.get("/room", roomController.getAllRooms);
+apiRouter.get("/branch/:branchID/room", roomController.getRoomsByBranch);
+apiRouter.post("/branch/:branchID/room", roomController.createRoom);
+apiRouter.put("/room/:roomID", roomController.updateRoom);
+apiRouter.delete("/room/:roomID", roomController.deleteRoom);
 
 /******************************************************************************
                                 Export default

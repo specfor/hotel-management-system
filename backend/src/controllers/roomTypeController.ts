@@ -143,12 +143,3 @@ export async function deleteRoomType(req: Request, res: Response): Promise<void>
     return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error"});
   }
 }
-
-
-// roomTypeId: number;
-// branchId: number;
-// roomTypeName: string;
-// dailyRate: number;
-// lateCheckoutRate: number;
-// capacity: number;
-// amenities: string;
