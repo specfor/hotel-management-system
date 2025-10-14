@@ -170,21 +170,19 @@ export async function deleteRoomTypeDB(branchIDInt: number, roomTypeName: string
 
 }
 
+export async function getRoomTypeByNameDB(branchID: number, typeName: string): Promise<{ typeID: number } | null> {
+  try {
+    const sql = `
+      SELECT type_id AS "typeID"
+      FROM room_type
+      WHERE branch_id = $1 AND type_name = $2;
+    `;
+    const result = await db.query(sql, [branchID, typeName]);
+    return result.rows[0];
 
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
 
-// type_id SERIAL PRIMARY KEY,
-// branch_id INT ,
-// type_name VARCHAR(50)  ,
-// daily_rate DECIMAL(10,2)  ,
-// late_checkout_rate DECIMAL(10,2)  ,
-// capacity INT  ,
-// amenities VARCHAR(255) ,
-//
-//
-// roomTypeId: number;
-// branchId: number;
-// roomTypeName: string;
-// dailyRate: number;
-// lateCheckoutRate: number;
-// capacity: number;
-// amenities: string;
