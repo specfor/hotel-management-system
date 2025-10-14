@@ -3,6 +3,8 @@ import { Router } from "express";
 import { getUsers } from "@src/controllers/userController";
 import * as branchController from "@src/controllers/branchController";
 import * as roomTypeController from "@src/controllers/roomTypeController";
+import * as paymentController from "@src/controllers/paymentController";
+
 
 /******************************************************************************
                                 Setup
@@ -29,6 +31,12 @@ apiRouter.post("/room-type", roomTypeController.createRoomType);
 apiRouter.put("/room-type/:branchID/:roomTypeName", roomTypeController.updateRoomType);
 apiRouter.delete("/room-type/:branchID/:roomTypeName", roomTypeController.deleteRoomType);
 
+// endpoints for payment
+apiRouter.get("/payment", paymentController.getAllPayments);
+apiRouter.get("/payment/:id", paymentController.getPaymentByID);
+apiRouter.post("/payment", paymentController.addNewPayment);
+apiRouter.put("/payment/:id", paymentController.updatePayment);
+apiRouter.delete("/payment/:id", paymentController.deletePayment);
 
 /******************************************************************************
                                 Export default
