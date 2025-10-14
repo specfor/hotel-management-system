@@ -28,13 +28,13 @@ INSERT INTO room_type (branch_id, type_name, daily_rate, late_checkout_rate, cap
 -- =========================
 -- 3. Rooms
 -- =========================
-INSERT INTO room (room_id, branch_id, type_id, room_status) VALUES
-(101, 1, 1, 'Available'),
-(102, 1, 2, 'Available'),
-(103, 1, 3, 'Available'),
-(201, 2, 4, 'Available'),
-(202, 2, 5, 'Available'),
-(301, 3, 6, 'Available');
+INSERT INTO room (branch_id, type_id, room_status) VALUES
+(1, 1, 'Available'),
+(1, 2, 'Available'),
+(1, 3, 'Available'),
+(2, 4, 'Available'),
+(2, 5, 'Available'),
+(3, 6, 'Available');
 
 -- =========================
 -- 4. Guests
