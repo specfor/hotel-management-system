@@ -12,7 +12,7 @@ CREATE TABLE revenue (
   record_id SERIAL PRIMARY KEY,
   branch_id INT ,
   month INT ,
-  calculated_data_time TIMESTAMP ,
+  calculated_data_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   amount NUMERIC(11,2) CHECK (amount >= 0),
   CONSTRAINT fk_revenue_branch FOREIGN KEY (branch_id) REFERENCES branch(branch_id)
 );
