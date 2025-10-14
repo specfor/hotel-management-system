@@ -13,7 +13,7 @@ CREATE TABLE payment (
   bill_id INT,
   paid_method VARCHAR(50),
   paid_amount DECIMAL(10,2),
-  date_time TIMESTAMP
+  date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_payment_billid ON payment(bill_id);
