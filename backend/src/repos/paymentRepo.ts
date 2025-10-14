@@ -63,7 +63,7 @@ export async function updatePaymentInfo_repo(
   }
   const query = `UPDATE payment
       SET
-        bill_id = $1 
+        bill_id = $1, 
         paid_method = $2, 
         paid_amount = $3, 
         date_time = $4
