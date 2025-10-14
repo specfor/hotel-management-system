@@ -1,8 +1,9 @@
+ 
 import { Router } from "express";
-
 import { getUsers } from "@src/controllers/userController";
 import * as branchController from "@src/controllers/branchController";
 import * as roomTypeController from "@src/controllers/roomTypeController";
+import * as roomController from "@src/controllers/roomController";
 
 /******************************************************************************
                                 Setup
@@ -29,6 +30,12 @@ apiRouter.post("/room-type", roomTypeController.createRoomType);
 apiRouter.put("/room-type/:branchID/:roomTypeName", roomTypeController.updateRoomType);
 apiRouter.delete("/room-type/:branchID/:roomTypeName", roomTypeController.deleteRoomType);
 
+// endpoints for room
+apiRouter.get("/room", roomController.getAllRooms);
+apiRouter.get("/branch/:branchID/room", roomController.getRoomsByBranch);
+apiRouter.post("/branch/:branchID/room", roomController.createRoom);
+apiRouter.put("/room/:roomID", roomController.updateRoom);
+apiRouter.delete("/room/:roomID", roomController.deleteRoom);
 
 /******************************************************************************
                                 Export default
