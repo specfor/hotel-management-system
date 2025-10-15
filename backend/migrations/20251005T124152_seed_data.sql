@@ -17,24 +17,24 @@ INSERT INTO branch (branch_name, city, address) VALUES
 -- =========================
 -- 2. Room Types
 -- =========================
-INSERT INTO room_type (type_id, branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES
-(1, 1, 'Single', 50.00, 10.00, 1, 'WiFi, TV'),
-(2, 1, 'Double', 80.00, 15.00, 2, 'WiFi, TV, Mini-fridge'),
-(3, 1, 'Suite', 150.00, 25.00, 4, 'WiFi, TV, Mini-fridge, Jacuzzi'),
-(4, 2, 'Single', 55.00, 10.00, 1, 'WiFi, TV'),
-(5, 2, 'Double', 85.00, 15.00, 2, 'WiFi, TV, Mini-fridge'),
-(6, 3, 'Suite', 160.00, 25.00, 4, 'WiFi, TV, Mini-fridge, Jacuzzi');
+INSERT INTO room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES
+(1, 'Single', 50.00, 10.00, 1, 'WiFi, TV'),
+(1, 'Double', 80.00, 15.00, 2, 'WiFi, TV, Mini-fridge'),
+(1, 'Suite', 150.00, 25.00, 4, 'WiFi, TV, Mini-fridge, Jacuzzi'),
+(2, 'Single', 55.00, 10.00, 1, 'WiFi, TV'),
+(2, 'Double', 85.00, 15.00, 2, 'WiFi, TV, Mini-fridge'),
+(3, 'Suite', 160.00, 25.00, 4, 'WiFi, TV, Mini-fridge, Jacuzzi');
 
 -- =========================
 -- 3. Rooms
 -- =========================
-INSERT INTO room (room_id, branch_id, type_id, room_status) VALUES
-(101, 1, 1, 'Available'),
-(102, 1, 2, 'Available'),
-(103, 1, 3, 'Available'),
-(201, 2, 4, 'Available'),
-(202, 2, 5, 'Available'),
-(301, 3, 6, 'Available');
+INSERT INTO room (branch_id, type_id, room_status) VALUES
+(1, 1, 'Available'),
+(1, 2, 'Available'),
+(1, 3, 'Available'),
+(2, 4, 'Available'),
+(2, 5, 'Available'),
+(3, 6, 'Available');
 
 -- =========================
 -- 4. Guests

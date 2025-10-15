@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import {BranchPublic} from "@src/types/branchTypes";    // named export
 import db from "@src/common/util/db";
 import * as console from "node:console";   // default export
