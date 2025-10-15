@@ -11,7 +11,7 @@ export async function getAllRoomTypes(req:Request, res: Response):Promise<void>{
     const roomTypeArr = await getAllRoomTypesDB();
 
     if(!roomTypeArr){
-      return jsonResponse(res, true, HttpStatusCodes.OK, {message: "No room types stored or query execution failed"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "No room types stored or query execution failed"});
     }else{
       return jsonResponse(res, true, HttpStatusCodes.OK, roomTypeArr);
     }
@@ -29,7 +29,7 @@ export async function getRoomTypesByBranch(req:Request, res: Response):Promise<v
     const roomTypeArr = await getRoomTypesByBranchDB(roomTypeIDInt);
 
     if(!roomTypeArr){
-      return jsonResponse(res, true, HttpStatusCodes.OK, {message: "No room types stored or query execution failed"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "No room types stored or query execution failed"});
     }else{
       return jsonResponse(res, true, HttpStatusCodes.OK, roomTypeArr);
     }
@@ -75,7 +75,7 @@ export async function createRoomType(req: Request, res: Response):Promise<void>{
       return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Room type was not created"});
     }else{
 
-      return jsonResponse(res, true, HttpStatusCodes.CREATED, {message: "Room type created successfully", roomType});
+      return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Room type created successfully", roomType});
     }
 
   }catch(err){
@@ -133,7 +133,7 @@ export async function deleteRoomType(req: Request, res: Response): Promise<void>
     const deleted = await deleteRoomTypeDB(branchIDInt, roomTypeName);
 
     if (!deleted) {
-      return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {message: "Deletion unsuccessful"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Deletion unsuccessful"});
     }else{
       return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Deleted successfully"});
     }

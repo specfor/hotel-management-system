@@ -10,7 +10,7 @@ export async function getAllDiscounts(req: Request, res: Response): Promise<void
     const discounts = await getAllDiscountsDB();
 
     if (!discounts || discounts.length === 0) {
-      return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {message: "No discounts found"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "No discounts found"});
     }
 
     return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Discounts fetched successfully", data: discounts});
@@ -32,7 +32,7 @@ export async function getDiscountById(req: Request, res: Response): Promise<void
     const discount = await getDiscountByIdDB(discountID);
 
     if (!discount) {
-      return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {message: "Discount not found"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Discount not found"});
     }
 
     return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Discount fetched successfully", data: discount,
@@ -55,7 +55,7 @@ export async function getDiscountsByBranch(req: Request, res: Response): Promise
     const discounts = await getDiscountsByBranchDB(branchID);
 
     if (!discounts || discounts.length === 0) {
-      return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {message: "No discounts found for this branch"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "No discounts found for this branch"});
     }
 
     return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Discounts fetched successfully", data: discounts,
@@ -114,10 +114,10 @@ export async function createDiscount(req: Request, res: Response): Promise<void>
     });
 
     if (!newDiscount) {
-      return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Failed to create discount"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Failed to create discount"});
     }
 
-    return jsonResponse(res, true, HttpStatusCodes.CREATED, {message: "Discount created successfully", data: newDiscount,
+    return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Discount created successfully", data: newDiscount,
     });
 
   } catch (err) {
@@ -190,7 +190,7 @@ export async function updateDiscount(req: Request, res: Response): Promise<void>
     });
 
     if (!updatedDiscount) {
-      return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
         message: "Discount not found or update failed",
       });
     }
@@ -220,7 +220,7 @@ export async function deleteDiscount(req: Request, res: Response): Promise<void>
     const deleted = await deleteDiscountDB(discountID);
 
     if (!deleted) {
-      return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
         message: "Discount not found or already deleted",
       });
     }

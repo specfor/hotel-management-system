@@ -17,7 +17,7 @@ export async function getAllRooms(req:Request, res: Response):Promise<void>{
   try{
     const roomArr = await getAllRoomsDB();
     if(!roomArr){
-      return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "No rooms exist or query execution failed"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "No rooms exist or query execution failed"});
     }else{
       return jsonResponse(res, true, HttpStatusCodes.OK, {roomArr});
     }
@@ -39,7 +39,7 @@ export async function getRoomsByBranch(req: Request, res: Response): Promise<voi
     const rooms = await getRoomsByBranchDB(branchID, type, status);
 
     if (!rooms) {
-      return jsonResponse(res, true, HttpStatusCodes.NO_CONTENT, { message: "No rooms found" });
+      return jsonResponse(res, true, HttpStatusCodes.BAD_REQUEST, { message: "No rooms found" });
     }else{
       return jsonResponse(res, true, HttpStatusCodes.OK, { rooms });
     }
@@ -62,7 +62,7 @@ export async function createRoom(req: Request, res: Response):Promise<void>{
 
     const branch = await getBranchByIdDB(branchIdInt);
     if (!branch) {
-      return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, { message: "Branch not found" });
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, { message: "Branch not found" });
     }
 
     if (!roomTypeName) {
@@ -72,7 +72,7 @@ export async function createRoom(req: Request, res: Response):Promise<void>{
     const roomTypeId = await getRoomTypeByNameDB(branchIdInt, roomTypeName as string);
 
     if (!roomTypeId) {
-      return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, { message: `Room type '${roomTypeName}' not found in branch ${branchIdInt}` });
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, { message: `Room type '${roomTypeName}' not found in branch ${branchIdInt}` });
     }
 
     const createdRoom = await createRoomDB(branchIdInt, roomTypeId.typeID);
@@ -80,7 +80,7 @@ export async function createRoom(req: Request, res: Response):Promise<void>{
     if (!createdRoom) {
       return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, { message: "Room creation failed" });
     }else{
-      return jsonResponse(res, true, HttpStatusCodes.CREATED, {createdRoom});
+      return jsonResponse(res, true, HttpStatusCodes.OK, {createdRoom});
     }
 
   }catch(err){
@@ -110,7 +110,7 @@ export async function updateRoom(req: Request, res: Response): Promise<void> {
       const branchIdObj = await getBranchIdOfRoom(roomIDInt);
       const roomType = await getRoomTypeByNameDB(branchIdObj.branchID, roomTypeName);
       if (!roomType) {
-        return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, { message: `Room type '${roomTypeName}' not found` });
+        return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, { message: `Room type '${roomTypeName}' not found` });
       }
       typeID = roomType.typeID;
     }
@@ -118,7 +118,7 @@ export async function updateRoom(req: Request, res: Response): Promise<void> {
     const updatedRoom = await updateRoomDB(roomIDInt, typeID, roomStatus);
 
     if (!updatedRoom) {
-      return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, { message: "Room not found or update failed" });
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, { message: "Room not found or update failed" });
     }
 
     return jsonResponse(res, true, HttpStatusCodes.OK, { message: "Room updated successfully", updatedRoom });
@@ -139,7 +139,7 @@ export async function deleteRoom(req: Request, res: Response): Promise<void> {
     const deleted = await deleteRoomDB(roomIDInt);
 
     if (!deleted) {
-      return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, { message: "Room not found" });
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, { message: "Room not found" });
     }else{
       return jsonResponse(res, true, HttpStatusCodes.OK, { message: "Room deleted successfully" });
     }
