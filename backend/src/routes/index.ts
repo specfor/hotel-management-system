@@ -4,6 +4,8 @@ import { getUsers } from "@src/controllers/userController";
 import * as branchController from "@src/controllers/branchController";
 import * as roomTypeController from "@src/controllers/roomTypeController";
 import * as roomController from "@src/controllers/roomController";
+import * as discountController from "@src/controllers/discountController";
+import {getDiscountById} from "@src/controllers/discountController";
 
 /******************************************************************************
                                 Setup
@@ -37,6 +39,13 @@ apiRouter.post("/branch/:branchID/room", roomController.createRoom);
 apiRouter.put("/room/:roomID", roomController.updateRoom);
 apiRouter.delete("/room/:roomID", roomController.deleteRoom);
 
+// endpoints for discounts
+apiRouter.get("/discount", discountController.getAllDiscounts);
+apiRouter.get("/discount/:discountID", discountController.getDiscountById);
+apiRouter.get("/discount/branch/:branchID", discountController.getDiscountsByBranch);
+apiRouter.post("/discount", discountController.createDiscount);
+apiRouter.put("/discount/:discountID", discountController.updateDiscount);
+apiRouter.delete("/discount/:discountID", discountController.deleteDiscount);
 /******************************************************************************
                                 Export default
 ******************************************************************************/

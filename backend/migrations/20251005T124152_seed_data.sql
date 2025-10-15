@@ -77,9 +77,9 @@ INSERT INTO chargable_services (service_id, branch_id, service_name, unit_price,
 -- 8. Bookings
 -- =========================
 INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, payment_method, date_time, check_in, check_out) VALUES
-(1, 1, 1, 101, 'Booked', 'Credit Card', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
-(2, 2, 2, 102, 'Checked-In', 'Cash', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
-(3, 1, 3, 103, 'Cancelled', 'Bank Transfer', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
+(1, 1, 1, 1, 'Booked', 'Credit Card', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
+(2, 2, 2, 2, 'Checked-In', 'Cash', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
+(3, 1, 3, 3, 'Cancelled', 'Bank Transfer', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
 
 -- =========================
 -- 9. Service Usage
@@ -92,16 +92,18 @@ INSERT INTO service_usage (record_id, service_id, booking_id, date_time, quantit
 -- =========================
 -- 10. Payments
 -- =========================
-INSERT INTO payment (payment_id, bill_id, paid_method, paid_amount, date_time) VALUES
-(1, 1, 'Credit Card', 100.00, '2025-10-05 13:00'),
-(2, 2, 'Cash', 50.00, '2025-09-28 16:00');
+-- INSERT INTO payment (payment_id, bill_id, paid_method, paid_amount, date_time) VALUES
+-- (1, 1, 'Credit Card', 100.00, '2025-10-05 13:00'),
+-- (2, 2, 'Cash', 50.00, '2025-09-28 16:00');
 
 -- =========================
 -- 11. Discounts
 -- =========================
-INSERT INTO discount (discount_id, branch_id, discount_name, discount_rate, discount_condition, valid_from, valid_to) VALUES
-(1, 1, 'Summer Sale', 10.00, 'Min stay 3 nights', '2025-06-01', '2025-08-31'),
-(2, 2, 'Weekend Special', 15.00, 'Friday to Sunday stays', '2025-01-01', '2025-12-31');
+INSERT INTO discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES
+(1, 'Summer Sale', 'percentage', 10.00, NULL, 'Min stay 3 nights', '2025-06-01', '2025-08-31'),
+(2, 'Weekend Special', 'fixed', 1000.00, NULL, 'Friday to Sunday stays', '2025-01-01', '2025-12-31'),
+(1, 'Big Spender Offer', 'percentage', 15.00, 20000.00, 'Applicable for bills over Rs. 20,000', '2025-03-01', '2025-05-31'),
+(3, 'Holiday Deal', 'fixed', 750.00, 10000.00, 'Valid for bookings above Rs. 10,000', '2025-11-15', '2025-12-31');
 
 -- =========================
 -- 12. Revenue

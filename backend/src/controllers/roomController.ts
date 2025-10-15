@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import {Request} from "express";
+import { Request, Response } from "express";
 import {jsonResponse} from "@src/common/util/response";
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import {
