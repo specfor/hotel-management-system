@@ -18,7 +18,7 @@ CREATE TABLE booking (
   room_id INT NOT NULL,
   booking_status booking_status_enum,
   payment_method payment_method_enum,
-  date_time TIMESTAMP,
+  date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   check_in TIMESTAMP,
   check_out TIMESTAMP,
   CONSTRAINT fk_booking_user FOREIGN KEY (user_id) REFERENCES "user"(staff_id) ON DELETE SET NULL,
