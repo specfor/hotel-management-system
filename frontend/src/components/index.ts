@@ -10,5 +10,9 @@ export { default as Notification } from "./Notification";
 export { default as RoleGuard } from "./RoleGuard";
 export { default as ConditionalRender } from "./ConditionalRender";
 
+// Alert Components
+export { default as Alert } from "./Alert";
+export { default as AlertContainer } from "./AlertContainer";
+
 // Primary UI Components (re-export for convenience)
 export * from "./primary";

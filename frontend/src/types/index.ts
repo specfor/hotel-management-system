@@ -29,3 +29,6 @@ export type { User, UserRole, Permission, LoginCredentials, AuthResponse, AuthCo
 
 // Table types
 export type { TableColumn, TableAction, TablePagination, TableSort, TableFilter, TableProps } from "./table";
+
+// Alert types
+export type { AlertType, AlertMessage, AlertContextType, AlertProps, AlertContainerProps } from "./alert";
