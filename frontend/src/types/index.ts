@@ -26,3 +26,6 @@ export type {
 
 // Auth types
 export type { User, UserRole, Permission, LoginCredentials, AuthResponse, AuthContextType, JwtPayload } from "./auth";
+
+// Table types
+export type { TableColumn, TableAction, TablePagination, TableSort, TableFilter, TableProps } from "./table";
