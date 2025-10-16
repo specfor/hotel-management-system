@@ -42,7 +42,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION calc_service_total()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.total_price := NEW.quantity * (SELECT unit_price FROM chargable_services WHERE service_id = NEW.service_id);
+    NEW.total_price := NEW.quantity * (SELECT unit_price FROM chargeable_services WHERE service_id = NEW.service_id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

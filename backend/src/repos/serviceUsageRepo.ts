@@ -1,0 +1,162 @@
+/* eslint-disable max-len */
+// backend/src/repos/serviceUsageRepo.ts
+
+import { ServiceUsagePublic, ServiceUsageCreate, ServiceUsageUpdate } from "@src/types/serviceUsageTypes";
+import db from "@src/common/util/db";
+import logger from "jet-logger";
+
+// --- Helper Functions ---
+const mapToPublic = (row: any): ServiceUsagePublic => ({
+    recordId: row.record_id,
+    serviceId: row.service_id,
+    bookingId: row.booking_id,
+    dateTime: row.date_time,
+    quantity: parseFloat(row.quantity),
+    totalPrice: parseFloat(row.total_price),
+});
+
+// --- CRUD Operations ---
+
+/**
+ * Get all service usage records. (READ All)
+ */
+export async function getAllServiceUsageDB(): Promise<ServiceUsagePublic[] | null> {
+    try {
+        const sql = `
+            SELECT 
+                record_id, service_id, booking_id, date_time, quantity, total_price
+            FROM 
+                service_usage;
+        `;
+        const result = await db.query(sql);
+        return result.rows.map(mapToPublic);
+    } catch (err) {
+        logger.err(err);
+        return null;
+    }
+}
+
+/**
+ * Get a single service usage record by ID. (READ One)
+ */
+export async function getServiceUsageByIDDB(recordId: number): Promise<ServiceUsagePublic | null> {
+    try {
+        const sql = `
+            SELECT 
+                record_id, service_id, booking_id, date_time, quantity, total_price
+            FROM 
+                service_usage
+            WHERE
+                record_id = $1;
+        `;
+        const result = await db.query(sql, [recordId]);
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return mapToPublic(result.rows[0]);
+    } catch (err) {
+        logger.err(err);
+        return null;
+    }
+}
+
+/**
+ * Create a new service usage record. (CREATE)
+ */
+export async function createServiceUsageDB(usageData: ServiceUsageCreate): Promise<ServiceUsagePublic | null> {
+    try {
+        const sql = `
+            INSERT INTO service_usage (service_id, booking_id, quantity, date_time)
+            VALUES ($1, $2, $3, NOW())
+            RETURNING *;
+        `;
+        const values = [
+            usageData.serviceId,
+            usageData.bookingId,
+            usageData.quantity,
+        ];
+
+        const createdUsage = await db.query(sql, values);
+        return mapToPublic(createdUsage.rows[0]);
+
+    } catch (err) {
+        logger.err(err);
+        return null;
+    }
+}
+
+/**
+ * Update an existing service usage record. (UPDATE)
+ */
+export async function updateServiceUsageDB(usageData: ServiceUsageUpdate): Promise<ServiceUsagePublic | null> {
+    try {
+        const updates: string[] = [];
+        const values: (string | number | Date)[] = [];
+        let paramIndex = 1;
+
+        if (usageData.serviceId !== undefined) {
+            updates.push("service_id = $" + paramIndex);
+            values.push(usageData.serviceId);
+            paramIndex++;
+        }
+
+        if (usageData.bookingId !== undefined) {
+            updates.push("booking_id = $" + paramIndex);
+            values.push(usageData.bookingId);
+            paramIndex++;
+        }
+
+        if (usageData.quantity !== undefined) {
+            updates.push("quantity = $" + paramIndex);
+            values.push(usageData.quantity);
+            paramIndex++;
+        }
+        
+        if (updates.length === 0) {
+            return null; 
+        }
+
+        const sql = `
+          UPDATE service_usage
+          SET ${updates.join(", ")}
+          WHERE record_id = $${paramIndex}
+          RETURNING *;
+        `;
+        values.push(usageData.recordId); 
+
+        const result = await db.query(sql, values);
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return mapToPublic(result.rows[0]);
+
+    } catch (err) {
+        logger.err(err);
+        return null;
+    }
+}
+
+/**
+ * Delete a service usage record by ID. (DELETE)
+ * Returns true if deleted, false if not found.
+ */
+export async function deleteServiceUsageDB(recordId: number): Promise<boolean> {
+    try {
+        const sql = `
+          DELETE FROM service_usage
+          WHERE record_id = $1
+          RETURNING record_id;
+        `;
+
+        const result = await db.query(sql, [recordId]);
+
+        return result.rowCount !== null && result.rowCount > 0;
+    } catch (err) {
+        logger.err("Database error:", err);
+        return false;
+    }
+}

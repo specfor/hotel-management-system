@@ -63,9 +63,9 @@ INSERT INTO "user" (staff_id, username, password_hash) VALUES
 (3, 'charlie', 'hashedpass3');
 
 -- =========================
--- 7. Chargable Services
+-- 7. Chargeable Services
 -- =========================
-INSERT INTO chargable_services (service_id, branch_id, service_name, unit_price, unit_type) VALUES
+INSERT INTO chargeable_services (service_id, branch_id, service_name, unit_price, unit_type) VALUES
 (1, 1, 'Room Service', 10.00, 'Per item'),
 (2, 1, 'Laundry', 5.00, 'Per item'),
 (3, 1, 'Spa', 30.00, 'Per session'),
