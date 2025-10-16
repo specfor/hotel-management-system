@@ -41,6 +41,8 @@ export interface NavigationItem {
   path: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
+  requiredPermissions?: string[];
+  requiredRole?: string;
 }
 
 export interface SidebarProps {

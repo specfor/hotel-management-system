@@ -2,9 +2,26 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: string;
+  role: UserRole;
   avatar?: string;
 }
+
+export type UserRole = "admin" | "manager" | "staff" | "receptionist";
+
+export type Permission =
+  | "view_dashboard"
+  | "view_bookings"
+  | "create_bookings"
+  | "edit_bookings"
+  | "delete_bookings"
+  | "view_rooms"
+  | "manage_rooms"
+  | "view_guests"
+  | "manage_guests"
+  | "view_reports"
+  | "view_settings"
+  | "manage_settings"
+  | "manage_users";
 
 export interface LoginCredentials {
   email: string;
@@ -23,13 +40,15 @@ export interface AuthContextType {
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
+  hasPermission: (permission: Permission) => boolean;
+  hasAnyPermission: (permissions: Permission[]) => boolean;
 }
 
 export interface JwtPayload {
   sub: string;
   email: string;
   name: string;
-  role: string;
+  role: UserRole;
   iat: number;
   exp: number;
 }

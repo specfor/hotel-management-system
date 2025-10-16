@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { protectedRoutes, publicRoutes } from "../config/routes";
 import ProtectedRoute from "./ProtectedRoute";
+import RoleBasedRoute from "./RoleBasedRoute";
 
 const AppRouter: React.FC = () => {
   return (
@@ -16,7 +17,13 @@ const AppRouter: React.FC = () => {
         <Route
           key={route.path}
           path={route.path}
-          element={<ProtectedRoute>{React.createElement(route.element)}</ProtectedRoute>}
+          element={
+            <ProtectedRoute>
+              <RoleBasedRoute permissions={route.requiredPermissions} path={route.path}>
+                {React.createElement(route.element)}
+              </RoleBasedRoute>
+            </ProtectedRoute>
+          }
         />
       ))}
     </Routes>

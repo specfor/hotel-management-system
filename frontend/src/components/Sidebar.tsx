@@ -2,10 +2,24 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button, Badge } from "./primary";
+import { usePermissions } from "../hooks/usePermissions";
 import type { SidebarProps } from "../types";
+import type { Permission } from "../types/auth";
 
 const Sidebar: React.FC<SidebarProps> = ({ navigationItems, isCollapsed = true, onToggleCollapse, className = "" }) => {
+  const { hasAnyPermission } = usePermissions();
   const sidebarWidth = isCollapsed ? "w-16" : "w-64";
+
+  // Filter navigation items based on user permissions
+  const filteredNavigationItems = navigationItems.filter((item) => {
+    // If no permissions required, show the item
+    if (!item.requiredPermissions || item.requiredPermissions.length === 0) {
+      return true;
+    }
+
+    // Check if user has any of the required permissions
+    return hasAnyPermission(item.requiredPermissions as Permission[]);
+  });
 
   return (
     <div
@@ -22,7 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navigationItems, isCollapsed = true, 
       {/* Navigation Items */}
       <nav className="flex-1 py-4">
         <div className="space-y-1 px-2">
-          {navigationItems.map((item) => (
+          {filteredNavigationItems.map((item) => (
             <NavLink
               key={item.id}
               to={item.path}

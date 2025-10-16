@@ -25,4 +25,4 @@ export type {
 } from "./ui";
 
 // Auth types
-export type { User, LoginCredentials, AuthResponse, AuthContextType, JwtPayload } from "./auth";
+export type { User, UserRole, Permission, LoginCredentials, AuthResponse, AuthContextType, JwtPayload } from "./auth";

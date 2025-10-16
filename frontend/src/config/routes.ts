@@ -7,12 +7,14 @@ import Guests from "../pages/Guests";
 import Reports from "../pages/Reports";
 import SettingsPage from "../pages/Settings";
 import Login from "../pages/Login";
+import type { Permission } from "../types/auth";
 
 export interface AppRoute {
   path: string;
   element: React.ComponentType;
   label: string;
   protected?: boolean;
+  requiredPermissions?: Permission[];
 }
 
 // Protected routes (require authentication)
@@ -22,36 +24,42 @@ export const protectedRoutes: AppRoute[] = [
     element: Dashboard,
     label: "Dashboard",
     protected: true,
+    requiredPermissions: ["view_dashboard"],
   },
   {
     path: "/bookings",
     element: Bookings,
     label: "Bookings",
     protected: true,
+    requiredPermissions: ["view_bookings"],
   },
   {
     path: "/rooms",
     element: Rooms,
     label: "Rooms",
     protected: true,
+    requiredPermissions: ["view_rooms"],
   },
   {
     path: "/guests",
     element: Guests,
     label: "Guests",
     protected: true,
+    requiredPermissions: ["view_guests"],
   },
   {
     path: "/reports",
     element: Reports,
     label: "Reports",
     protected: true,
+    requiredPermissions: ["view_reports"],
   },
   {
     path: "/settings",
     element: SettingsPage,
     label: "Settings",
     protected: true,
+    requiredPermissions: ["view_settings"],
   },
 ];
 

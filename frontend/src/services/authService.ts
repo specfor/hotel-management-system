@@ -18,25 +18,45 @@ export class AuthService {
   // Login user
   static async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      // For demo purposes, simulate a successful login with mock data
-      // Remove this when backend is ready
-      if (credentials.email === "admin@hotel.com" && credentials.password === "admin123") {
-        const mockUser: User = {
+      // For demo purposes, simulate different user roles
+      const demoUsers = {
+        "admin@hotel.com": {
           id: "1",
-          email: credentials.email,
+          email: "admin@hotel.com",
           name: "Hotel Administrator",
-          role: "Admin",
-        };
+          role: "admin" as const,
+        },
+        "manager@hotel.com": {
+          id: "2",
+          email: "manager@hotel.com",
+          name: "Hotel Manager",
+          role: "manager" as const,
+        },
+        "staff@hotel.com": {
+          id: "3",
+          email: "staff@hotel.com",
+          name: "Hotel Staff",
+          role: "staff" as const,
+        },
+        "receptionist@hotel.com": {
+          id: "4",
+          email: "receptionist@hotel.com",
+          name: "Hotel Receptionist",
+          role: "receptionist" as const,
+        },
+      };
 
+      const demoUser = demoUsers[credentials.email as keyof typeof demoUsers];
+
+      if (demoUser && credentials.password === "password123") {
         // Create a mock JWT token (for demo - in real app, this comes from backend)
-        const mockToken =
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkBob3RlbC5jb20iLCJuYW1lIjoiSG90ZWwgQWRtaW5pc3RyYXRvciIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTczNDMzNjAwMCwiZXhwIjoxNzM0NDIyNDAwfQ.demo_token_for_development";
+        const mockToken = `demo_token_for_development_${demoUser.role}`;
 
         // Store token and user data
         this.setToken(mockToken);
-        this.setUser(mockUser);
+        this.setUser(demoUser);
 
-        return { token: mockToken, user: mockUser };
+        return { token: mockToken, user: demoUser };
       } else {
         throw new Error("Invalid email or password");
       }
@@ -108,14 +128,39 @@ export class AuthService {
   // Get user from token
   static getUserFromToken(token: string): User | null {
     try {
-      // For demo token, return mock user data
+      // For demo token, extract role from token and return appropriate user data
       if (token.includes("demo_token_for_development")) {
-        return {
-          id: "1",
-          email: "admin@hotel.com",
-          name: "Hotel Administrator",
-          role: "Admin",
+        const roleMatch = token.match(/demo_token_for_development_(\w+)/);
+        const role = roleMatch ? roleMatch[1] : "admin";
+
+        const demoUsers = {
+          admin: {
+            id: "1",
+            email: "admin@hotel.com",
+            name: "Hotel Administrator",
+            role: "admin" as const,
+          },
+          manager: {
+            id: "2",
+            email: "manager@hotel.com",
+            name: "Hotel Manager",
+            role: "manager" as const,
+          },
+          staff: {
+            id: "3",
+            email: "staff@hotel.com",
+            name: "Hotel Staff",
+            role: "staff" as const,
+          },
+          receptionist: {
+            id: "4",
+            email: "receptionist@hotel.com",
+            name: "Hotel Receptionist",
+            role: "receptionist" as const,
+          },
         };
+
+        return demoUsers[role as keyof typeof demoUsers] || demoUsers.admin;
       }
 
       const decoded: JwtPayload = jwtDecode(token);

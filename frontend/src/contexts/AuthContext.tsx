@@ -1,7 +1,8 @@
 import { createContext, useReducer, useEffect } from "react";
 import type { ReactNode } from "react";
 import { AuthService } from "../services/authService";
-import type { User, LoginCredentials, AuthContextType } from "../types/auth";
+import { hasPermission, hasAnyPermission } from "../utils/permissions";
+import type { User, LoginCredentials, AuthContextType, Permission } from "../types/auth";
 
 // Auth state interface
 interface AuthState {
@@ -126,6 +127,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     dispatch({ type: "AUTH_LOGOUT" });
   };
 
+  // Permission checking functions
+  const checkPermission = (permission: Permission): boolean => {
+    if (!state.user) return false;
+    return hasPermission(state.user.role, permission);
+  };
+
+  const checkAnyPermission = (permissions: Permission[]): boolean => {
+    if (!state.user) return false;
+    return hasAnyPermission(state.user.role, permissions);
+  };
+
   // Context value
   const value: AuthContextType = {
     user: state.user,
@@ -134,6 +146,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isAuthenticated: state.isAuthenticated,
     login,
     logout,
+    hasPermission: checkPermission,
+    hasAnyPermission: checkAnyPermission,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
