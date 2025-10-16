@@ -1,22 +1,17 @@
 import { useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import { useAuth } from "./hooks/useAuth";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import AppRouter from "./components/AppRouter";
 import { navigationItems } from "./config";
-import type { UserProfile, NotificationItem } from "./types";
+import type { NotificationItem } from "./types";
 
-function App() {
+// Main App Content Component (needs to be inside AuthProvider)
+function AppContent() {
+  const { user, logout, isAuthenticated } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
-
-  // Mock user data
-  const mockUser: UserProfile = {
-    id: "1",
-    name: "John Anderson",
-    email: "john.anderson@hotel.com",
-    role: "Manager",
-    avatar: undefined, // Will show initials
-  };
 
   // Mock notifications
   const mockNotifications: NotificationItem[] = [
@@ -63,40 +58,71 @@ function App() {
   };
 
   const handleLogout = () => {
-    console.log("Logout clicked");
+    logout();
   };
 
-  return (
-    <Router>
-      <div className="min-h-screen bg-gray-50 flex">
-        {/* Sidebar */}
-        <Sidebar
-          navigationItems={navigationItems}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        />
+  // Convert User to UserProfile format for Header component
+  const userProfile = user
+    ? {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+      }
+    : null;
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          <Header
-            hotelName="Grand Plaza Hotel"
-            user={mockUser}
-            notifications={mockNotifications}
-            onNotificationClick={handleNotificationClick}
-            onProfileClick={handleProfileClick}
-            onLogout={handleLogout}
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Only show sidebar and header for authenticated users */}
+      {isAuthenticated && userProfile && (
+        <>
+          {/* Sidebar */}
+          <Sidebar
+            navigationItems={navigationItems}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           />
 
-          {/* Page Content */}
-          <div className="flex justify-center">
-            <div className="container">
-              <main className="flex-1">
-                <AppRouter />
-              </main>
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col">
+            <Header
+              hotelName="Grand Plaza Hotel"
+              user={userProfile}
+              notifications={mockNotifications}
+              onNotificationClick={handleNotificationClick}
+              onProfileClick={handleProfileClick}
+              onLogout={handleLogout}
+            />
+
+            {/* Page Content */}
+            <div className="flex justify-center">
+              <div className="container">
+                <main className="flex-1">
+                  <AppRouter />
+                </main>
+              </div>
             </div>
           </div>
+        </>
+      )}
+
+      {/* For non-authenticated users, show full-screen content (Login page) */}
+      {!isAuthenticated && (
+        <div className="w-full">
+          <AppRouter />
         </div>
-      </div>
+      )}
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </Router>
   );
 }

@@ -6,45 +6,67 @@ import Rooms from "../pages/Rooms";
 import Guests from "../pages/Guests";
 import Reports from "../pages/Reports";
 import SettingsPage from "../pages/Settings";
+import Login from "../pages/Login";
 
 export interface AppRoute {
   path: string;
   element: React.ComponentType;
   label: string;
+  protected?: boolean;
 }
 
-export const routes: AppRoute[] = [
+// Protected routes (require authentication)
+export const protectedRoutes: AppRoute[] = [
   {
     path: "/",
     element: Dashboard,
     label: "Dashboard",
+    protected: true,
   },
   {
     path: "/bookings",
     element: Bookings,
     label: "Bookings",
+    protected: true,
   },
   {
     path: "/rooms",
     element: Rooms,
     label: "Rooms",
+    protected: true,
   },
   {
     path: "/guests",
     element: Guests,
     label: "Guests",
+    protected: true,
   },
   {
     path: "/reports",
     element: Reports,
     label: "Reports",
+    protected: true,
   },
   {
     path: "/settings",
     element: SettingsPage,
     label: "Settings",
+    protected: true,
   },
 ];
+
+// Public routes (don't require authentication)
+export const publicRoutes: AppRoute[] = [
+  {
+    path: "/login",
+    element: Login,
+    label: "Login",
+    protected: false,
+  },
+];
+
+// All routes combined
+export const routes: AppRoute[] = [...protectedRoutes, ...publicRoutes];
 
 // Convert to React Router format
 export const routerConfig: RouteObject[] = routes.map((route) => ({

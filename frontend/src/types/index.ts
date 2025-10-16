@@ -23,3 +23,6 @@ export type {
   AvatarProps,
   LoadingSpinnerProps,
 } from "./ui";
+
+// Auth types
+export type { User, LoginCredentials, AuthResponse, AuthContextType, JwtPayload } from "./auth";
