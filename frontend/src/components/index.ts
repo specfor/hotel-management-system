@@ -14,5 +14,11 @@ export { default as ConditionalRender } from "./ConditionalRender";
 export { default as Alert } from "./Alert";
 export { default as AlertContainer } from "./AlertContainer";
 
+// Modal Components
+export { default as Modal } from "./Modal";
+export { default as ModalContainer } from "./ModalContainer";
+export { default as ConfirmationModal } from "./ConfirmationModal";
+export { default as FormModal } from "./FormModal";
+
 // Primary UI Components (re-export for convenience)
 export * from "./primary";

@@ -2,11 +2,12 @@ import { useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AlertProvider } from "./contexts/AlertContext";
+import { ModalProvider } from "./contexts/ModalContext";
 import { useAuth } from "./hooks/useAuth";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import AppRouter from "./components/AppRouter";
-import { AlertContainer } from "./components";
+import { AlertContainer, ModalContainer } from "./components";
 import { navigationItems } from "./config";
 import type { NotificationItem } from "./types";
 
@@ -124,8 +125,11 @@ function App() {
     <Router>
       <AuthProvider>
         <AlertProvider>
-          <AppContent />
-          <AlertContainer position="top-right" className="mt-14" />
+          <ModalProvider>
+            <AppContent />
+            <AlertContainer position="top-right" className="mt-14" />
+            <ModalContainer />
+          </ModalProvider>
         </AlertProvider>
       </AuthProvider>
     </Router>

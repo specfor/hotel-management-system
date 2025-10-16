@@ -32,3 +32,13 @@ export type { TableColumn, TableAction, TablePagination, TableSort, TableFilter,
 
 // Alert types
 export type { AlertType, AlertMessage, AlertContextType, AlertProps, AlertContainerProps } from "./alert";
+
+// Modal types
+export type {
+  ModalSize,
+  ModalProps,
+  ModalItem,
+  ModalContextType,
+  ConfirmationModalProps,
+  FormModalProps,
+} from "./modal";

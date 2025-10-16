@@ -20,7 +20,7 @@ export interface ButtonProps extends BaseComponentProps {
 }
 
 export interface InputProps extends BaseComponentProps {
-  type?: "text" | "email" | "password" | "number" | "tel" | "url";
+  type?: "text" | "email" | "password" | "number" | "tel" | "url" | "date";
   placeholder?: string;
   value?: string;
   defaultValue?: string;
