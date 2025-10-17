@@ -30,7 +30,7 @@ app.use(
     origin: [ENV.ClientOrigin, "http://localhost:3000"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
-  })
+  }),
 );
 
 // Show routes called in console during development

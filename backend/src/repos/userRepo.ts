@@ -9,10 +9,14 @@ import { UserPublic, UserRepo } from "@src/types/userTypes";
 // }
 
 export default function addNewUser(user: UserRepo): Promise<UserPublic | null> {
-  return new Promise((resolve, reject) => {
-    let sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
-    let params = [user.name, user.email, user.password];
-    // execute SQL query and return the user if created
+  return new Promise((resolve) => {
+    // TODO: Implement actual database query
+    // const sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
+    // const params = [user.name, user.email, user.password];
+
+    // Placeholder: execute SQL query and return the user if created
+    // TODO: Replace with actual database execution
+    // Database.execute(sql, params);
     resolve({ id: 1, name: user.name, email: user.email });
   });
 }

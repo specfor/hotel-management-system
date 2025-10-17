@@ -1,12 +1,12 @@
 /* eslint-disable n/no-process-env */
 
-import path from 'path';
-import dotenv from 'dotenv';
-import moduleAlias from 'module-alias';
+import path from "path";
+import dotenv from "dotenv";
+import moduleAlias from "module-alias";
 
 
 // Check the env
-const NODE_ENV = (process.env.NODE_ENV ?? 'development');
+const NODE_ENV = (process.env.NODE_ENV ?? "development");
 
 // Configure "dotenv"
 const result2 = dotenv.config({
@@ -17,6 +17,6 @@ if (result2.error) {
 }
 
 // Configure moduleAlias
-if (__filename.endsWith('js')) {
-  moduleAlias.addAlias('@src', __dirname + '/dist');
+if (__filename.endsWith("js")) {
+  moduleAlias.addAlias("@src", __dirname + "/dist");
 }

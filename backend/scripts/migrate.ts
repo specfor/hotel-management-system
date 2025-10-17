@@ -23,7 +23,7 @@ async function createMigration(name: string): Promise<void> {
   if (!name) {
     logger.err("❌ Migration name is required");
     logger.info("Usage: npm run migrate create <migration_name>");
-    process.exit(1);
+    throw new Error("Migration name is required");
   }
 
   // Ensure migrations directory exists
@@ -87,7 +87,7 @@ async function main(): Promise<void> {
   const arg = process.argv[3];
 
   if (!command) {
-    console.log(`
+    logger.info(`
 🔧 Migration Manager CLI
 
 Usage: npm run migrate [command]
@@ -105,7 +105,7 @@ Examples:
   npm run migrate create "add_users_table"
   npm run migrate create "add_booking_constraints"
     `);
-    process.exit(0);
+    return;
   }
 
   const migrationManager = new MigrationManager(MIGRATIONS_DIR);
@@ -137,13 +137,13 @@ Examples:
     default:
       logger.err(`❌ Unknown command: ${command}`);
       logger.info("Run 'npm run migrate' to see available commands");
-      process.exit(1);
+      throw new Error(`Unknown command: ${command}`);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.err("❌ Migration command failed:");
     logger.err(error);
     await migrationManager.close();
-    process.exit(1);
+    throw error;
   }
 
   // Close connections after successful completion
@@ -151,19 +151,22 @@ Examples:
 }
 
 // Handle graceful shutdown
-process.on("SIGINT", async () => {
+process.on("SIGINT", () => {
   logger.info("⏹️  Migration interrupted");
+  // eslint-disable-next-line n/no-process-exit
   process.exit(0);
 });
 
-process.on("SIGTERM", async () => {
+process.on("SIGTERM", () => {
   logger.info("⏹️  Migration terminated");
+  // eslint-disable-next-line n/no-process-exit
   process.exit(0);
 });
 
 // Run the CLI
-main().catch((error) => {
+main().catch((error: unknown) => {
   logger.err("💥 Unhandled error:");
   logger.err(error);
+  // eslint-disable-next-line n/no-process-exit
   process.exit(1);
 });

@@ -21,8 +21,8 @@ async function databaseExists(adminClient: Client, dbName: string): Promise<bool
 
 async function terminateConnections(adminClient: Client, dbName: string): Promise<void> {
   await adminClient.query(
-    `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()`,
-    [dbName]
+    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()",
+    [dbName],
   );
 }
 
@@ -56,7 +56,7 @@ async function dropDatabase(): Promise<void> {
 
     if (!force) {
       const confirmed = await promptConfirm(
-        `⚠️  This will DROP the database "${safeDbName}" and all data. Continue? (y/n): `
+        `⚠️  This will DROP the database "${safeDbName}" and all data. Continue? (y/n): `,
       );
       if (!confirmed) {
         logger.info("⏭️  Drop cancelled by user");
@@ -76,10 +76,9 @@ async function dropDatabase(): Promise<void> {
   }
 }
 
-dropDatabase().catch((error) => {
+dropDatabase().catch((error: unknown) => {
   logger.err("❌ Failed to drop database:");
   logger.err(error);
+  // eslint-disable-next-line n/no-process-exit
   process.exit(1);
 });
-
-
