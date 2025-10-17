@@ -7,7 +7,14 @@ import {
   deleteUserByStaffId,
 } from "@src/controllers/userController";
 import { register, login } from "@src/controllers/authController";
-import { authenticate } from "@src/common/middleware/authMiddleware";
+import {
+  getStaffMembers,
+  getStaffById,
+  getStaffByBranchId,
+  createStaffMember,
+  updateStaffMember,
+  deleteStaffMember,
+} from "@src/controllers/staffController";
 
 /******************************************************************************
                                 Setup
@@ -20,12 +27,21 @@ const apiRouter = Router();
 apiRouter.post("/auth/register", register);
 apiRouter.post("/auth/login", login);
 
-// User Routes (Protected - requires authentication)
+// User Routes (Public)
 
-apiRouter.get("/users", authenticate, getUsers);
-apiRouter.get("/users/staff/:staffId", authenticate, getUserByStaffId);
-apiRouter.get("/users/username/:username", authenticate, getUserByUsername);
-apiRouter.delete("/users/:staffId", authenticate, deleteUserByStaffId);
+apiRouter.get("/users", getUsers);
+apiRouter.get("/users/staff/:staffId", getUserByStaffId);
+apiRouter.get("/users/username/:username", getUserByUsername);
+apiRouter.delete("/users/:staffId", deleteUserByStaffId);
+
+// Staff Routes (Public)
+
+apiRouter.get("/staff", getStaffMembers);
+apiRouter.get("/staff/:staffId", getStaffById);
+apiRouter.get("/staff/branch/:branchId", getStaffByBranchId);
+apiRouter.post("/staff", createStaffMember);
+apiRouter.put("/staff/:staffId", updateStaffMember);
+apiRouter.delete("/staff/:staffId", deleteStaffMember);
 
 apiRouter.use("/api", apiRouter);
 /******************************************************************************

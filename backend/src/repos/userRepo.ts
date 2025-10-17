@@ -42,7 +42,11 @@ export async function getAllUsers(): Promise<UserPublic[]> {
   return result.rows as UserPublic[];
 }
 
-//Delete user by staff ID
+//Delete user by staff ID (also deletes associated logs)
 export async function deleteUser(staffId: number): Promise<void> {
+  // First delete all log records associated with this user
+  await db.query("DELETE FROM log WHERE user_id = $1", [staffId]);
+  
+  // Then delete the user record
   await db.query("DELETE FROM \"user\" WHERE staff_id = $1", [staffId]);
 }

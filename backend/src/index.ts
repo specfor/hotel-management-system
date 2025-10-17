@@ -65,7 +65,7 @@ process.on("SIGINT", async () => {
 });
 
 // Start the application
-startServer().catch((error) => {
+startServer().catch((error:unknown) => {
   logger.err("Unhandled error during startup:");
   logger.err(error);
   throw new Error("Failed to start server");
