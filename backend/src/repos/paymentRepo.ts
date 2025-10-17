@@ -1,7 +1,7 @@
 import db from "@src/common/util/db";
-import { PaymentPublic } from "@src/types/paymentTypes";
+import { PaymentPrivate, PaymentPublic } from "@src/types/paymentTypes";
 
-export async function getAllPayments_repo(): Promise<PaymentPublic[]> {
+export async function getAllPayments_repo(): Promise<PaymentPublic[] | null> {
   if (!db.isReady()) {
     await db.connect();
   }
@@ -11,7 +11,9 @@ export async function getAllPayments_repo(): Promise<PaymentPublic[]> {
     FROM payment 
     ORDER BY payment_id ASC`
   );
-
+  if (result.rows.length === 0) {
+    return null;
+  }
   return result.rows as PaymentPublic[];
 }
 
@@ -36,7 +38,9 @@ export async function getPaymentByID_repo(
   return result.rows[0] as PaymentPublic;
 }
 
-export async function addNewPayment_repo(record: PaymentPublic): Promise<number | null> {
+export async function addNewPayment_repo(
+  record: PaymentPrivate
+): Promise<number | null> {
   if (!db.isReady()) {
     await db.connect();
   }
@@ -58,26 +62,25 @@ export async function addNewPayment_repo(record: PaymentPublic): Promise<number 
 }
 
 export async function updatePaymentInfo_repo(
-  record: PaymentPublic
+  record: PaymentPrivate,
+  payment_id: number
 ): Promise<PaymentPublic | null> {
   if (!db.isReady()) {
     await db.connect();
   }
   const query = `UPDATE payment
       SET
-        bill_id = $1 
+        bill_id = $1, 
         paid_method = $2, 
-        paid_amount = $3, 
-        date_time = $4
-      WHERE payment_id = $5
-      RETURNING payment_id, bill_id, paid_method, paid_amount, date_time;`;
+        paid_amount = $3
+      WHERE payment_id = $4
+      RETURNING payment_id, bill_id, paid_method, paid_amount;`;
 
   const values = [
     record.bill_id,
     record.paid_method,
     record.paid_amount,
-    record.date_time,
-    record.payment_id,
+    payment_id,
   ];
 
   const result = await db.query(query, values);

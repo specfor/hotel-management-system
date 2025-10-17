@@ -77,9 +77,9 @@ INSERT INTO chargable_services (service_id, branch_id, service_name, unit_price,
 -- 8. Bookings
 -- =========================
 INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, payment_method, date_time, check_in, check_out) VALUES
-(1, 1, 1, 101, 'Booked', 'Credit Card', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
-(2, 2, 2, 102, 'Checked-In', 'Cash', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
-(3, 1, 3, 103, 'Cancelled', 'Bank Transfer', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
+(1, 1, 1, 1, 'Booked', 'Credit Card', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
+(2, 2, 2, 2, 'Checked-In', 'Cash', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
+(3, 1, 3, 3, 'Cancelled', 'Bank Transfer', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
 
 -- =========================
 -- 9. Service Usage
@@ -90,21 +90,40 @@ INSERT INTO service_usage (record_id, service_id, booking_id, date_time, quantit
 (3, 4, 2, '2025-09-29 18:00', 1, 15.00);
 
 -- =========================
--- 10. Payments
+-- 10. Final Bills (must exist before Payments)
+-- =========================
+INSERT INTO final_bill (
+  bill_id,
+  user_id,
+  booking_id,
+  room_charges,
+  total_service_charges,
+  total_tax,
+  total_discount,
+  late_checkout_charge,
+  total_amount,
+  paid_amount,
+  outstanding_amount
+) VALUES
+(1, 1, 1, 100.00, 20.00, 12.00, 0.00, 0.00, NULL, 100.00, NULL),
+(2, 2, 2, 80.00, 15.00, 9.50, 0.00, 0.00, NULL, 50.00, NULL);
+
+-- =========================
+-- 11. Payments
 -- =========================
 INSERT INTO payment (payment_id, bill_id, paid_method, paid_amount, date_time) VALUES
 (1, 1, 'Credit Card', 100.00, '2025-10-05 13:00'),
 (2, 2, 'Cash', 50.00, '2025-09-28 16:00');
 
 -- =========================
--- 11. Discounts
+-- 12. Discounts
 -- =========================
 INSERT INTO discount (discount_id, branch_id, discount_name, discount_rate, discount_condition, valid_from, valid_to) VALUES
 (1, 1, 'Summer Sale', 10.00, 'Min stay 3 nights', '2025-06-01', '2025-08-31'),
 (2, 2, 'Weekend Special', 15.00, 'Friday to Sunday stays', '2025-01-01', '2025-12-31');
 
 -- =========================
--- 12. Revenue
+-- 13. Revenue
 -- =========================
 INSERT INTO revenue (record_id, branch_id, month, calculated_data_time, amount) VALUES
 (1, 1, 9, NOW(), 5000.00),
@@ -112,7 +131,7 @@ INSERT INTO revenue (record_id, branch_id, month, calculated_data_time, amount) 
 (3, 3, 9, NOW(), 4000.00);
 
 -- =========================
--- 13. Logs
+-- 14. Logs
 -- =========================
 INSERT INTO log (record_id, user_id, action, date_time, action_rec_id) VALUES
 (1, 1, 'Created booking', NOW(), 1),

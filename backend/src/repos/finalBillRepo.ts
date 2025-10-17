@@ -23,7 +23,6 @@ export async function getFinalBillByID_repo(
   if (!db.isReady()) {
     await db.connect();
   }
-
   const query = `
     SELECT *
     FROM final_bill

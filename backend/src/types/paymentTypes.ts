@@ -5,3 +5,11 @@ export interface PaymentPublic {
     paid_amount: number;
     date_time: string | null;
 }
+
+export interface PaymentPrivate {
+    bill_id: number ;
+    paid_method: string;
+    paid_amount: number;
+    date_time: string | null;
+}
+
