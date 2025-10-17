@@ -1,13 +1,62 @@
 import db from "@src/common/util/db";
-import { Staff, StaffCreate, StaffUpdate } from "@src/types/staffTypes";
+import { Staff, StaffCreate, StaffUpdate, StaffQueryParams } from "@src/types/staffTypes";
 
-//Get all staff members
-export async function getAllStaff(): Promise<Staff[]> {
-  const result = await db.query(
+//Get all staff members with pagination and filtering
+export async function getAllStaff(params: StaffQueryParams = {}): Promise<{
+  staff: Staff[],
+  totalCount: number,
+}> {
+  const {
+    page = 1,
+    limit = 30,
+    branch_id,
+    job_title,
+    name,
+  } = params;
+
+  // Calculate offset for pagination
+  const offset = (page - 1) * limit;
+
+  // Build WHERE clause dynamically based on filters
+  const conditions: string[] = [];
+  const values: unknown[] = [];
+  let paramIndex = 1;
+
+  if (branch_id !== undefined) {
+    conditions.push(`branch_id = $${paramIndex++}`);
+    values.push(branch_id);
+  }
+
+  if (job_title !== undefined) {
+    conditions.push(`job_title ILIKE $${paramIndex++}`);
+    values.push(`%${job_title}%`);
+  }
+
+  if (name !== undefined) {
+    conditions.push(`name ILIKE $${paramIndex++}`);
+    values.push(`%${name}%`);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+  // Get total count for pagination metadata
+  const countQuery = `SELECT COUNT(*) FROM staff ${whereClause}`;
+  const countResult = await db.query(countQuery, values);
+  const totalCount = parseInt(String(countResult.rows[0].count));
+
+  // Get paginated results
+  const dataQuery =
     "SELECT staff_id, branch_id, name, contact_no, email, job_title, salary " +
-      "FROM staff ORDER BY staff_id",
-  );
-  return result.rows as Staff[];
+    `FROM staff ${whereClause} ` +
+    "ORDER BY staff_id " +
+    `LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+
+  const dataResult = await db.query(dataQuery, [...values, limit, offset]);
+
+  return {
+    staff: dataResult.rows as Staff[],
+    totalCount,
+  };
 }
 
 //Find staff by ID

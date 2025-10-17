@@ -38,3 +38,26 @@ export interface StaffPublic {
   email: string;
   job_title: string;
 }
+
+//Pagination and filter parameters
+export interface StaffQueryParams {
+  page?: number;
+  limit?: number;
+  branch_id?: number;
+  job_title?: string;
+  name?: string;
+}
+
+//Paginated response
+export interface PaginatedStaffResponse {
+  success: boolean;
+  data: Staff[];
+  pagination: {
+    currentPage: number,
+    totalPages: number,
+    totalRecords: number,
+    recordsPerPage: number,
+    hasNextPage: boolean,
+    hasPreviousPage: boolean,
+  };
+}

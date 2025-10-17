@@ -10,17 +10,50 @@ import {
   updateStaff,
   deleteStaff,
 } from "@src/repos/staffRepo";
-import { StaffCreate, StaffUpdate } from "@src/types/staffTypes";
+import { StaffCreate, StaffUpdate, StaffQueryParams } from "@src/types/staffTypes";
 
-//Get all staff members
-//GET /api/staff
+//Get all staff members with pagination and filters
+//GET /api/staff?page=1&limit=30&branch_id=1&job_title=Manager&name=Alice
 export async function getStaffMembers(
   req: Request,
   res: Response,
 ): Promise<void> {
   try {
-    const staff = await getAllStaff();
-    jsonResponse(res, true, HttpStatusCodes.OK, { staff });
+    // Parse query parameters
+    const queryParams: StaffQueryParams = {
+      page: req.query.page ? parseInt(req.query.page as string) : 1,
+      limit: req.query.limit ? parseInt(req.query.limit as string) : 30,
+      branch_id: req.query.branch_id
+        ? parseInt(req.query.branch_id as string)
+        : undefined,
+      job_title: req.query.job_title as string,
+      name: req.query.name as string,
+    };
+
+    // Validate page and limit
+    if (queryParams.page && queryParams.page < 1) {
+      queryParams.page = 1;
+    }
+    if (queryParams.limit && (queryParams.limit < 1 || queryParams.limit > 100)) {
+      queryParams.limit = 30; // Max 100 records per page
+    }
+
+    const { staff, totalCount } = await getAllStaff(queryParams);
+
+    const totalPages = Math.ceil(totalCount / (queryParams.limit ?? 30));
+    const currentPage = queryParams.page ?? 1;
+
+    jsonResponse(res, true, HttpStatusCodes.OK, {
+      staff,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalRecords: totalCount,
+        recordsPerPage: queryParams.limit ?? 30,
+        hasNextPage: currentPage < totalPages,
+        hasPreviousPage: currentPage > 1,
+      },
+    });
   } catch (error) {
     jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
       error: "Failed to fetch staff members",

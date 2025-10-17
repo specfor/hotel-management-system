@@ -7,13 +7,43 @@ import {
   findUserByUsername,
   deleteUser,
 } from "@src/repos/userRepo";
+import { UserQueryParams } from "@src/types/userTypes";
 
-//Get all users
-//GET /api/users
+//Get all users with pagination and filters
+//GET /api/users?page=1&limit=30&username=alice
 export async function getUsers(req: Request, res: Response): Promise<void> {
   try {
-    const users = await getAllUsers();
-    jsonResponse(res, true, HttpStatusCodes.OK, { users });
+    // Parse query parameters
+    const queryParams: UserQueryParams = {
+      page: req.query.page ? parseInt(req.query.page as string) : 1,
+      limit: req.query.limit ? parseInt(req.query.limit as string) : 30,
+      username: req.query.username as string,
+    };
+
+    // Validate page and limit
+    if (queryParams.page && queryParams.page < 1) {
+      queryParams.page = 1;
+    }
+    if (queryParams.limit && (queryParams.limit < 1 || queryParams.limit > 100)) {
+      queryParams.limit = 30; // Max 100 records per page
+    }
+
+    const { users, totalCount } = await getAllUsers(queryParams);
+
+    const totalPages = Math.ceil(totalCount / (queryParams.limit ?? 30));
+    const currentPage = queryParams.page ?? 1;
+
+    jsonResponse(res, true, HttpStatusCodes.OK, {
+      users,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalRecords: totalCount,
+        recordsPerPage: queryParams.limit ?? 30,
+        hasNextPage: currentPage < totalPages,
+        hasPreviousPage: currentPage > 1,
+      },
+    });
   } catch (error) {
     jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
       error: "Failed to fetch users",

@@ -24,3 +24,10 @@ export interface UserPublic {
   staff_id: number;
   username: string;
 }
+
+//Pagination and filter parameters for users
+export interface UserQueryParams {
+  page?: number;
+  limit?: number;
+  username?: string;
+}
