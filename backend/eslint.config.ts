@@ -4,7 +4,7 @@ import stylisticJs from "@stylistic/eslint-plugin-js";
 import stylisticTs from "@stylistic/eslint-plugin-ts";
 import nodePlugin from "eslint-plugin-n";
 
-export default tseslint.config(
+export default [
   eslint.configs.recommended,
   nodePlugin.configs["flat/recommended-script"],
   ...tseslint.configs.strictTypeChecked,
@@ -87,4 +87,4 @@ export default tseslint.config(
       "prefer-const": "warn",
     },
   },
-);
+];
