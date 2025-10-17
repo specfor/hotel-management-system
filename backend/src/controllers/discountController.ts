@@ -1,139 +1,151 @@
-/* eslint-disable max-len */
-import { Request, Response } from "express";
-import console from "node:console";
-import {jsonResponse} from "@src/common/util/response";
+import {
+  getAllDiscountsDB,
+  getDiscountByIdDB,
+  getDiscountsByBranchDB,
+  createDiscountDB,
+  updateDiscountDB,
+  deleteDiscountDB,
+} from "@src/repos/discountRepo";
+import { jsonResponse } from "@src/common/util/response";
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
-import {getAllDiscountsDB, getDiscountByIdDB, getDiscountsByBranchDB, createDiscountDB, updateDiscountDB, deleteDiscountDB} from "@src/repos/discountRepo";
 
-export async function getAllDiscounts(req: Request, res: Response): Promise<void>{
-  try{
+import * as console from "node:console";
+import { Request, Response } from "express";
+import Joi from "joi";
+
+export async function getAllDiscounts(req: Request, res: Response) {
+  try {
     const discounts = await getAllDiscountsDB();
 
     if (!discounts || discounts.length === 0) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "No discounts found"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "No discounts stored",
+      });
     }
 
-    return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Discounts fetched successfully", data: discounts});
-
-  }catch(err){
+    return jsonResponse(res, true, HttpStatusCodes.OK, {
+      message: "Discounts fetched successfully",
+      details: discounts,
+    });
+  } catch (err) {
     console.error(err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error"});
+    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      message: "Server error",
+    });
   }
 }
 
-export async function getDiscountById(req: Request, res: Response): Promise<void> {
+export async function getDiscountById(req: Request, res: Response) {
   try {
-    const discountID = parseInt(req.params.discountID, 10);
+    const paramSchema = Joi.object<{ discountId: number }>({
+      discountId: Joi.number().integer().positive().required(),
+    });
 
-    if (isNaN(discountID)) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Invalid discount ID"});
+    const paramResult = paramSchema.validate(req.params, {
+      abortEarly: false,
+    });
+
+    if (paramResult.error) {
+      const messages = paramResult.error.details.map((details) => details.message);
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "invalid input data",
+        details: messages,
+      });
     }
 
-    const discount = await getDiscountByIdDB(discountID);
+    const discountId: number = paramResult.value.discountId;
+
+    const discount = await getDiscountByIdDB(discountId);
 
     if (!discount) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Discount not found"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "No discount found with ID " + discountId,
+      });
     }
 
-    return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Discount fetched successfully", data: discount,
+    return jsonResponse(res, true, HttpStatusCodes.OK, {
+      message: "Discount fetched successfully",
+      details: discount,
     });
-
   } catch (err) {
-    console.error("Error in getDiscountById:", err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error while fetching discount"});
+    console.error(err);
+    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      message: "Server error",
+    });
   }
 }
 
-export async function getDiscountsByBranch(req: Request, res: Response): Promise<void> {
+export async function getDiscountsByBranch(req: Request, res: Response) {
   try {
-    const branchID = parseInt(req.params.branchID, 10);
+    const paramSchema = Joi.object<{ branchId: number }>({
+      branchId: Joi.number().integer().positive().required(),
+    });
 
-    if (isNaN(branchID)) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Invalid branch ID"});
+    const paramResult = paramSchema.validate(req.params, {
+      abortEarly: false,
+    });
+
+    if (paramResult.error) {
+      const messages = paramResult.error.details.map((details) => details.message);
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "invalid input data",
+        details: messages,
+      });
     }
 
-    const discounts = await getDiscountsByBranchDB(branchID);
+    const branchId: number = paramResult.value.branchId;
+
+    const discounts = await getDiscountsByBranchDB(branchId);
 
     if (!discounts || discounts.length === 0) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "No discounts found for this branch"});
-    }
-
-    return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Discounts fetched successfully", data: discounts,
-    });
-
-  } catch (err) {
-    console.error("Error in getDiscountsByBranch:", err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error while fetching discounts by branch"});
-  }
-}
-
-export async function createDiscount(req: Request, res: Response): Promise<void> {
-  try {
-    const {
-      branchId,
-      discountName,
-      discountType,
-      discountValue,
-      minBillAmount,
-      discountCondition,
-      validFrom,
-      validTo,
-    } = req.body;
-
-    if (
-      !branchId ||
-            !discountName ||
-        !discountType ||
-        !discountValue ||
-        !validFrom ||
-        !validTo
-    ) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Missing required fields"});
-    }
-
-    if (discountType !== "fixed" && discountType !== "percentage") {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Invalid discount type — must be 'fixed' or 'percentage'"});
-    }
-
-    const fromDate = new Date(validFrom);
-    const toDate = new Date(validTo);
-
-    if (fromDate > toDate) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Invalid date range — 'validFrom' cannot be after 'validTo'"});
-    }
-
-    const newDiscount = await createDiscountDB({
-      branchId,
-      discountName,
-      discountType,
-      discountValue,
-      minBillAmount,
-      discountCondition,
-      validFrom: fromDate,
-      validTo: toDate,
-    });
-
-    if (!newDiscount) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Failed to create discount"});
-    }
-
-    return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Discount created successfully", data: newDiscount,
-    });
-
-  } catch (err) {
-    console.error("Error in createDiscount:", err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
-      message: "Server error while creating discount",
-    });
-  }
-}
-
-export async function updateDiscount(req: Request, res: Response): Promise<void> {
-  try {
-    const discountID = parseInt(req.params.discountID, 10);
-    if (isNaN(discountID)) {
       return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-        message: "Invalid discount ID",
+        message: "No discounts found for branch ID " + branchId,
+      });
+    }
+
+    return jsonResponse(res, true, HttpStatusCodes.OK, {
+      message: "Discounts fetched successfully",
+      details: discounts,
+    });
+  } catch (err) {
+    console.error(err);
+    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      message: "Server error",
+    });
+  }
+}
+
+export async function createDiscount(req: Request, res: Response) {
+  try {
+    const bodySchema = Joi.object<{
+          branchId: number,
+          discountName: string,
+          discountType: string,
+          discountValue: number,
+          minBillAmount?: number,
+          discountCondition: string,
+          validFrom: Date,
+          validTo: Date,
+      }>({
+        branchId: Joi.number().integer().positive().required(),
+        discountName: Joi.string().required(),
+        discountType: Joi.string().valid("fixed", "percentage").required(),
+        discountValue: Joi.number().positive().required(),
+        minBillAmount: Joi.number().positive().optional(),
+        discountCondition: Joi.string().required(),
+        validFrom: Joi.date().required(),
+        validTo: Joi.date().required(),
+      });
+
+    const bodyResult = bodySchema.validate(req.body, {
+      abortEarly: false,
+    });
+
+    if (bodyResult.error) {
+      const messages = bodyResult.error.details.map((details) => details.message);
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "invalid input data",
+        details: messages,
       });
     }
 
@@ -146,9 +158,105 @@ export async function updateDiscount(req: Request, res: Response): Promise<void>
       discountCondition,
       validFrom,
       validTo,
-    } = req.body;
+    } = bodyResult.value;
 
-    if (
+    if (new Date(validFrom) > new Date(validTo)) {
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "Invalid date range — 'validFrom' cannot be after 'validTo'",
+      });
+    }
+
+    const createdDiscount = await createDiscountDB({
+      branchId,
+      discountName,
+      discountType,
+      discountValue,
+      minBillAmount,
+      discountCondition,
+      validFrom,
+      validTo,
+    });
+
+    if (!createdDiscount) {
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "Discount creation unsuccessful",
+      });
+    }
+
+    return jsonResponse(res, true, HttpStatusCodes.OK, {
+      message: "Discount created successfully",
+      details: createdDiscount,
+    });
+  } catch (err) {
+    console.log(err);
+    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      message: "Server error",
+    });
+  }
+}
+
+export async function updateDiscount(req: Request, res: Response) {
+  try{
+    const paramSchema = Joi.object<{discountId: number}>({
+      discountId: Joi.number().integer().positive().required(),
+    });
+
+    const paramResult = paramSchema.validate(req.params, {
+      abortEarly: false,
+    });
+
+    if(paramResult.error){
+      const messages = paramResult.error.details.map((details) => details.message);
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "invalid input data",
+        details: messages,
+      });
+    }
+
+    const discountId: number = paramResult.value.discountId;
+
+    const bodySchema = Joi.object<{
+            branchId?: number,
+            discountName?: string,
+            discountType?: string,
+            discountValue?: number,
+            minBillAmount?: number,
+            discountCondition?: string,
+            validFrom?: Date,
+            validTo?: Date,
+        }>({
+          branchId: Joi.number().integer().positive().optional(),
+          discountName: Joi.string().optional(),
+          discountType: Joi.string().valid("fixed", "percentage").optional(),
+          discountValue: Joi.number().positive().optional(),
+          minBillAmount: Joi.number().positive().optional(),
+          discountCondition: Joi.string().optional(),
+          validFrom: Joi.date().optional(),
+          validTo: Joi.date().optional(),
+        });
+
+    const bodyResult = bodySchema.validate(req.body, {
+      abortEarly: false,
+    });
+
+    if(bodyResult.error){
+      const messages = bodyResult.error.details.map((details) => details.message);
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "invalid input data",
+        details: messages,
+      });
+    }
+
+    const branchId = bodyResult.value.branchId;
+    const discountName = bodyResult.value.discountName;
+    const discountType = bodyResult.value.discountType;
+    const discountValue = bodyResult.value.discountValue;
+    const minBillAmount = bodyResult.value.minBillAmount;
+    const discountCondition = bodyResult.value.discountCondition;
+    const validFrom = bodyResult.value.validFrom;
+    const validTo = bodyResult.value.validTo;
+
+    if(
       !branchId &&
             !discountName &&
             !discountType &&
@@ -157,82 +265,84 @@ export async function updateDiscount(req: Request, res: Response): Promise<void>
             !discountCondition &&
             !validFrom &&
             !validTo
-    ) {
+    ){
       return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-        message: "No fields provided to update",
+        message: "At least one field should be not null",
       });
     }
 
-    if (discountType && discountType !== "fixed" && discountType !== "percentage") {
+    if(validFrom && validTo && new Date(validFrom) > new Date(validTo)){
       return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-        message: "Invalid discount type — must be 'fixed' or 'percentage'",
+        message: "Invalid date range — 'validFrom' cannot be after 'validTo'",
       });
     }
 
-    const fromDate = validFrom ? new Date(validFrom) : undefined;
-    const toDate = validTo ? new Date(validTo) : undefined;
-
-    if (fromDate && toDate && fromDate > toDate) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-        message: "'validFrom' cannot be after 'validTo'",
-      });
-    }
-
-    const updatedDiscount = await updateDiscountDB(discountID, {
+    const updatedDiscount = await updateDiscountDB(discountId, {
       branchId,
       discountName,
       discountType,
       discountValue,
       minBillAmount,
       discountCondition,
-      validFrom: fromDate,
-      validTo: toDate,
+      validFrom,
+      validTo,
     });
 
-    if (!updatedDiscount) {
+    if(!updatedDiscount){
       return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-        message: "Discount not found or update failed",
+        message: "Discount updating unsuccessful",
       });
     }
 
     return jsonResponse(res, true, HttpStatusCodes.OK, {
       message: "Discount updated successfully",
-      data: updatedDiscount,
+      details: updatedDiscount,
     });
-  } catch (err) {
-    console.error("Error in updateDiscount:", err);
+
+  }catch(err){
+    console.log(err);
     return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
-      message: "Server error while updating discount",
+      message: "Server error",
     });
   }
+
 }
 
-export async function deleteDiscount(req: Request, res: Response): Promise<void> {
+export async function deleteDiscount(req: Request, res: Response) {
   try {
-    const discountID = parseInt(req.params.discountID, 10);
+    const paramSchema = Joi.object<{ discountId: number }>({
+      discountId: Joi.number().integer().positive().required(),
+    });
 
-    if (isNaN(discountID)) {
+    const paramResult = paramSchema.validate(req.params, {
+      abortEarly: false,
+    });
+
+    if (paramResult.error) {
+      const messages = paramResult.error.details.map((details) => details.message);
       return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-        message: "Invalid discount ID",
+        message: "invalid input data",
+        details: messages,
       });
     }
 
-    const deleted = await deleteDiscountDB(discountID);
+    const discountId = paramResult.value.discountId;
+
+    const deleted = await deleteDiscountDB(discountId);
 
     if (!deleted) {
       return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-        message: "Discount not found or already deleted",
+        message: "Discount deletion unsuccessful",
       });
     }
 
     return jsonResponse(res, true, HttpStatusCodes.OK, {
-      message: "Discount deleted successfully",
+      message: "Discount with ID " + discountId + " deleted successfully",
     });
-
   } catch (err) {
-    console.error("Error in deleteDiscount:", err);
+    console.log(err);
     return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
-      message: "Server error while deleting discount",
+      message: "Server error",
     });
   }
 }

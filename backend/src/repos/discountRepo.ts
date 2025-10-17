@@ -1,10 +1,11 @@
- 
-import {DiscountPublic, DiscountCreateInput, DiscountUpdateInput} from "@src/types/discount";
+import {DiscountPublic,
+  DiscountCreateInput,
+  DiscountUpdateInput} from "@src/types/discount";
 import db from "@src/common/util/db";
 
 export async function getAllDiscountsDB(): Promise<DiscountPublic[] | null>{
-  try{
-    const sql = `
+
+  const sql = `
       SELECT 
         discount_id AS "discountId",
         branch_id AS "branchId",
@@ -18,22 +19,18 @@ export async function getAllDiscountsDB(): Promise<DiscountPublic[] | null>{
       FROM discount;
     `;
 
-    const result = await db.query(sql);
-    if (result.rowCount === 0) {
-      return null;
-    }
-
-    return result.rows as DiscountPublic[];
-      
-  }catch(err){
-    console.error(err);
+  const result = await db.query(sql);
+  if (result.rowCount === 0) {
     return null;
   }
+
+  return result.rows as DiscountPublic[];
+      
 }
 
 export async function getDiscountByIdDB(discountID: number): Promise<DiscountPublic | null> {
-  try {
-    const sql = `
+
+  const sql = `
       SELECT
         discount_id AS "discountId",
         branch_id AS "branchId",
@@ -48,19 +45,19 @@ export async function getDiscountByIdDB(discountID: number): Promise<DiscountPub
       WHERE discount_id = $1;
     `;
 
-    const result = await db.query(sql, [discountID]);
-    if (result.rowCount === 0) return null;
-    return result.rows[0] as DiscountPublic;
+  const result = await db.query(sql, [discountID]);
 
-  } catch (err) {
-    console.error("Error in getDiscountByIdDB:", err);
+  if (result.rowCount === 0) {
     return null;
   }
+
+  return result.rows[0] as DiscountPublic;
+
 }
 
 export async function getDiscountsByBranchDB(branchID: number): Promise<DiscountPublic[] | null> {
-  try {
-    const sql = `
+
+  const sql = `
       SELECT
         discount_id AS "discountId",
         branch_id AS "branchId",
@@ -75,20 +72,18 @@ export async function getDiscountsByBranchDB(branchID: number): Promise<Discount
       WHERE branch_id = $1;
     `;
 
-    const result = await db.query(sql, [branchID]);
+  const result = await db.query(sql, [branchID]);
 
-    if (result.rowCount === 0) return null;
-    return result.rows as DiscountPublic[];
-
-  } catch (err) {
-    console.error("Error in getDiscountsByBranchDB:", err);
+  if (result.rowCount === 0) {
     return null;
   }
+
+  return result.rows as DiscountPublic[];
 }
 
 export async function createDiscountDB(discount: DiscountCreateInput): Promise<DiscountPublic | null> {
-  try {
-    const sql = `
+
+  const sql = `
       INSERT INTO discount (
         branch_id,
         discount_name,
@@ -112,86 +107,86 @@ export async function createDiscountDB(discount: DiscountCreateInput): Promise<D
         valid_to AS "validTo";
     `;
 
-    const result = await db.query(sql, [
-      discount.branchId,
-      discount.discountName,
-      discount.discountType,
-      discount.discountValue,
-      discount.minBillAmount ?? null,
-      discount.discountCondition ?? null,
-      discount.validFrom,
-      discount.validTo,
-    ]);
+  const result = await db.query(sql, [
+    discount.branchId,
+    discount.discountName,
+    discount.discountType,
+    discount.discountValue,
+    discount.minBillAmount ?? null,
+    discount.discountCondition ?? null,
+    discount.validFrom,
+    discount.validTo,
+  ]);
 
-    return result.rows[0] as DiscountPublic;
-  } catch (err) {
-    console.error("Error in createDiscountDB:", err);
+  if(result.rowCount === 0) {
     return null;
   }
+
+  return result.rows[0] as DiscountPublic;
 }
 
 export async function updateDiscountDB(
   discountID: number,
   discount: DiscountUpdateInput,
 ): Promise<DiscountPublic | null> {
-  try {
-    const updates: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
 
-    if (discount.branchId !== undefined) {
-      updates.push(`branch_id = $${paramIndex}`);
-      values.push(discount.branchId);
-      paramIndex++;
-    }
+  const updates: string[] = [];
+  const values: (string | number | Date | null)[] = [];
+  let paramIndex = 1;
 
-    if (discount.discountName !== undefined) {
-      updates.push(`discount_name = $${paramIndex}`);
-      values.push(discount.discountName);
-      paramIndex++;
-    }
+  if (discount.branchId !== undefined) {
+    updates.push(`branch_id = $${paramIndex}`);
+    values.push(discount.branchId);
+    paramIndex++;
+  }
 
-    if (discount.discountType !== undefined) {
-      updates.push(`discount_type = $${paramIndex}`);
-      values.push(discount.discountType);
-      paramIndex++;
-    }
+  if (discount.discountName !== undefined) {
+    updates.push(`discount_name = $${paramIndex}`);
+    values.push(discount.discountName);
+    paramIndex++;
+  }
 
-    if (discount.discountValue !== undefined) {
-      updates.push(`discount_value = $${paramIndex}`);
-      values.push(discount.discountValue);
-      paramIndex++;
-    }
+  if (discount.discountType !== undefined) {
+    updates.push(`discount_type = $${paramIndex}`);
+    values.push(discount.discountType);
+    paramIndex++;
+  }
 
-    if (discount.minBillAmount !== undefined) {
-      updates.push(`min_bill_amount = $${paramIndex}`);
-      values.push(discount.minBillAmount);
-      paramIndex++;
-    }
+  if (discount.discountValue !== undefined) {
+    updates.push(`discount_value = $${paramIndex}`);
+    values.push(discount.discountValue);
+    paramIndex++;
+  }
 
-    if (discount.discountCondition !== undefined) {
-      updates.push(`discount_condition = $${paramIndex}`);
-      values.push(discount.discountCondition);
-      paramIndex++;
-    }
+  if (discount.minBillAmount !== undefined) {
+    updates.push(`min_bill_amount = $${paramIndex}`);
+    values.push(discount.minBillAmount);
+    paramIndex++;
+  }
 
-    if (discount.validFrom !== undefined) {
-      updates.push(`valid_from = $${paramIndex}`);
-      values.push(discount.validFrom);
-      paramIndex++;
-    }
+  if (discount.discountCondition !== undefined) {
+    updates.push(`discount_condition = $${paramIndex}`);
+    values.push(discount.discountCondition);
+    paramIndex++;
+  }
 
-    if (discount.validTo !== undefined) {
-      updates.push(`valid_to = $${paramIndex}`);
-      values.push(discount.validTo);
-      paramIndex++;
-    }
+  if (discount.validFrom !== undefined) {
+    updates.push(`valid_from = $${paramIndex}`);
+    values.push(discount.validFrom);
+    paramIndex++;
+  }
 
-    if (updates.length === 0) {
-      return null;
-    }
+  if (discount.validTo !== undefined) {
+    updates.push(`valid_to = $${paramIndex}`);
+    values.push(discount.validTo);
+    paramIndex++;
+  }
 
-    const sql = `
+  if (updates.length === 0) {
+    return null;
+  }
+
+  const sql = `
             UPDATE discount
             SET ${updates.join(", ")}
             WHERE discount_id = $${paramIndex}
@@ -207,31 +202,25 @@ export async function updateDiscountDB(
         valid_to AS "validTo";
         `;
 
-    values.push(discountID);
+  values.push(discountID);
 
-    const result = await db.query(sql, values);
+  const result = await db.query(sql, values);
 
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    return result.rows[0] as DiscountPublic;
-  } catch (err) {
-    console.error("Error in updateDiscountDB:", err);
+  if (result.rows.length === 0) {
     return null;
   }
+
+  return result.rows[0] as DiscountPublic;
+  
 }
 
 export async function deleteDiscountDB(discountID: number): Promise<boolean> {
-  try {
-    const sql = `
+  const sql = `
       DELETE FROM discount
       WHERE discount_id = $1;
     `;
-    const result = await db.query(sql, [discountID]);
-    return result.rowCount > 0;
-  } catch (err) {
-    console.error("Error in deleteDiscountDB:", err);
-    return false;
-  }
+  const result = await db.query(sql, [discountID]);
+
+  return (result.rowCount ?? 0) > 0;
+  
 }
