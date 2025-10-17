@@ -6,7 +6,6 @@ import * as roomTypeController from "@src/controllers/roomTypeController";
 import * as paymentController from "@src/controllers/paymentController";
 import * as roomController from "@src/controllers/roomController";
 import * as discountController from "@src/controllers/discountController";
-import {getDiscountById} from "@src/controllers/discountController";
 
 /******************************************************************************
                                 Setup
@@ -21,17 +20,17 @@ apiRouter.use("/api", apiRouter);
 
 // endpoints for branch
 apiRouter.get("/branch", branchController.getAllBranches);
-apiRouter.get("/branch/:branchID", branchController.getBranchByID);
+apiRouter.get("/branch/:branchId", branchController.getBranchByID);
 apiRouter.post("/branch", branchController.createBranch);
-apiRouter.put("/branch/:branchID", branchController.updateBranch);
-apiRouter.delete("/branch/:branchID", branchController.deleteBranch);
+apiRouter.put("/branch/:branchId", branchController.updateBranch);
+apiRouter.delete("/branch/:branchId", branchController.deleteBranch);
 
 // endpoints for room-type
 apiRouter.get("/room-type", roomTypeController.getAllRoomTypes);
-apiRouter.get("/room-type/:branchID", roomTypeController.getRoomTypesByBranch);
+apiRouter.get("/room-type/:branchId", roomTypeController.getRoomTypesByBranch);
 apiRouter.post("/room-type", roomTypeController.createRoomType);
-apiRouter.put("/room-type/:branchID/:roomTypeName", roomTypeController.updateRoomType);
-apiRouter.delete("/room-type/:branchID/:roomTypeName", roomTypeController.deleteRoomType);
+apiRouter.put("/room-type/:branchId/:roomTypeName", roomTypeController.updateRoomType);
+apiRouter.delete("/room-type/:branchId/:roomTypeName", roomTypeController.deleteRoomType);
 
 // endpoints for payment
 apiRouter.get("/payment", paymentController.getAllPayments);
@@ -42,18 +41,18 @@ apiRouter.delete("/payment/:id", paymentController.deletePayment);
 
 // endpoints for room
 apiRouter.get("/room", roomController.getAllRooms);
-apiRouter.get("/branch/:branchID/room", roomController.getRoomsByBranch);
-apiRouter.post("/branch/:branchID/room", roomController.createRoom);
-apiRouter.put("/room/:roomID", roomController.updateRoom);
-apiRouter.delete("/room/:roomID", roomController.deleteRoom);
+apiRouter.get("/branch/:branchId/room", roomController.getRoomsByBranch);
+apiRouter.post("/branch/:branchId/room", roomController.createRoom);
+apiRouter.put("/room/:roomId", roomController.updateRoom);
+apiRouter.delete("/room/:roomId", roomController.deleteRoom);
 
 // endpoints for discounts
 apiRouter.get("/discount", discountController.getAllDiscounts);
-apiRouter.get("/discount/:discountID", discountController.getDiscountById);
-apiRouter.get("/discount/branch/:branchID", discountController.getDiscountsByBranch);
+apiRouter.get("/discount/:discountId", discountController.getDiscountById);
+apiRouter.get("/discount/branch/:branchId", discountController.getDiscountsByBranch);
 apiRouter.post("/discount", discountController.createDiscount);
-apiRouter.put("/discount/:discountID", discountController.updateDiscount);
-apiRouter.delete("/discount/:discountID", discountController.deleteDiscount);
+apiRouter.put("/discount/:discountId", discountController.updateDiscount);
+apiRouter.delete("/discount/:discountId", discountController.deleteDiscount);
 /******************************************************************************
                                 Export default
 ******************************************************************************/
