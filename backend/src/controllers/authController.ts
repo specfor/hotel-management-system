@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
+import { jsonResponse } from "@src/common/util/response";
 import {
   findUserByUsername,
   createUser,
@@ -21,24 +22,24 @@ export async function register(req: Request, res: Response) {
 
     // Validate input
     if (!staff_id || !username || !password) {
-      return res.status(HttpStatusCodes.BAD_REQUEST).json({
-        error: "staff_id, username, and password are required",
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "staff_id, username, and password are required",
       });
     }
 
     // Check if username already exists
     const existingUser = await findUserByUsername(username);
     if (existingUser) {
-      return res.status(HttpStatusCodes.BAD_REQUEST).json({
-        error: "Username already exists",
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "Username already exists",
       });
     }
 
     // Check if staff_id already has a user account
     const existingStaffUser = await findUserByStaffId(staff_id);
     if (existingStaffUser) {
-      return res.status(HttpStatusCodes.BAD_REQUEST).json({
-        error: "This staff member already has a user account",
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "This staff member already has a user account",
       });
     }
 
@@ -57,7 +58,7 @@ export async function register(req: Request, res: Response) {
       username: newUser.username,
     });
 
-    return res.status(HttpStatusCodes.OK).json({
+    return jsonResponse(res, true, HttpStatusCodes.OK, {
       message: "User registered successfully",
       user: {
         staff_id: newUser.staff_id,
@@ -66,9 +67,9 @@ export async function register(req: Request, res: Response) {
       token,
     });
   } catch (error) {
-    return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
-      error: "Failed to register user",
-      details: String(error),
+    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      message: "Failed to register user",
+      error: String(error),
     });
   }
 }
@@ -82,24 +83,24 @@ export async function login(req: Request, res: Response) {
 
     // Validate input
     if (!username || !password) {
-      return res.status(HttpStatusCodes.BAD_REQUEST).json({
-        error: "Username and password are required",
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "Username and password are required",
       });
     }
 
     // Find user
     const user = await findUserByUsername(username);
     if (!user) {
-      return res.status(HttpStatusCodes.BAD_REQUEST).json({
-        error: "Invalid username or password",
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "Invalid username or password",
       });
     }
 
     // Compare password
     const isPasswordValid = await comparePassword(password, user.password_hash);
     if (!isPasswordValid) {
-      return res.status(HttpStatusCodes.BAD_REQUEST).json({
-        error: "Invalid username or password",
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "Invalid username or password",
       });
     }
 
@@ -109,7 +110,7 @@ export async function login(req: Request, res: Response) {
       username: user.username,
     });
 
-    return res.status(HttpStatusCodes.OK).json({
+    return jsonResponse(res, true, HttpStatusCodes.OK, {
       message: "Login successful",
       user: {
         staff_id: user.staff_id,
@@ -118,9 +119,9 @@ export async function login(req: Request, res: Response) {
       token,
     });
   } catch (error) {
-    return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
-      error: "Failed to login",
-      details: String(error),
+    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      message: "Failed to login",
+      error: String(error),
     });
   }
 }
