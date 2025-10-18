@@ -2,9 +2,8 @@ import { Response } from "express";
 
 export function jsonResponse(
   res: Response,
-  success: boolean,
+  success: boolean, 
   status: number,
-  data: object,
-): Response {
-  return res.status(status).json({ success, data });
+  data: object): Response {
+  return res.status(status).json({ success, data});
 }

@@ -47,6 +47,7 @@
     "@types/cookie-parser": "^1.4.9",
     "@types/find": "^0.2.4",
     "@types/fs-extra": "^11.0.4",
+    "@types/joi": "^17.2.2",
     "@types/jsonfile": "^6.1.4",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/module-alias": "^2.0.4",
