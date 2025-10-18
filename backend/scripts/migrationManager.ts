@@ -174,7 +174,10 @@ export class MigrationManager {
     // Note: Database names cannot be parameterized, so we need to validate it
     const dbName = ENV.Db.Name.replace(/[^a-zA-Z0-9_]/g, "");
     if (dbName !== ENV.Db.Name) {
-      throw new Error("Invalid database name. Only alphanumeric characters and underscores are allowed.");
+      throw new Error(
+        "Invalid database name. Only alphanumeric characters " +
+          "and underscores are allowed.",
+      );
     }
 
     await this.adminClient.query(`CREATE DATABASE "${dbName}"`);
@@ -243,9 +246,12 @@ export class MigrationManager {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
 
-      CREATE INDEX IF NOT EXISTS idx_migrations_filename ON ${this.migrationsTable}(filename);
-      CREATE INDEX IF NOT EXISTS idx_migrations_status ON ${this.migrationsTable}(status);
-      CREATE INDEX IF NOT EXISTS idx_migrations_executed_at ON ${this.migrationsTable}(executed_at);
+      CREATE INDEX IF NOT EXISTS idx_migrations_filename
+        ON ${this.migrationsTable}(filename);
+      CREATE INDEX IF NOT EXISTS idx_migrations_status
+        ON ${this.migrationsTable}(status);
+      CREATE INDEX IF NOT EXISTS idx_migrations_executed_at
+        ON ${this.migrationsTable}(executed_at);
     `;
 
     await this.pool.query(createTableSQL);
@@ -262,10 +268,14 @@ export class MigrationManager {
         output: process.stdout,
       });
 
-      rl.question(`📋 Create migrations tracking table "${this.migrationsTable}"? (y/n): `, (answer) => {
-        rl.close();
-        resolve(answer.toLowerCase().trim() === "y" || answer.toLowerCase().trim() === "yes");
-      });
+      rl.question(
+        `📋 Create migrations tracking table "${this.migrationsTable}"? (y/n): `,
+        (answer) => {
+          rl.close();
+          const normalized = answer.toLowerCase().trim();
+          resolve(normalized === "y" || normalized === "yes");
+        },
+      );
     });
   }
 
@@ -346,7 +356,12 @@ export class MigrationManager {
       }));
     } catch (error: unknown) {
       // If table doesn't exist, return empty array
-      if (error && typeof error === "object" && "code" in error && (error as { code: string }).code === "42P01") {
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        (error as { code: string }).code === "42P01"
+      ) {
         return [];
       }
       throw error;
@@ -360,8 +375,12 @@ export class MigrationManager {
     const allMigrations = await this.getMigrationFiles();
     const executedMigrations = await this.getExecutedMigrations();
 
-    const successfulMigrations = executedMigrations.filter((m) => m.status === MigrationStatus.SUCCESS);
-    const executedMap = new Map(successfulMigrations.map((m) => [m.filename, m]));
+    const successfulMigrations = executedMigrations.filter(
+      (m) => m.status === MigrationStatus.SUCCESS,
+    );
+    const executedMap = new Map(
+      successfulMigrations.map((m) => [m.filename, m]),
+    );
 
     return allMigrations.filter((migration) => {
       const executed = executedMap.get(migration.filename);
@@ -371,7 +390,10 @@ export class MigrationManager {
 
       // If checksum changed, warn and skip (don't re-run)
       if (executed.checksum !== migration.checksum) {
-        logger.warn(`⚠️  Migration ${migration.filename} has changed checksum.` + " Skipping re-execution.");
+        logger.warn(
+          `⚠️  Migration ${migration.filename} has changed checksum.` +
+            " Skipping re-execution.",
+        );
         return false;
       }
 
@@ -427,7 +449,10 @@ export class MigrationManager {
       // Commit transaction
       await client.query("COMMIT");
 
-      logger.info(`✅ Migration ${migration.filename} executed successfully (${executionTime}ms)`);
+      logger.info(
+        `✅ Migration ${migration.filename} executed successfully ` +
+          `(${executionTime}ms)`,
+      );
     } catch (error) {
       // Rollback transaction
       await client.query("ROLLBACK");
@@ -460,7 +485,9 @@ export class MigrationManager {
 
     // Check if database pool is connected
     if (!this.pool) {
-      throw new Error("Database pool not connected. Make sure to call initialize() first.");
+      throw new Error(
+        "Database pool not connected. Make sure to call initialize() first.",
+      );
     }
 
     const pendingMigrations = await this.getPendingMigrations();
@@ -486,7 +513,9 @@ export class MigrationManager {
     const allMigrations = await this.getMigrationFiles();
     const executedMigrations = await this.getExecutedMigrations();
     const pendingMigrations = await this.getPendingMigrations();
-    const failedMigrations = executedMigrations.filter((m) => m.status === MigrationStatus.FAILED);
+    const failedMigrations = executedMigrations.filter(
+      (m) => m.status === MigrationStatus.FAILED,
+    );
 
     logger.info("\n📊 Migration Status Report");
     logger.info("=".repeat(50));
