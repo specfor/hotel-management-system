@@ -7,6 +7,7 @@ import Guests from "../pages/Guests";
 import Reports from "../pages/Reports";
 import SettingsPage from "../pages/Settings";
 import Login from "../pages/Login";
+import Branches from "../pages/branch/Branch";
 import type { Permission } from "../types/auth";
 
 export interface AppRoute {
@@ -60,6 +61,13 @@ export const protectedRoutes: AppRoute[] = [
     label: "Settings",
     protected: true,
     requiredPermissions: ["view_settings"],
+  },
+  {
+    path: "/branches",
+    element: Branches,
+    label: "Branches",
+    protected: true,
+    requiredPermissions: ["view_branches"],
   },
 ];
 

@@ -21,7 +21,8 @@ export type Permission =
   | "view_reports"
   | "view_settings"
   | "manage_settings"
-  | "manage_users";
+  | "manage_users"
+  | "view_branches";
 
 export interface LoginCredentials {
   email: string;

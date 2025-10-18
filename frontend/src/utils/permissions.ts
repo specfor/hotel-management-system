@@ -16,6 +16,7 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "view_settings",
     "manage_settings",
     "manage_users",
+    "view_branches",
   ],
   manager: [
     "view_dashboard",
@@ -29,6 +30,7 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "manage_guests",
     "view_reports",
     "view_settings",
+    "view_branches",
   ],
   staff: [
     "view_dashboard",

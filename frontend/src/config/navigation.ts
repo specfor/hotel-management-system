@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, Bed, Users, BarChart3, Settings } from "lucide-react";
+import { LayoutDashboard, Calendar, Bed, Users, BarChart3, Settings, Building } from "lucide-react";
 import type { NavigationItem } from "../types";
 
 export const navigationItems: NavigationItem[] = [
@@ -30,6 +30,13 @@ export const navigationItems: NavigationItem[] = [
     path: "/guests",
     icon: Users,
     requiredPermissions: ["view_guests"],
+  },
+  {
+    id: "branches",
+    label: "Branches",
+    path: "/branches",
+    icon: Building,
+    requiredPermissions: ["view_branches"],
   },
   {
     id: "reports",

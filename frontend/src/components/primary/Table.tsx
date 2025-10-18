@@ -122,7 +122,8 @@ function Table<T extends Record<string, unknown>>({
   // Render cell content
   const renderCellContent = (column: TableColumn<T>, record: T, index: number) => {
     if (column.render) {
-      const value = column.dataIndex ? record[column.dataIndex] : undefined;
+      //   const value = column.dataIndex ? record[column.dataIndex] : undefined;
+      const value = record[column.key];
       return column.render(value, record, index);
     }
 
