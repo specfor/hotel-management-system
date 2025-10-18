@@ -1,17 +1,15 @@
 // backend/src/types/bookingTypes.ts
 
 // Enums from migration file:
-export type BookingStatus = 'Booked' | 'Checked-In' | 'Checked-Out' | 'Cancelled';
-export type PaymentMethod = 'Cash' | 'Credit Card' | 'Debit Card' | 'Bank Transfer' | 'Online Wallet';
+export type BookingStatus = "Booked" | "Checked-In" | "Checked-Out" | "Cancelled";
 
 // Public data structure for a booking record (Output)
 export interface BookingPublic {
     bookingId: number;
     userId: number | null; // Can be null (ON DELETE SET NULL FK)
-    guestId: number;
+    guestId: number;    
     roomId: number;
     bookingStatus: BookingStatus;
-    paymentMethod: PaymentMethod | null;
     dateTime: Date;
     checkIn: Date;
     checkOut: Date;
@@ -22,7 +20,6 @@ export interface BookingCreate {
     userId: number;
     guestId: number;
     roomId: number;
-    paymentMethod: PaymentMethod;
     checkIn: Date;
     checkOut: Date;
 }
@@ -34,7 +31,6 @@ export interface BookingUpdate {
     guestId?: number;
     roomId?: number;
     bookingStatus?: BookingStatus;
-    paymentMethod?: PaymentMethod;
     checkIn?: Date;
     checkOut?: Date;
 }

@@ -76,10 +76,10 @@ INSERT INTO chargeable_services (service_id, branch_id, service_name, unit_price
 -- =========================
 -- 8. Bookings
 -- =========================
-INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, payment_method, date_time, check_in, check_out) VALUES
-(1, 1, 1, 101, 'Booked', 'Credit Card', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
-(2, 2, 2, 102, 'Checked-In', 'Cash', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
-(3, 1, 3, 103, 'Cancelled', 'Bank Transfer', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
+INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES
+(1, 1, 1, 101, 'Booked', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
+(2, 2, 2, 102, 'Checked-In', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
+(3, 1, 3, 103, 'Cancelled', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
 
 -- =========================
 -- 9. Service Usage
