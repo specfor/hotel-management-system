@@ -60,3 +60,24 @@ export { JobTitle as StaffJobTitle } from "./staff";
 // Guest types
 export type { Guest, GuestFilters, GuestFormData, GuestDetailsModalProps, BookingStatus } from "./guest";
 export { BookingStatus as GuestBookingStatus } from "./guest";
+
+// Service and Discount types
+export type {
+  ChargeableService,
+  Discount,
+  UnitType,
+  DiscountConditionType,
+  ServiceFilters,
+  DiscountFilters,
+  ServiceFormData,
+  DiscountFormData,
+  Branch as ServiceBranch,
+} from "./service";
+export {
+  UnitType as ServiceUnitType,
+  DiscountConditionType as ServiceDiscountConditionType,
+  formatUnitType,
+  formatConditionType,
+  formatPrice,
+  formatPercentage,
+} from "./service";

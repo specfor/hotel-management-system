@@ -4,6 +4,7 @@ import Dashboard from "../pages/Dashboard";
 import Bookings from "../pages/Bookings";
 import Rooms from "../pages/room/Rooms";
 import Guests from "../pages/guests/GuestManagement";
+import Services from "../pages/services/Services";
 import Reports from "../pages/Reports";
 import SettingsPage from "../pages/Settings";
 import Login from "../pages/Login";
@@ -48,6 +49,13 @@ export const protectedRoutes: AppRoute[] = [
     label: "Guests",
     protected: true,
     allowedRoles: ["admin", "manager", "staff", "receptionist"], // All roles can access guests
+  },
+  {
+    path: "/services",
+    element: Services,
+    label: "Services",
+    protected: true,
+    allowedRoles: ["admin", "manager"], // Only admin and manager can access services and discounts
   },
   {
     path: "/reports",
