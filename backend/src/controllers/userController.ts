@@ -1,7 +1,12 @@
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import { jsonResponse } from "@src/common/util/response";
 import { Request, Response } from "express";
-import { getAllUsers, findUserByStaffId, findUserByUsername, deleteUser } from "@src/repos/userRepo";
+import {
+  getAllUsers,
+  findUserByStaffId,
+  findUserByUsername,
+  deleteUser,
+} from "@src/repos/userRepo";
 import { UserQueryParams } from "@src/types/userTypes";
 
 //Get all users with pagination and filters

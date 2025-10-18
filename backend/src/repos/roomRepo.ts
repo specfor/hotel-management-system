@@ -143,7 +143,9 @@ export async function deleteRoomDB(roomID: number): Promise<boolean> {
 
 }
 
-export async function getBranchIdOfRoom(roomID: number):Promise<{branchId: number} | null>{
+export async function getBranchIdOfRoom(
+  roomID: number,
+): Promise<{ branchId: number } | null> {
   const sql = `
             SELECT branch_id AS "branchId"
             FROM room

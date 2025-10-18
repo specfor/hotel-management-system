@@ -36,8 +36,14 @@ export default [
       "@typescript-eslint/no-floating-promises": 0,
       "@typescript-eslint/no-confusing-void-expression": 0,
       "@typescript-eslint/no-unnecessary-condition": 0,
-      "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
-      "@typescript-eslint/restrict-plus-operands": ["warn", { allowNumberAndString: true }],
+      "@typescript-eslint/restrict-template-expressions": [
+        "error",
+        { allowNumber: true },
+      ],
+      "@typescript-eslint/restrict-plus-operands": [
+        "warn",
+        { allowNumberAndString: true },
+      ],
       "@typescript-eslint/no-unused-vars": "warn",
       "@typescript-eslint/no-unsafe-enum-comparison": 0,
       "@typescript-eslint/no-unnecessary-type-parameters": 0,

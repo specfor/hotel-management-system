@@ -14,14 +14,24 @@ async function promptConfirm(question: string): Promise<boolean> {
   });
 }
 
-async function databaseExists(adminClient: Client, dbName: string): Promise<boolean> {
-  const result = await adminClient.query("SELECT 1 FROM pg_database WHERE datname = $1", [dbName]);
+async function databaseExists(
+  adminClient: Client,
+  dbName: string,
+): Promise<boolean> {
+  const result = await adminClient.query(
+    "SELECT 1 FROM pg_database WHERE datname = $1",
+    [dbName],
+  );
   return result.rows.length > 0;
 }
 
-async function terminateConnections(adminClient: Client, dbName: string): Promise<void> {
+async function terminateConnections(
+  adminClient: Client,
+  dbName: string,
+): Promise<void> {
   await adminClient.query(
-    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()",
+    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity " +
+      "WHERE datname = $1 AND pid <> pg_backend_pid()",
     [dbName],
   );
 }
@@ -33,7 +43,10 @@ async function dropDatabase(): Promise<void> {
   const targetDbNameRaw = ENV.Db.Name;
   const safeDbName = targetDbNameRaw.replace(/[^a-zA-Z0-9_]/g, "");
   if (safeDbName !== targetDbNameRaw) {
-    throw new Error("Invalid database name in ENV. Only alphanumeric and underscore are allowed.");
+    throw new Error(
+      "Invalid database name in ENV. " +
+        "Only alphanumeric and underscore are allowed.",
+    );
   }
 
   const adminClient = new Client({

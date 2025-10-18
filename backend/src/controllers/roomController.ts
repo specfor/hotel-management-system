@@ -255,7 +255,9 @@ export async function updateRoom(req: Request, res: Response){
 
       if (!roomType) {
         return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-          message: `Room type '${roomTypeName}' not found in branch ${branchObj.branchId}`,
+          message:
+            `Room type '${roomTypeName}' not found in branch ` +
+            `${branchObj.branchId}`,
         });
       }
 

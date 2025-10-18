@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { getUsers, getUserByStaffId, getUserByUsername, deleteUserByStaffId } from "@src/controllers/userController";
+import { 
+  getUsers,
+  getUserByStaffId,
+  getUserByUsername,
+  deleteUserByStaffId,
+} from "@src/controllers/userController";
 import { register, login } from "@src/controllers/authController";
 import {
   getStaffMembers,

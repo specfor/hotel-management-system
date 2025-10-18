@@ -28,8 +28,9 @@ export async function getAllDiscountsDB(): Promise<DiscountPublic[] | null>{
       
 }
 
-export async function getDiscountByIdDB(discountID: number): Promise<DiscountPublic | null> {
-
+export async function getDiscountByIdDB(
+  discountID: number,
+): Promise<DiscountPublic | null> {
   const sql = `
       SELECT
         discount_id AS "discountId",
@@ -55,8 +56,9 @@ export async function getDiscountByIdDB(discountID: number): Promise<DiscountPub
 
 }
 
-export async function getDiscountsByBranchDB(branchID: number): Promise<DiscountPublic[] | null> {
-
+export async function getDiscountsByBranchDB(
+  branchID: number,
+): Promise<DiscountPublic[] | null> {
   const sql = `
       SELECT
         discount_id AS "discountId",
@@ -81,8 +83,9 @@ export async function getDiscountsByBranchDB(branchID: number): Promise<Discount
   return result.rows as DiscountPublic[];
 }
 
-export async function createDiscountDB(discount: DiscountCreateInput): Promise<DiscountPublic | null> {
-
+export async function createDiscountDB(
+  discount: DiscountCreateInput,
+): Promise<DiscountPublic | null> {
   const sql = `
       INSERT INTO discount (
         branch_id,

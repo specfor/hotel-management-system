@@ -132,7 +132,10 @@ export class MigrationManager {
       throw new Error("Admin client not connected");
     }
 
-    const result = await this.adminClient.query("SELECT 1 FROM pg_database WHERE datname = $1", [ENV.Db.Name]);
+    const result = await this.adminClient.query(
+      "SELECT 1 FROM pg_database WHERE datname = $1",
+      [ENV.Db.Name],
+    );
 
     return result.rows.length > 0;
   }
@@ -147,10 +150,14 @@ export class MigrationManager {
         output: process.stdout,
       });
 
-      rl.question(`📊 Database "${ENV.Db.Name}" does not exist. Create it? (y/n): `, (answer) => {
-        rl.close();
-        resolve(answer.toLowerCase().trim() === "y" || answer.toLowerCase().trim() === "yes");
-      });
+      rl.question(
+        `📊 Database "${ENV.Db.Name}" does not exist. Create it? (y/n): `,
+        (answer) => {
+          rl.close();
+          const normalized = answer.toLowerCase().trim();
+          resolve(normalized === "y" || normalized === "yes");
+        },
+      );
     });
   }
 

@@ -55,7 +55,10 @@ export async function createRoomTypeDB(
   capacityInt?: number, amenities?: string): Promise<RoomTypePublic | null>{
 
   const sql = `
-      INSERT INTO room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities)
+      INSERT INTO room_type (
+        branch_id, type_name, daily_rate, late_checkout_rate,
+        capacity, amenities
+      )
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING
           type_id as "roomTypeId",
