@@ -19,6 +19,10 @@ const ENV = jetEnv({
     Password: str,
   },
   ClientOrigin: str,
+  Jwt: {
+    Secret: str,
+    Exp: str,
+  },
 });
 
 /******************************************************************************
