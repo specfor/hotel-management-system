@@ -5,8 +5,8 @@ export function validateUsername(username: string): boolean {
 }
 
 export function validatePassword(password: string): {
-  valid: boolean;
-  message?: string;
+  valid: boolean,
+  message?: string,
 } {
   if (password.length < 8) {
     return { valid: false, message: "Password must be at least 8 characters" };
