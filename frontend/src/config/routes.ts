@@ -8,14 +8,14 @@ import Reports from "../pages/Reports";
 import SettingsPage from "../pages/Settings";
 import Login from "../pages/Login";
 import Branches from "../pages/branch/Branch";
-import type { Permission } from "../types/auth";
+import type { UserRole } from "../types/auth";
 
 export interface AppRoute {
   path: string;
   element: React.ComponentType;
   label: string;
   protected?: boolean;
-  requiredPermissions?: Permission[];
+  allowedRoles?: UserRole[];
 }
 
 // Protected routes (require authentication)
@@ -25,49 +25,49 @@ export const protectedRoutes: AppRoute[] = [
     element: Dashboard,
     label: "Dashboard",
     protected: true,
-    requiredPermissions: ["view_dashboard"],
+    allowedRoles: ["admin", "manager", "staff", "receptionist"], // All roles can access dashboard
   },
   {
     path: "/bookings",
     element: Bookings,
     label: "Bookings",
     protected: true,
-    requiredPermissions: ["view_bookings"],
+    allowedRoles: ["admin", "manager", "staff", "receptionist"], // All roles can access bookings
   },
   {
     path: "/rooms",
     element: Rooms,
     label: "Rooms",
     protected: true,
-    requiredPermissions: ["view_rooms"],
+    allowedRoles: ["admin", "manager", "staff", "receptionist"], // All roles can access rooms
   },
   {
     path: "/guests",
     element: Guests,
     label: "Guests",
     protected: true,
-    requiredPermissions: ["view_guests"],
+    allowedRoles: ["admin", "manager", "staff", "receptionist"], // All roles can access guests
   },
   {
     path: "/reports",
     element: Reports,
     label: "Reports",
     protected: true,
-    requiredPermissions: ["view_reports"],
+    allowedRoles: ["admin", "manager"], // Only admin and manager can access reports
   },
   {
     path: "/settings",
     element: SettingsPage,
     label: "Settings",
     protected: true,
-    requiredPermissions: ["view_settings"],
+    allowedRoles: ["admin", "manager"], // Only admin and manager can access settings
   },
   {
     path: "/branches",
     element: Branches,
     label: "Branches",
     protected: true,
-    requiredPermissions: ["view_branches"],
+    allowedRoles: ["admin", "manager"], // Only admin and manager can access branches
   },
 ];
 

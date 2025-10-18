@@ -19,7 +19,7 @@ const AppRouter: React.FC = () => {
           path={route.path}
           element={
             <ProtectedRoute>
-              <RoleBasedRoute permissions={route.requiredPermissions} path={route.path}>
+              <RoleBasedRoute allowedRoles={route.allowedRoles} path={route.path}>
                 {React.createElement(route.element)}
               </RoleBasedRoute>
             </ProtectedRoute>

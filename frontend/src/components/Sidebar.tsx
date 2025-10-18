@@ -2,23 +2,22 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button, Badge } from "./primary";
-import { usePermissions } from "../hooks/usePermissions";
+import { useAuth } from "../hooks/useAuth";
 import type { SidebarProps } from "../types";
-import type { Permission } from "../types/auth";
 
 const Sidebar: React.FC<SidebarProps> = ({ navigationItems, isCollapsed = true, onToggleCollapse, className = "" }) => {
-  const { hasAnyPermission } = usePermissions();
+  const { user } = useAuth();
   const sidebarWidth = isCollapsed ? "w-16" : "w-64";
 
-  // Filter navigation items based on user permissions
+  // Filter navigation items based on user role
   const filteredNavigationItems = navigationItems.filter((item) => {
-    // If no permissions required, show the item
-    if (!item.requiredPermissions || item.requiredPermissions.length === 0) {
+    // If no roles required, show the item
+    if (!item.allowedRoles || item.allowedRoles.length === 0) {
       return true;
     }
 
-    // Check if user has any of the required permissions
-    return hasAnyPermission(item.requiredPermissions as Permission[]);
+    // Check if user has the required role
+    return user && item.allowedRoles.includes(user.role);
   });
 
   return (

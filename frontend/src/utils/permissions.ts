@@ -64,23 +64,33 @@ export function getRolePermissions(role: UserRole): Permission[] {
   return rolePermissions[role] ?? [];
 }
 
-// Check if user can access a specific page
+// Check if user can access a specific page based on role
 export function canAccessPage(role: UserRole, page: string): boolean {
-  const pagePermissions: Record<string, Permission[]> = {
-    "/": ["view_dashboard"],
-    "/bookings": ["view_bookings"],
-    "/rooms": ["view_rooms"],
-    "/guests": ["view_guests"],
-    "/reports": ["view_reports"],
-    "/settings": ["view_settings"],
+  const pageRoles: Record<string, UserRole[]> = {
+    "/": ["admin", "manager", "staff", "receptionist"],
+    "/bookings": ["admin", "manager", "staff", "receptionist"],
+    "/rooms": ["admin", "manager", "staff", "receptionist"],
+    "/guests": ["admin", "manager", "staff", "receptionist"],
+    "/reports": ["admin", "manager"],
+    "/settings": ["admin", "manager"],
+    "/branches": ["admin", "manager"],
   };
 
-  const requiredPermissions = pagePermissions[page];
-  if (!requiredPermissions) {
-    return true; // Allow access to pages without specific permission requirements
+  const allowedRoles = pageRoles[page];
+  if (!allowedRoles) {
+    return true; // Allow access to pages without specific role requirements
   }
 
-  return hasAnyPermission(role, requiredPermissions);
+  return allowedRoles.includes(role);
+}
+
+// Check if user role can access a route
+export function canAccessRoute(userRole: UserRole, allowedRoles?: UserRole[]): boolean {
+  if (!allowedRoles || allowedRoles.length === 0) {
+    return true; // No role restrictions
+  }
+
+  return allowedRoles.includes(userRole);
 }
 
 // Get user-friendly role display name
