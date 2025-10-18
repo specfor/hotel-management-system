@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, Bed, Users, BarChart3, Settings, Building } from "lucide-react";
+import { LayoutDashboard, Calendar, Bed, Users, BarChart3, Settings, Building, UserCheck } from "lucide-react";
 import type { NavigationItem } from "../types";
 
 export const navigationItems: NavigationItem[] = [
@@ -37,6 +37,13 @@ export const navigationItems: NavigationItem[] = [
     path: "/branches",
     icon: Building,
     allowedRoles: ["admin", "manager"], // Only admin and manager can access branches
+  },
+  {
+    id: "staff",
+    label: "Staff",
+    path: "/staff",
+    icon: UserCheck,
+    allowedRoles: ["admin", "manager"], // Only admin and manager can access staff management
   },
   {
     id: "reports",

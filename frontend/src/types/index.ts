@@ -45,3 +45,14 @@ export type {
   ConfirmationModalProps,
   FormModalProps,
 } from "./modal";
+
+// Staff types
+export type {
+  Staff,
+  JobTitle,
+  StaffFilters,
+  StaffFormData,
+  StaffDetailsModalProps,
+  Branch as StaffBranch,
+} from "./staff";
+export { JobTitle as StaffJobTitle } from "./staff";

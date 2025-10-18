@@ -8,6 +8,7 @@ import Reports from "../pages/Reports";
 import SettingsPage from "../pages/Settings";
 import Login from "../pages/Login";
 import Branches from "../pages/branch/Branch";
+import StaffManagement from "../pages/staff/StaffManagement";
 import type { UserRole } from "../types/auth";
 
 export interface AppRoute {
@@ -68,6 +69,13 @@ export const protectedRoutes: AppRoute[] = [
     label: "Branches",
     protected: true,
     allowedRoles: ["admin", "manager"], // Only admin and manager can access branches
+  },
+  {
+    path: "/staff",
+    element: StaffManagement,
+    label: "Staff",
+    protected: true,
+    allowedRoles: ["admin", "manager"], // Only admin and manager can access staff management
   },
 ];
 
