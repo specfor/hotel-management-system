@@ -3,7 +3,7 @@ import type { RouteObject } from "react-router-dom";
 import Dashboard from "../pages/Dashboard";
 import Bookings from "../pages/Bookings";
 import Rooms from "../pages/room/Rooms";
-import Guests from "../pages/Guests";
+import Guests from "../pages/guests/GuestManagement";
 import Reports from "../pages/Reports";
 import SettingsPage from "../pages/Settings";
 import Login from "../pages/Login";

@@ -56,3 +56,7 @@ export type {
   Branch as StaffBranch,
 } from "./staff";
 export { JobTitle as StaffJobTitle } from "./staff";
+
+// Guest types
+export type { Guest, GuestFilters, GuestFormData, GuestDetailsModalProps, BookingStatus } from "./guest";
+export { BookingStatus as GuestBookingStatus } from "./guest";
