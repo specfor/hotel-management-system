@@ -11,6 +11,9 @@ import { JobTitle } from "../../types/staff";
 import type { Staff, StaffFilters, StaffFormData, Branch } from "../../types/staff";
 import type { TableColumn } from "../../types/table";
 
+// API integration ready - import and use:
+// import { getStaff, createStaff, updateStaff, deleteStaff, sendPasswordReset, getBranches } from "../../api_connection";
+
 const StaffManagement: React.FC = () => {
   const { showSuccess, showError } = useAlert();
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -452,12 +455,38 @@ const StaffManagement: React.FC = () => {
             ))}
           </select>
         </div>
+        <div className="flex items-end">
+          <Button
+            variant="outline"
+            onClick={() =>
+              setFilters({
+                search: "",
+                name: "",
+                branch_id: undefined,
+                job_title: undefined,
+                email: "",
+              })
+            }
+            className="w-full"
+          >
+            Clear Filters
+          </Button>
+        </div>
       </div>
 
       {/* Staff Table */}
       <Table
         data={filteredStaff as unknown as Record<string, unknown>[]}
         columns={columns as unknown as TableColumn<Record<string, unknown>>[]}
+        pagination={{
+          current: 1,
+          pageSize: 10,
+          total: branches.length,
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: true,
+          pageSizeOptions: [5, 10, 20, 50],
+        }}
       />
 
       {/* Staff Form Modal */}

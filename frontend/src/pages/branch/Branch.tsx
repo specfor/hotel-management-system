@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Plus, Eye, Pencil, Search, Building } from "lucide-react";
 import Table from "../../components/primary/Table";
 import Button from "../../components/primary/Button";
@@ -7,8 +7,8 @@ import { useAlert } from "../../hooks/useAlert";
 import NewBranchForm from "./NewBranchForm";
 import UpdateBranchForm from "./UpdateBranchForm";
 import BranchDetailsModal from "./BranchDetailsModal";
+import { getBranches, createBranch, updateBranch, deleteBranch } from "../../api_connection/branches";
 
-// Mock data - replace with API calls later
 interface Branch {
   branch_id: number;
   branch_name: string;
@@ -122,23 +122,33 @@ const BranchPage: React.FC = () => {
         <span className="text-gray-500 text-sm">{new Date(String(value)).toLocaleDateString()}</span>
       ),
     },
-  ];
-
-  // Table actions
-  const actions = [
     {
-      key: "view",
-      label: "View Details",
-      onClick: (record: Record<string, unknown>) => handleViewDetails(record as unknown as Branch),
-      variant: "secondary" as const,
-      icon: <Eye className="h-4 w-4" />,
-    },
-    {
-      key: "edit",
-      label: "Edit",
-      onClick: (record: Record<string, unknown>) => handleEdit(record as unknown as Branch),
-      variant: "primary" as const,
-      icon: <Pencil className="h-4 w-4" />,
+      key: "actions",
+      title: "Actions",
+      sortable: false,
+      render: (_: unknown, record: unknown) => {
+        const branch = record as Branch;
+        return (
+          <div className="flex space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleViewDetails(branch)}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEdit(branch)}
+              className="text-green-600 hover:text-green-800"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -183,6 +193,16 @@ const BranchPage: React.FC = () => {
     });
   };
 
+  const loadBranches = async () => {
+    try {
+      const response = await getBranches();
+      console.log(response);
+      //   setBranches(response.data);
+    } catch {
+      showError("Failed to load branches. Please try again.");
+    }
+  };
+
   const handleCreateBranch = async (branchData: Omit<Branch, "branch_id" | "created_at" | "updated_at">) => {
     try {
       // Mock API call - replace with actual implementation
@@ -222,35 +242,41 @@ const BranchPage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    loadBranches();
+  }, [filters]);
+
   // Filter components
   const renderFilters = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          <Search className="h-4 w-4 inline mr-1" />
-          Search by Branch Name
-        </label>
-        <input
-          type="text"
-          placeholder="Enter branch name..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          value={filters.branch_name || ""}
-          onChange={(e) => setFilters((prev) => ({ ...prev, branch_name: e.target.value }))}
-        />
-      </div>
+    <div className="flex justify-between gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+      <div className="flex gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Search className="h-4 w-4 inline mr-1" />
+            Search by Branch Name
+          </label>
+          <input
+            type="text"
+            placeholder="Enter branch name..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            value={filters.branch_name || ""}
+            onChange={(e) => setFilters((prev) => ({ ...prev, branch_name: e.target.value }))}
+          />
+        </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          <Building className="h-4 w-4 inline mr-1" />
-          Filter by City
-        </label>
-        <input
-          type="text"
-          placeholder="Enter city name..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          value={filters.city || ""}
-          onChange={(e) => setFilters((prev) => ({ ...prev, city: e.target.value }))}
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Building className="h-4 w-4 inline mr-1" />
+            Filter by City
+          </label>
+          <input
+            type="text"
+            placeholder="Enter city name..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            value={filters.city || ""}
+            onChange={(e) => setFilters((prev) => ({ ...prev, city: e.target.value }))}
+          />
+        </div>
       </div>
 
       <div className="flex items-end">
@@ -290,7 +316,6 @@ const BranchPage: React.FC = () => {
           columns={columns}
           data={filteredBranches as unknown as Record<string, unknown>[]}
           rowKey="branch_id"
-          actions={actions}
           loading={loading}
           filterable={false}
           sortable={true}
