@@ -96,3 +96,16 @@ export async function deletePayment_repo(id: number): Promise<void> {
   const values = [id];
   await db.query(query, values);
 }
+
+export async function getTotalPaidAmountByID_repo(bill_id: number): Promise<number> {
+  if (!db.isReady()) {
+    await db.connect();
+  }
+  const query = `
+    SELECT COALESCE(SUM(paid_amount), 0) AS total_paid
+    FROM payment
+    WHERE bill_id = $1
+  `;
+  const result = await db.query(query, [bill_id]);
+  return result.rows[0].total_paid;
+}

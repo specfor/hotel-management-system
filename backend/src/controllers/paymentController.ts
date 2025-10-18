@@ -150,6 +150,14 @@ export async function updatePayment(
 
       date_time: Joi.date().iso().allow(null).label("Date and Time"),
     });
+    const validationResult = updatePaymentSchema.validate(req.body);
+    // The validation result contains either an error or the validated value
+    if (validationResult.error) {
+      jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        error: validationResult.error.message,
+      });
+      return;
+    }
     const Payment = await updatePaymentInfo_model(
       req.body as PaymentPublic,
       id

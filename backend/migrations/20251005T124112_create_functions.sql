@@ -56,16 +56,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION update_bill_on_payment()
-RETURNS TRIGGER AS $$
-BEGIN
-    UPDATE final_bill
-    SET paid_amount = paid_amount + NEW.paid_amount,
-        outstanding_amount = total_amount - (paid_amount + NEW.paid_amount)
-    WHERE bill_id = NEW.bill_id;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
 
 -- Example:
 -- CREATE TABLE example_table (

@@ -35,11 +35,6 @@ FOR EACH ROW
 EXECUTE FUNCTION update_outstanding_amount();
 
 
-CREATE TRIGGER trg_update_bill
-AFTER INSERT ON payment
-FOR EACH ROW
-EXECUTE FUNCTION update_bill_on_payment();
-
 
 
 -- Example:

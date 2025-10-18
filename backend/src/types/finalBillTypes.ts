@@ -13,4 +13,3 @@ export interface FinalBillPublic {
   created_at: string | Date | null;
 }
 
-

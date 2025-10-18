@@ -3,8 +3,14 @@ import {
   deletePayment_repo,
   updatePaymentInfo_repo,
 } from "@src/repos/paymentRepo";
-import { getFinalBillByID_repo } from "@src/repos/finalBillRepo";
-import { getPaymentByID_repo } from "@src/repos/paymentRepo";
+import {
+  getFinalBillByID_repo,
+  updateFinalBillPaidAmount_repo,
+} from "@src/repos/finalBillRepo";
+import {
+  getPaymentByID_repo,
+  getTotalPaidAmountByID_repo,
+} from "@src/repos/paymentRepo";
 import { PaymentPrivate, PaymentPublic } from "@src/types/paymentTypes";
 import { FinalBillPublic } from "@src/types/finalBillTypes";
 
@@ -23,26 +29,30 @@ function getCurrentTimestamp(): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
+async function updateFinalBillPaidAmount(bill_id: number) {
+  const totalPaid = await getTotalPaidAmountByID_repo(bill_id);
+  await updateFinalBillPaidAmount_repo(bill_id, totalPaid);
+}
+
 export async function addNewPayment_model(newPay: PaymentPrivate) {
   const finalBill = await getFinalBillByID_repo(newPay.bill_id);
   if (finalBill) {
     const timestamp = getCurrentTimestamp();
     newPay.date_time = timestamp;
     const { paid_amount } = newPay;
-    const finalBill = await getFinalBillByID_repo(newPay.bill_id);
-    // if (finalBill || typeof finalBill.outstanding_amount !== "number") {
-    //   return {
-    //     success: false,
-    //     error: "Final bill not found or outstanding_amount missing",
-    //   };
-    // }
     const { outstanding_amount } = finalBill as FinalBillPublic;
-    console.log(outstanding_amount)
-    if (outstanding_amount < paid_amount) {
-      return { success: false, error: "Paid amount is larger than Outstanding amount" };
+    const outstanding = Number(outstanding_amount);
+    const paid = Number(paid_amount);
+
+    if (outstanding < paid) {
+      return {
+        success: false,
+        error: "Paid amount is larger than Outstanding amount",
+      };
     }
 
-    const x = await addNewPayment_repo(newPay as PaymentPrivate);
+    const x = await addNewPayment_repo(newPay);
+    updateFinalBillPaidAmount(newPay.bill_id);
     return { success: true, payment_id: x };
   } else {
     return { success: false, error: "Bill Id not found" };
@@ -57,8 +67,29 @@ export async function updatePaymentInfo_model(
   if (!payment) {
     return { success: false, error: "Payment not found" };
   }
-  await updatePaymentInfo_repo(record, payment_id);
-  return { success: true, payment_id: payment.payment_id };
+  const finalBill = await getFinalBillByID_repo(record.bill_id);
+  if (finalBill) {
+    const { paid_amount } = record;
+    const { outstanding_amount } = finalBill as FinalBillPublic;
+    const outstanding = Number(outstanding_amount);
+    const paid = Number(paid_amount);
+    if (outstanding < paid) {
+      return {
+        success: false,
+        error: `Paid amount is larger than Outstanding amount for bill ${record.bill_id}`,
+      };
+    }
+    await updatePaymentInfo_repo(record, payment_id);
+    if (payment.bill_id != record.bill_id) {
+      updateFinalBillPaidAmount(payment.bill_id); // for the previous bill
+      updateFinalBillPaidAmount(record.bill_id); // for the new bill
+      return { success: true, payment_id: payment.payment_id };
+    }
+    updateFinalBillPaidAmount(record.bill_id);
+    return { success: true, payment_id: payment.payment_id };
+  } else {
+    return { success: false, error: "Bill Id not found" };
+  }
 }
 
 export async function deletePayment_model(payment_id: number) {
@@ -66,6 +97,8 @@ export async function deletePayment_model(payment_id: number) {
   if (!payment) {
     return { success: false, error: "Payment not found" };
   }
+  const { bill_id } = payment;
   await deletePayment_repo(payment_id);
+  await updateFinalBillPaidAmount(bill_id);
   return { success: true, payment_id: payment.payment_id };
 }
