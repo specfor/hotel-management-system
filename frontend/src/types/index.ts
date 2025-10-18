@@ -58,7 +58,7 @@ export type {
 export { JobTitle as StaffJobTitle } from "./staff";
 
 // Guest types
-export type { Guest, GuestFilters, GuestFormData, GuestDetailsModalProps, BookingStatus } from "./guest";
+export type { Guest, GuestFilters, GuestFormData, GuestDetailsModalProps } from "./guest";
 export { BookingStatus as GuestBookingStatus } from "./guest";
 
 // Service and Discount types
@@ -81,3 +81,26 @@ export {
   formatPrice,
   formatPercentage,
 } from "./service";
+
+// Booking types
+export type {
+  Booking,
+  ServiceUsage,
+  Payment,
+  FinalBill,
+  BookingStatus,
+  PaymentMethod,
+  CreateBookingRequest,
+  UpdateBookingRequest,
+  CreateServiceUsageRequest,
+  CreatePaymentRequest,
+  BookingFilters,
+} from "./booking";
+export {
+  BookingStatus as BookingStatusEnum,
+  PaymentMethod as PaymentMethodEnum,
+  formatBookingStatus,
+  formatPaymentMethod,
+  getBookingStatusColor,
+  getPaymentMethodColor,
+} from "./booking";

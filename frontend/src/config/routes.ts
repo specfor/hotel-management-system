@@ -1,7 +1,8 @@
 import React from "react";
 import type { RouteObject } from "react-router-dom";
 import Dashboard from "../pages/Dashboard";
-import Bookings from "../pages/Bookings";
+import Bookings from "../pages/booking/BookingManagement";
+import BookingDetails from "../pages/booking/BookingDetails";
 import Rooms from "../pages/room/Rooms";
 import Guests from "../pages/guests/GuestManagement";
 import Services from "../pages/services/Services";
@@ -33,6 +34,13 @@ export const protectedRoutes: AppRoute[] = [
     path: "/bookings",
     element: Bookings,
     label: "Bookings",
+    protected: true,
+    allowedRoles: ["admin", "manager", "staff", "receptionist"], // All roles can access bookings
+  },
+  {
+    path: "/bookings/:bookingId",
+    element: BookingDetails,
+    label: "Booking Details",
     protected: true,
     allowedRoles: ["admin", "manager", "staff", "receptionist"], // All roles can access bookings
   },
