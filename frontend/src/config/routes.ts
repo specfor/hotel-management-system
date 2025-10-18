@@ -2,7 +2,7 @@ import React from "react";
 import type { RouteObject } from "react-router-dom";
 import Dashboard from "../pages/Dashboard";
 import Bookings from "../pages/Bookings";
-import Rooms from "../pages/Rooms";
+import Rooms from "../pages/room/Rooms";
 import Guests from "../pages/Guests";
 import Reports from "../pages/Reports";
 import SettingsPage from "../pages/Settings";

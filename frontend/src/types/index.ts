@@ -10,6 +10,9 @@ export type {
   SidebarProps,
 } from "./components";
 
+// Room types
+export type { Room, RoomType, RoomStatus, RoomFilters, RoomTypeFilters, Branch } from "./room";
+
 // UI component types
 export type {
   ComponentSize,
