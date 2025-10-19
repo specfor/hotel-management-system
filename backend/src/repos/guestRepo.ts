@@ -6,16 +6,19 @@ export async function getAllGuests_repo(
   nic?: string,
   minAge?: number,
   maxAge?: number,
-  page: number = 1,
-  limit: number = 5
-): Promise<GuestPublic[]> {
+  page = 1,
+  limit = 5,
+): Promise<GuestPublic[] | null> {
   if (!db.isReady()) {
     await db.connect();
   }
 
   // Start building the query
-  let query = `SELECT guest_id, nic, name, age, contact_no, email, room_id, booking_status FROM guest_main_view WHERE 1=1`;
-  const values: any[] = [];
+  let query = `
+    SELECT guest_id, nic, name, age, contact_no, email, room_id, booking_status 
+    FROM guest_main_view 
+    WHERE 1=1`;
+  const values: (string | number | null)[] = [];
   let idx = 1;
 
   // Filtering
@@ -44,21 +47,16 @@ export async function getAllGuests_repo(
   query += ` ORDER BY guest_id ASC LIMIT $${idx} OFFSET $${idx + 1}`;
   values.push(limit, (page - 1) * limit);
 
-  const result = await db.query(query, values);
-
-  return result.rows.map((row: any) => ({
-    guest_id: row.guest_id,
-    nic: row.nic ?? null,
-    name: row.name ?? null,
-    age: row.age ?? null,
-    contact_no: row.contact_no ?? null,
-    email: row.email ?? null,
-    room_id: row.room_id ?? null,
-    booking_status: row.booking_status ?? null,
-  }));
+  const { rows } = await db.query(query, values);
+  if (rows.length === 0) {
+    return null;
+  }
+  return rows as GuestPublic[];
 }
 
-export async function getGuestByID_repo(id: number): Promise<GuestPublic | null> {
+export async function getGuestByID_repo(
+  id: number,
+): Promise<GuestPublic | null> {
   if (!db.isReady()) {
     await db.connect();
   }
@@ -67,7 +65,7 @@ export async function getGuestByID_repo(id: number): Promise<GuestPublic | null>
     `select guest_id, NIC, name, age,  contact_no, email, room_id, booking_status
     FROM guest_main_view 
     WHERE guest_id = $1`,
-    [id], 
+    [id],
   );
 
   if (result.rows.length === 0) {
@@ -87,33 +85,34 @@ export async function getGuestByID_repo(id: number): Promise<GuestPublic | null>
   };
 }
 
-export async function addNewGuest_repo(record: GuestRepo): Promise<number | null> {
+export async function addNewGuest_repo(
+  record: GuestRepo,
+): Promise<number | null> {
   if (!db.isReady()) {
     await db.connect();
   }
   const query = `insert into guest (nic, name, age, contact_no, email, password) values
                   ($1, $2, $3, $4, $5, $6)
                   RETURNING "guest_id";`;
-  
+
   const values = [
-    record.nic, 
-    record.name, 
-    record.age, 
-    record.contact_no, 
-    record.email, 
+    record.nic,
+    record.name,
+    record.age,
+    record.contact_no,
+    record.email,
     record.password,
   ];
 
   const result = await db.query(query, values);
   const newguest_id = result.rows[0].guest_id as number;
-  return newguest_id;  
+  return newguest_id;
 }
 
 export async function updateGuestInfo_repo(
   record: GuestRepo,
-  guest_id: number
+  guest_id: number,
 ): Promise<GuestPublic | null> {
-
   if (!db.isReady()) {
     await db.connect();
   }
@@ -128,11 +127,11 @@ export async function updateGuestInfo_repo(
       RETURNING guest_id, nic, name, age, contact_no, email;`;
 
   const values = [
-    record.nic, 
-    record.name, 
-    record.age, 
-    record.contact_no, 
-    record.email, 
+    record.nic,
+    record.name,
+    record.age,
+    record.contact_no,
+    record.email,
     guest_id,
   ];
 
@@ -148,10 +147,12 @@ export async function updateGuestInfo_repo(
     email: row.email ?? null,
     room_id: null,
     booking_status: null,
-  }; 
+  };
 }
 
-export async function changeGuestPassword_repo(record: GuestPassword): Promise<void> {
+export async function changeGuestPassword_repo(
+  record: GuestPassword,
+): Promise<void> {
   if (!db.isReady()) {
     await db.connect();
   }
@@ -163,24 +164,14 @@ export async function changeGuestPassword_repo(record: GuestPassword): Promise<v
   await db.query(query, values);
 }
 
-
 export async function deleteGuest_repo(id: number): Promise<void> {
   if (!db.isReady()) {
     await db.connect();
   }
-  const query  = "DELETE FROM guest WHERE guest_id = $1";
+  const query = "DELETE FROM guest WHERE guest_id = $1";
   const values = [id];
   await db.query(query, values);
 }
-
-
-
-
-
-
-
-
-
 
 // TODO: Profile update logic
 // - Update guest details (name, email, phone, etc.) EXCEPT password

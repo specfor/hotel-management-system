@@ -1,7 +1,14 @@
 import { Router } from "express";
 
 import { getUsers } from "@src/controllers/userController";
-import { getAllGuests, getGuestByID, addNewGuest, updateGuestInfo, changeGuestPassword, deleteGuest} from "@src/controllers/guestController";
+import {
+  getAllGuests,
+  getGuestByID,
+  addNewGuest,
+  updateGuestInfo,
+  changeGuestPassword,
+  deleteGuest,
+} from "@src/controllers/guestController";
 
 /******************************************************************************
                                 Setup

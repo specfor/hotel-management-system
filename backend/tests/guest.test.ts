@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import request from "supertest";
-import app from "@src/server"; // Adjust import if your Express app is exported differently
+import app from "@src/server"; 
 
 describe("Guest API Endpoints", () => {
   test("GET /api/guest should return guests", async () => {
@@ -16,7 +16,7 @@ describe("Guest API Endpoints", () => {
       name: "Test Guest",
       age: 30,
       contact_no: "0771234567",
-      email: "testguest@example.com"
+      email: "testguest@example.com",
     };
     const res = await request(app).post("/api/guest").send(guestData);
     expect(res.status).toBe(201);
