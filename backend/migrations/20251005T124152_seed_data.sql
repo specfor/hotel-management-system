@@ -1,44 +1,66 @@
--- Branches
-INSERT INTO branch (branch_id, branch_name, city, address) VALUES
-(1, 'Colombo Central', 'Colombo', '123 Main St'),
-(2, 'Kandy Lakeview', 'Kandy', '45 Lake Rd'),
-(3, 'Galle Fort', 'Galle', '12 Fort Street');
+-- Migration: seed_data
+-- Created: 2025-10-05T12:41:52.793Z
+-- Description: Add description here
 
--- Room Types
-INSERT INTO room_type (type_id, branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES
-(1, 1, 'Single', 50.00, 10.00, 1, 'WiFi, TV'),
-(2, 1, 'Double', 80.00, 15.00, 2, 'WiFi, TV, Mini-fridge'),
-(3, 1, 'Suite', 150.00, 25.00, 4, 'WiFi, TV, Mini-fridge, Jacuzzi'),
-(4, 2, 'Single', 55.00, 10.00, 1, 'WiFi, TV'),
-(5, 2, 'Double', 85.00, 15.00, 2, 'WiFi, TV, Mini-fridge'),
-(6, 3, 'Suite', 160.00, 25.00, 4, 'WiFi, TV, Mini-fridge, Jacuzzi');
+-- =====================================================
+-- UP MIGRATION
+-- =====================================================
 
--- Rooms (room_id must match bookings and be unique)
-INSERT INTO room (room_id, branch_id, type_id, room_status) VALUES
-(101, 1, 1, 'Available'),
-(102, 1, 2, 'Available'),
-(103, 1, 3, 'Available'),
-(104, 2, 4, 'Available'),
-(105, 2, 5, 'Available'),
-(106, 3, 6, 'Available');
+-- =========================
+-- 1. Branches
+-- =========================
+INSERT INTO branch (branch_name, city, address) VALUES
+('Colombo Central', 'Colombo', '123 Main St'),
+('Kandy Lakeview', 'Kandy', '45 Lake Rd'),
+('Galle Fort', 'Galle', '12 Fort Street');
 
--- Guests
+-- =========================
+-- 2. Room Types
+-- =========================
+INSERT INTO room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES
+(1, 'Single', 50.00, 10.00, 1, 'WiFi, TV'),
+(1, 'Double', 80.00, 15.00, 2, 'WiFi, TV, Mini-fridge'),
+(1, 'Suite', 150.00, 25.00, 4, 'WiFi, TV, Mini-fridge, Jacuzzi'),
+(2, 'Single', 55.00, 10.00, 1, 'WiFi, TV'),
+(2, 'Double', 85.00, 15.00, 2, 'WiFi, TV, Mini-fridge'),
+(3, 'Suite', 160.00, 25.00, 4, 'WiFi, TV, Mini-fridge, Jacuzzi');
+
+-- =========================
+-- 3. Rooms
+-- =========================
+INSERT INTO room (branch_id, type_id, room_status) VALUES
+(1, 1, 'Available'),
+(1, 2, 'Available'),
+(1, 3, 'Available'),
+(2, 4, 'Available'),
+(2, 5, 'Available'),
+(3, 6, 'Available');
+
+-- =========================
+-- 4. Guests
+-- =========================
 INSERT INTO guest (guest_id, nic, name, age, contact_no, email, password) VALUES
-(1, '901234567V', 'John Doe', 30, '0771234567', 'john@example.com', 'pass123'),
-(2, '902345678V', 'Jane Smith', 28, '0779876543', 'jane@example.com', 'pass456'),
-(3, '903456789V', 'Alice Brown', 35, '0775678901', 'alice@example.com', 'pass789');
+(1, 901234567, 'John Doe', 30, 94771234567, 'john@example.com', 'pass123'),
+(2, 902345678, 'Jane Smith', 28, 94779876543, 'jane@example.com', 'pass456'),
+(3, 903456789, 'Alice Brown', 35, 94775678901, 'alice@example.com', 'pass789'),
+(4, 904567890, 'Bob White', 40, 94772345678, 'bob@example.com', 'pass321'),
+(5, 905678901, 'Charlie Black', 32, 94773456789, 'charlie@example.com', 'pass654');
 
--- Staff
+-- =========================
+-- 5. Staff
+-- =========================
 INSERT INTO staff (staff_id, branch_id, name, contact_no, email, job_title, salary) VALUES
-(1, 1, 'Alice Manager', '07771230001', 'alice.manager@example.com', 'Manager', 1500.00),
-(2, 2, 'Bob Reception', '07771230002', 'bob.reception@example.com', 'Receptionist', 800.00),
-(3, 3, 'Charlie Housekeeping', '07771230003', 'charlie.house@example.com', 'Housekeeping', 700.00);
+(1, 1, 'Alice Manager', 94771230001, 'alice.manager@example.com', 'Manager', 1500.00),
+(2, 2, 'Bob Reception', 94771230002, 'bob.reception@example.com', 'Receptionist', 800.00),
+(3, 3, 'Charlie Housekeeping', 94771230003, 'charlie.house@example.com', 'Housekeeping', 700.00);
 
--- Users (staff login)
-INSERT INTO "user" (user_id, staff_id, username, password_hash) VALUES
-(1, 1, 'alice', 'hashedpass1'),
-(2, 2, 'bob', 'hashedpass2'),
-(3, 3, 'charlie', 'hashedpass3');
+-- =========================
+-- 6. Users (staff login)
+-- =========================
+-- INSERT INTO "user" (staff_id, username, password_hash) VALUES
+-- (1, 'alice', 'hashedpass1'),
+-- (2, 'bob', 'hashedpass2'),
+-- (3, 'charlie', 'hashedpass3');
 
 -- =========================
 -- 7. Chargeable Services
@@ -54,18 +76,18 @@ INSERT INTO chargeable_services (service_id, branch_id, service_name, unit_price
 -- =========================
 -- 8. Bookings
 -- =========================
-INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES
-(1, 1, 1, 101, 'Booked', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
-(2, 2, 2, 102, 'Checked-In', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
-(3, 1, 3, 103, 'Cancelled', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
+-- INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES
+-- (1, 1, 1, 101, 'Booked', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
+-- (2, 2, 2, 102, 'Checked-In', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
+-- (3, 1, 3, 103, 'Cancelled', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
 
 -- =========================
 -- 9. Service Usage
 -- =========================
-INSERT INTO service_usage (record_id, service_id, booking_id, date_time, quantity, total_price) VALUES
-(1, 1, 1, '2025-10-02 10:00', 2, 20.00),
-(2, 2, 1, '2025-10-03 09:00', 3, 15.00),
-(3, 4, 2, '2025-09-29 18:00', 1, 15.00);
+-- INSERT INTO service_usage (record_id, service_id, booking_id, date_time, quantity, total_price) VALUES
+-- (1, 1, 1, '2025-10-02 10:00', 2, 20.00),
+-- (2, 2, 1, '2025-10-03 09:00', 3, 15.00),
+-- (3, 4, 2, '2025-09-29 18:00', 1, 15.00);
 
 -- =========================
 -- 10. Payments
@@ -86,15 +108,17 @@ INSERT INTO discount (branch_id, discount_name, discount_type, discount_value, m
 -- =========================
 -- 12. Revenue
 -- =========================
-INSERT INTO revenue (record_id, branch_id, month, calculated_data_time, amount) VALUES
-(1, 1, 9, NOW(), 5000.00),
-(2, 2, 9, NOW(), 3000.00),
-(3, 3, 9, NOW(), 4000.00);
+-- INSERT INTO revenue (record_id, branch_id, month, calculated_data_time, amount) VALUES
+-- (1, 1, 9, NOW(), 5000.00),
+-- (2, 2, 9, NOW(), 3000.00),
+-- (3, 3, 9, NOW(), 4000.00);
 
--- Logs
-INSERT INTO log (record_id, user_id, action, date_time, action_rec_id) VALUES
-(1, 1, 'Created booking', NOW(), 1),
-(2, 2, 'Checked-in guest', NOW(), 2);
+-- =========================
+-- 13. Logs
+-- =========================
+-- INSERT INTO log (record_id, user_id, action, date_time, action_rec_id) VALUES
+-- (1, 1, 'Created booking', NOW(), 1),
+-- (2, 2, 'Checked-in guest', NOW(), 2);
 
 -- =========================
 -- Reset Sequences

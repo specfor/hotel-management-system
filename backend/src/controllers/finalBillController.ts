@@ -3,13 +3,14 @@ import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import { jsonResponse } from "@src/common/util/response";
 import { Request, Response } from "express";
 import Joi from "joi";
-import { addNewFinalBill_model } from "@src/models/finalBillModel";
+import { addNewFinalBill_model, updateFinalBillInfo_model } from "@src/models/finalBillModel";
 import {
   getAllFinalBills_repo,
   getFinalBillByID_repo,
   getFinalBillByBookingID_repo,
+  deleteFinalBill_repo,
 } from "@src/repos/finalBillRepo";
-import { FinalBillInsert, FinalBillPublic } from "@src/types/finalBillTypes";
+import { FinalBillInsert, FinalBillUpdate } from "@src/types/finalBillTypes";
 
 
 /**
@@ -133,10 +134,10 @@ export async function updateFinalBill(req: Request, res: Response): Promise<void
       return;
     }
 
-    const updatedBill = await updatefinalBillInfo_repo({
-      ...req.body,
+    const updatedBill = await updateFinalBillInfo_model(
       bill_id,
-    } as FinalBillPublic);
+      req.body as FinalBillUpdate,
+    );
 
     jsonResponse(res, true, HttpStatusCodes.OK, { updatedBill });
   } catch {
@@ -153,7 +154,7 @@ export async function deleteFinalBill(req: Request, res: Response): Promise<void
       jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, { error: "Invalid Bill ID" });
       return;
     }
-    await deletefinalBill_repo(bill_id);
+    await deleteFinalBill_repo(bill_id);
     jsonResponse(res, true, HttpStatusCodes.OK, {});
   } catch {
     jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {

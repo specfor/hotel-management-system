@@ -4,7 +4,7 @@ export interface PaymentPublic {
     paid_method: string;
     paid_amount: number;
     notes: string | null;
-    date_time: string | null;
+    date_time?: string | null;
 }
 
 export interface PaymentPrivate {
@@ -12,6 +12,6 @@ export interface PaymentPrivate {
     paid_method: string;
     paid_amount: number;
     notes: string | null;
-    date_time: string | null;
+    date_time?: string | null;
 }
 

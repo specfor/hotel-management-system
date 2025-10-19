@@ -1,4 +1,3 @@
-/* eslint-disable max-len*/
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import { jsonResponse } from "@src/common/util/response";
 import { Request, Response } from "express";
@@ -29,7 +28,7 @@ import Joi from "joi";
  */
 export async function getAllPayments(
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> {
   try {
     const Payments = await getAllPayments_repo();
@@ -49,7 +48,7 @@ export async function getAllPayments(
 
 export async function getAllPaymentsByBillID(
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> {
   try {
     // Extract query params
@@ -74,7 +73,7 @@ export async function getAllPaymentsByBillID(
       method,
       reference,
       notes,
-      date_time
+      date_time,
     );
 
     if (!result.success) {
@@ -99,7 +98,7 @@ export async function getAllPaymentsByBillID(
 
 export async function getPaymentByID(
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> {
   try {
     const id = parseInt(req.params.id);
@@ -127,7 +126,7 @@ export async function getPaymentByID(
 
 export async function addNewPayment(
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> {
   try {
     const newPaymentSchema = Joi.object({
@@ -153,7 +152,7 @@ export async function addNewPayment(
         error: validationResult.error.message,
       });
     } else {
-      const result = await addNewPayment_model(req.body);
+      const result = await addNewPayment_model(req.body as PaymentPrivate);
       const { success } = result;
       if (success) {
         const { payment_id } = result;
@@ -172,7 +171,7 @@ export async function addNewPayment(
 
 export async function updatePayment(
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> {
   try {
     const id = parseInt(req.params.id);
@@ -208,11 +207,11 @@ export async function updatePayment(
     }
     const Payment = await updatePaymentInfo_model(
       req.body as PaymentPublic,
-      id
+      id,
     );
 
     jsonResponse(res, true, HttpStatusCodes.OK, { Payment });
-  } catch (error) {
+  } catch {
     jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
       error: "Database Error - Error Happened in the repo",
     });
@@ -221,7 +220,7 @@ export async function updatePayment(
 
 export async function deletePayment(
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> {
   try {
     const id = parseInt(req.params.id);

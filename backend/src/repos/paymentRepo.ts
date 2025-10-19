@@ -9,7 +9,7 @@ export async function getAllPayments_repo(): Promise<PaymentPublic[] | null> {
   const result = await db.query(
     `SELECT * 
     FROM payment 
-    ORDER BY payment_id ASC`
+    ORDER BY payment_id ASC`,
   );
   if (result.rows.length === 0) {
     return null;
@@ -22,7 +22,7 @@ export async function getAllPaymentsByBillID_repo(
   method: string | undefined,
   reference: string | undefined,
   notes: string | undefined,
-  date_time: string | undefined
+  date_time: string | undefined,
 ): Promise<PaymentPublic[] | null> {
   if (!db.isReady()) {
     await db.connect();
@@ -67,7 +67,7 @@ export async function getAllPaymentsByBillID_repo(
 }
 
 export async function getPaymentByID_repo(
-  id: number
+  id: number,
 ): Promise<PaymentPublic | null> {
   if (!db.isReady()) {
     await db.connect();
@@ -77,7 +77,7 @@ export async function getPaymentByID_repo(
     `SELECT *
     FROM payment 
     WHERE payment_id = $1`,
-    [id]
+    [id],
   );
 
   if (result.rows.length === 0) {
@@ -88,7 +88,7 @@ export async function getPaymentByID_repo(
 }
 
 export async function addNewPayment_repo(
-  record: PaymentPrivate
+  record: PaymentPrivate,
 ): Promise<number | null> {
   if (!db.isReady()) {
     await db.connect();
@@ -114,7 +114,7 @@ export async function addNewPayment_repo(
 
 export async function updatePaymentInfo_repo(
   record: PaymentPrivate,
-  payment_id: number
+  payment_id: number,
 ): Promise<number | null> {
   if (!db.isReady()) {
     await db.connect();

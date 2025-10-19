@@ -18,6 +18,7 @@ import {
 import * as branchController from "@src/controllers/branchController";
 import * as roomTypeController from "@src/controllers/roomTypeController";
 import * as paymentController from "@src/controllers/paymentController";
+import * as finalBillController from "@src/controllers/finalBillController";
 import * as roomController from "@src/controllers/roomController";
 import * as discountController from "@src/controllers/discountController";
 import * as serviceController from "@src/controllers/chargeableServiceController"; 

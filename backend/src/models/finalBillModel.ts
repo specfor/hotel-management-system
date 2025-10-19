@@ -1,7 +1,7 @@
 import { FinalBillInsert, FinalBillUpdate } from "@src/types/finalBillTypes";
 import { UserPublic } from "@src/types/userTypes";
-import { getUserByID_repo } from "@src/repos/userRepo";
-import { getBookingByID_repo } from "@src/repos/bookingRepo";
+import { findUserByStaffId } from "@src/repos/userRepo";
+import { getBookingByIDDB } from "@src/repos/bookingRepo";
 import {
   getFinalBillByID_repo,
   getFinalBillByBookingID_repo,
@@ -37,7 +37,7 @@ function getCurrentTimestamp(): string {
 
 export async function addNewFinalBill_model(
   newBill: FinalBillInsert,
-): Promise<{ success: boolean; bill_id?: number | null; error?: string }> {
+): Promise<{ success: boolean, bill_id?: number | null, error?: string }> {
   const final_bill = await getFinalBillByBookingID_repo(newBill.booking_id);
   if (final_bill) {
     return {
@@ -45,9 +45,9 @@ export async function addNewFinalBill_model(
       error: "Final bill for this booking already exists",
     };
   } else {
-    const user = await getUserByID_repo(newBill.user_id) as UserPublic | null;
+    const user = await findUserByStaffId(newBill.user_id) as UserPublic | null;
     if (user) {
-      const booking = await getBookingByID_repo(newBill.booking_id);
+      const booking = await getBookingByIDDB(newBill.booking_id);
       if (booking) {
         const timestamp = getCurrentTimestamp();
         newBill.created_at = timestamp;
@@ -65,15 +65,15 @@ export async function addNewFinalBill_model(
   }
 }
 
-export async function updatefinalBillInfo_model(
+export async function updateFinalBillInfo_model(
   bill_id: number,
-  record: FinalBillUpdate
-): Promise<{ success: boolean; bill_id?: number | null; error?: string }> {
+  record: FinalBillUpdate,
+): Promise<{ success: boolean, bill_id?: number | null, error?: string }> {
   const bill = await getFinalBillByID_repo(bill_id);
   if (bill) {
-    const user = await getUserByID_repo(record.user_id);
+    const user = await findUserByStaffId(record.user_id);
     if (user) {
-      const booking = await getBookingByID_repo(record.booking_id);
+      const booking = await getBookingByIDDB(record.booking_id);
       if (booking) {
         const timestamp = getCurrentTimestamp();
         record.created_at = timestamp;
@@ -94,8 +94,8 @@ export async function updatefinalBillInfo_model(
 }
 
 export async function deleteFinalBill_model(
-  bill_id: number
-): Promise<{ success: boolean; error?: string }> {
+  bill_id: number,
+): Promise<{ success: boolean, error?: string }> {
   const billExists = await checkBillExistByID_repo(bill_id);
   if (!billExists) {
     return { success: false, error: "Bill ID not found" };
@@ -109,9 +109,9 @@ export async function deleteFinalBill_model(
 
 
 export async function calculateRoomCharges(bill_id: number): Promise<{
-  success: boolean;
-  room_charges?: number;
-  error?: string;
+  success: boolean,
+  room_charges?: number,
+  error?: string,
 }> {
   try {
     // Get room charges data from database
@@ -182,9 +182,9 @@ export async function calculateRoomCharges(bill_id: number): Promise<{
  * @returns Promise<{ success: boolean; room_charges?: number; error?: string }>
  */
 export async function updateRoomCharges(bill_id: number): Promise<{
-  success: boolean;
-  room_charges?: number;
-  error?: string;
+  success: boolean,
+  room_charges?: number,
+  error?: string,
 }> {
   try {
     // First calculate the room charges
@@ -197,7 +197,7 @@ export async function updateRoomCharges(bill_id: number): Promise<{
     // Update the database with calculated room charges
     const updateResult = await updateRoomCharges_repo(
       bill_id,
-      calculationResult.room_charges!
+      calculationResult.room_charges!,
     );
 
     return updateResult;

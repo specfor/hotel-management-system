@@ -13,7 +13,6 @@ import {
   getAllPaymentsByBillID_repo,
 } from "@src/repos/paymentRepo";
 import { PaymentPrivate, PaymentPublic } from "@src/types/paymentTypes";
-import { FinalBillPublic } from "@src/types/finalBillTypes";
 
 // Get current date/time in PostgreSQL TIMESTAMP format
 function getCurrentTimestamp(): string {
@@ -42,9 +41,9 @@ export async function getAllPaymentsByBillID_model(
   notes: string | undefined,
   date_time: string | undefined,
 ): Promise<{
-  success: boolean;
-  payments?: PaymentPublic[] | null;
-  error?: string;
+  success: boolean,
+  payments?: PaymentPublic[] | null,
+  error?: string,
 }> {
   const finalBill = await getFinalBillByID_repo(bill_id);
   if (finalBill) {
@@ -53,7 +52,7 @@ export async function getAllPaymentsByBillID_model(
       method,
       reference,
       notes,
-      date_time
+      date_time,
     );
     return { success: true, payments: payments };
   } else {
@@ -67,9 +66,9 @@ export async function addNewPayment_model(newPay: PaymentPrivate) {
     const timestamp = getCurrentTimestamp();
     newPay.date_time = timestamp;
     const { paid_amount } = newPay;
-    const { outstanding_amount } = finalBill as FinalBillPublic;
-    const outstanding = Number(outstanding_amount);
-    const paid = Number(paid_amount);
+    const { outstanding_amount } = finalBill;
+    const outstanding = outstanding_amount;
+    const paid = paid_amount;
 
     if (outstanding < paid) {
       return {
@@ -88,7 +87,7 @@ export async function addNewPayment_model(newPay: PaymentPrivate) {
 
 export async function updatePaymentInfo_model(
   record: PaymentPrivate,
-  payment_id: number
+  payment_id: number,
 ) {
   const payment = await getPaymentByID_repo(payment_id);
   if (!payment) {
@@ -97,9 +96,9 @@ export async function updatePaymentInfo_model(
   const finalBill = await getFinalBillByID_repo(record.bill_id);
   if (finalBill) {
     const { paid_amount } = record;
-    const { outstanding_amount } = finalBill as FinalBillPublic;
-    const outstanding = Number(outstanding_amount);
-    const paid = Number(paid_amount);
+    const { outstanding_amount } = finalBill;
+    const outstanding = outstanding_amount;
+    const paid = paid_amount;
     if (outstanding < paid) {
       return {
         success: false,

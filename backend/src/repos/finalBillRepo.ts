@@ -30,14 +30,14 @@ export async function getAllFinalBills_repo(): Promise<FinalBillPublic[]> {
   const result = await db.query(
     `SELECT * 
     FROM final_bill 
-    ORDER BY bill_id ASC`
+    ORDER BY bill_id ASC`,
   );
 
   return result.rows as FinalBillPublic[];
 }
 // Get final bill by id
 export async function getFinalBillByID_repo(
-  bill_id: number
+  bill_id: number,
 ): Promise<FinalBillPublic | null> {
   if (!db.isReady()) {
     await db.connect();
@@ -56,7 +56,7 @@ export async function getFinalBillByID_repo(
 }
 
 export async function getFinalBillByBookingID_repo(
-  booking_id: number
+  booking_id: number,
 ): Promise<FinalBillPublic | null> {
   if (!db.isReady()) {
     await db.connect();
@@ -77,7 +77,7 @@ export async function getFinalBillByBookingID_repo(
 
 // Add new final bill
 export async function addNewFinalBill_repo(
-  record: FinalBillInsert
+  record: FinalBillInsert,
 ): Promise<number | null> {
   if (!db.isReady()) {
     await db.connect();
@@ -100,7 +100,7 @@ export async function addNewFinalBill_repo(
 
 // Update final bill info
 export async function updateFinalBillInfo_repo(
-  record: FinalBillUpdate
+  record: FinalBillUpdate,
 ): Promise<number | null> {
   if (!db.isReady()) {
     await db.connect();
@@ -140,7 +140,7 @@ export async function deleteFinalBill_repo(bill_id: number): Promise<void> {
 // Update final bill paid amount
 export async function updateFinalBillPaidAmount_repo(
   bill_id: number,
-  totalPaidAmount: number
+  totalPaidAmount: number,
 ): Promise<void> {
   if (!db.isReady()) {
     await db.connect();
@@ -159,9 +159,9 @@ export async function updateFinalBillPaidAmount_repo(
 
 // Get room charges data for calculation
 export async function getRoomChargesData_repo(bill_id: number): Promise<{
-  daily_rate: number;
-  check_in: string;
-  check_out: string;
+  daily_rate: number,
+  check_in: string,
+  check_out: string,
 } | null> {
   if (!db.isReady()) {
     await db.connect();
@@ -197,8 +197,8 @@ export async function getRoomChargesData_repo(bill_id: number): Promise<{
 // Update room charges in database
 export async function updateRoomCharges_repo(
   bill_id: number,
-  room_charges: number
-): Promise<{ success: boolean; room_charges?: number; error?: string }> {
+  room_charges: number,
+): Promise<{ success: boolean, room_charges?: number, error?: string }> {
   if (!db.isReady()) {
     await db.connect();
   }
