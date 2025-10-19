@@ -95,7 +95,7 @@ export async function createServiceUsage(req: Request, res: Response) {
     const createdRecord = await createServiceUsageModel(req.body as ServiceUsageCreate);
 
     // If no error was thrown, creation succeeded.
-    return jsonResponse(res, true, HttpStatusCodes.CREATED, { message: "Record created successfully", createdRecord });
+    return jsonResponse(res, true, HttpStatusCodes.OK, { message: "Record created successfully", createdRecord });
         
   } catch (err) {
     // Catches validation (400) and FK errors (400) from the Model.
