@@ -39,20 +39,20 @@ INSERT INTO room (room_id, branch_id, type_id, room_status) VALUES
 -- -- =========================
 -- -- 4. Guests
 -- -- =========================
--- INSERT INTO guest (guest_id, nic, name, age, contact_no, email, password) VALUES
--- (1, 901234567, 'John Doe', 30, 94771234567, 'john@example.com', 'pass123'),
--- (2, 902345678, 'Jane Smith', 28, 94779876543, 'jane@example.com', 'pass456'),
--- (3, 903456789, 'Alice Brown', 35, 94775678901, 'alice@example.com', 'pass789'),
--- (4, 904567890, 'Bob White', 40, 94772345678, 'bob@example.com', 'pass321'),
--- (5, 905678901, 'Charlie Black', 32, 94773456789, 'charlie@example.com', 'pass654');
+INSERT INTO guest (guest_id, nic, name, age, contact_no, email, password) VALUES
+(1, 901234567, 'John Doe', 30, 94771234567, 'john@example.com', 'pass123'),
+(2, 902345678, 'Jane Smith', 28, 94779876543, 'jane@example.com', 'pass456'),
+(3, 903456789, 'Alice Brown', 35, 94775678901, 'alice@example.com', 'pass789'),
+(4, 904567890, 'Bob White', 40, 94772345678, 'bob@example.com', 'pass321'),
+(5, 905678901, 'Charlie Black', 32, 94773456789, 'charlie@example.com', 'pass654');
 
 -- -- =========================
--- -- 5. Staff
--- -- =========================
--- INSERT INTO staff (staff_id, branch_id, name, contact_no, email, job_title, salary) VALUES
--- (1, 1, 'Alice Manager', 94771230001, 'alice.manager@example.com', 'Manager', 1500.00),
--- (2, 2, 'Bob Reception', 94771230002, 'bob.reception@example.com', 'Receptionist', 800.00),
--- (3, 3, 'Charlie Housekeeping', 94771230003, 'charlie.house@example.com', 'Housekeeping', 700.00);
+-- 5. Staff
+-- =========================
+INSERT INTO staff (staff_id, branch_id, name, contact_no, email, job_title, salary) VALUES
+(1, 1, 'Alice Manager', 94771230001, 'alice.manager@example.com', 'Manager', 1500.00),
+(2, 2, 'Bob Reception', 94771230002, 'bob.reception@example.com', 'Receptionist', 800.00),
+(3, 3, 'Charlie Housekeeping', 94771230003, 'charlie.house@example.com', 'Housekeeping', 700.00);
 
 -- =========================
 -- 6. Users (staff login)
@@ -65,7 +65,7 @@ INSERT INTO "user" (staff_id, username, password_hash) VALUES
 -- =========================
 -- 7. Chargable Services
 -- =========================
-INSERT INTO chargable_services (service_id, branch_id, service_name, unit_price, unit_type) VALUES
+INSERT INTO chargeable_services (service_id, branch_id, service_name, unit_price, unit_type) VALUES
 (1, 1, 'Room Service', 10.00, 'Per item'),
 (2, 1, 'Laundry', 5.00, 'Per item'),
 (3, 1, 'Spa', 30.00, 'Per session'),
@@ -76,10 +76,10 @@ INSERT INTO chargable_services (service_id, branch_id, service_name, unit_price,
 -- =========================
 -- 8. Bookings
 -- =========================
-INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, payment_method, date_time, check_in, check_out) VALUES
-(1, 1, 1, 101, 'Booked', 'Credit Card', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
-(2, 2, 2, 102, 'Checked-In', 'Cash', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
-(3, 1, 3, 103, 'Cancelled', 'Bank Transfer', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
+INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES
+(1, 1, 1, 101, 'Booked', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
+(2, 2, 2, 102, 'Checked-In', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
+(3, 1, 3, 103, 'Cancelled', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
 
 -- =========================
 -- 9. Service Usage
@@ -92,6 +92,20 @@ INSERT INTO service_usage (record_id, service_id, booking_id, date_time, quantit
 -- =========================
 -- 10. Payments
 -- =========================
+-- =========================
+-- Final Bill Inserts (minimal for triggers)
+-- =========================
+INSERT INTO final_bill (bill_id, user_id, booking_id, total_tax) VALUES
+-- Bill for booking 1
+(1, 1, 1, 0),
+
+-- Bill for booking 2
+(2, 2, 2, 0),
+
+-- Bill for booking 3
+(3, 1, 3, 0);
+
+
 INSERT INTO payment (payment_id, bill_id, paid_method, paid_amount, date_time) VALUES
 (1, 1, 'Credit Card', 100.00, '2025-10-05 13:00'),
 (2, 2, 'Cash', 50.00, '2025-09-28 16:00');
@@ -99,9 +113,9 @@ INSERT INTO payment (payment_id, bill_id, paid_method, paid_amount, date_time) V
 -- =========================
 -- 11. Discounts
 -- =========================
-INSERT INTO discount (discount_id, branch_id, discount_name, discount_rate, discount_condition, valid_from, valid_to) VALUES
-(1, 1, 'Summer Sale', 10.00, 'Min stay 3 nights', '2025-06-01', '2025-08-31'),
-(2, 2, 'Weekend Special', 15.00, 'Friday to Sunday stays', '2025-01-01', '2025-12-31');
+INSERT INTO discount (discount_id, branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES
+(1, 1, 'Summer Sale', 'percentage', 10.00, 0, 'Min stay 3 nights', '2025-06-01', '2025-08-31'),
+(2, 2, 'Weekend Special', 'fixed', 15.00, 50, 'Friday to Sunday stays', '2025-01-01', '2025-12-31');
 
 -- =========================
 -- 12. Revenue
@@ -127,7 +141,7 @@ SELECT setval('room_type_type_id_seq', (SELECT COALESCE(MAX(type_id), 1) FROM ro
 SELECT setval('room_room_id_seq', (SELECT COALESCE(MAX(room_id), 1) FROM room));
 SELECT setval('guest_guest_id_seq', (SELECT COALESCE(MAX(guest_id), 1) FROM guest));
 SELECT setval('staff_staff_id_seq', (SELECT COALESCE(MAX(staff_id), 1) FROM staff));
-SELECT setval('chargable_services_service_id_seq', (SELECT COALESCE(MAX(service_id), 1) FROM chargable_services));
+SELECT setval('chargeable_services_service_id_seq', (SELECT COALESCE(MAX(service_id), 1) FROM chargeable_services));
 SELECT setval('booking_booking_id_seq', (SELECT COALESCE(MAX(booking_id), 1) FROM booking));
 SELECT setval('service_usage_record_id_seq', (SELECT COALESCE(MAX(record_id), 1) FROM service_usage));
 SELECT setval('payment_payment_id_seq', (SELECT COALESCE(MAX(payment_id), 1) FROM payment));

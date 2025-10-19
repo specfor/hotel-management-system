@@ -24,16 +24,8 @@ import * as discountController from "@src/controllers/discountController";
 import * as serviceController from "@src/controllers/chargeableServiceController"; 
 import * as bookingController from "@src/controllers/bookingController";
 import * as serviceUsageController from "@src/controllers/serviceUsageController";
+import * as guestController from "@src/controllers/guestController";
 
-import { getUsers } from "@src/controllers/userController";
-import {
-  getAllGuests,
-  getGuestByID,
-  addNewGuest,
-  updateGuestInfo,
-  changeGuestPassword,
-  deleteGuest,
-} from "@src/controllers/guestController";
 
 /******************************************************************************
                                 Setup
@@ -44,18 +36,6 @@ const apiRouter = Router();
 // Get all users
 apiRouter.get("/users", getUsers);
 
-// Get all guests
-apiRouter.get("/guest", getAllGuests);
-// Get guest by ID
-apiRouter.get("/guest/:id", getGuestByID);
-// Add new guest
-apiRouter.post("/guest", addNewGuest);
-// Update guest info
-apiRouter.put("/guest/:id", updateGuestInfo);
-// Change password
-apiRouter.put("/guest/:id/psw", changeGuestPassword);
-// Delete guest
-apiRouter.delete("/guest/:id", deleteGuest);
 
 // apiRouter.use("/api", apiRouter);
 apiRouter.use("/api", apiRouter);
@@ -144,8 +124,16 @@ apiRouter.get("/service-usage/:usageID", serviceUsageController.getServiceUsageB
 apiRouter.put("/service-usage/:usageID", serviceUsageController.updateServiceUsage);
 apiRouter.delete("/service-usage/:usageID", serviceUsageController.deleteServiceUsage);
 
+// endpoints for guest
+apiRouter.get("/guest", guestController.getAllGuests);
+apiRouter.get("/guest/:id", guestController.getGuestByID);
+apiRouter.post("/guest", guestController.addNewGuest);
+apiRouter.put("/guest/:id", guestController.updateGuestInfo);
+apiRouter.put("/guest/:id/psw", guestController.changeGuestPassword);
+apiRouter.delete("/guest/:id", guestController.deleteGuest);
+
 /******************************************************************************
-                                Export default
-******************************************************************************/
+ Export default
+ ******************************************************************************/
 
 export default apiRouter;

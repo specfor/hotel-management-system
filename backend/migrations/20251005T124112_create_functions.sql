@@ -141,23 +141,29 @@ RETURNS NUMERIC AS $$
 DECLARE
     discount_total NUMERIC;
     room_charges NUMERIC;
-    branch_id INT;
+    branchID INT;
 BEGIN
     -- Get room charges for this booking
     SELECT calculate_room_charges(p_booking_id) INTO room_charges;
 
     -- Get the branch of the booked room
     SELECT r.branch_id
-    INTO branch_id
+    INTO branchID
     FROM booking b
     JOIN room r ON b.room_id = r.room_id
     WHERE b.booking_id = p_booking_id;
 
     -- Sum all valid discounts for that branch
-    SELECT COALESCE(SUM(d.discount_rate * room_charges / 100),0)
+    SELECT COALESCE(SUM(
+        CASE 
+            WHEN d.discount_type = 'percentage' THEN d.discount_value * room_charges / 100
+            WHEN d.discount_type = 'fixed' THEN d.discount_value
+            ELSE 0
+        END
+    ), 0)
     INTO discount_total
     FROM discount d
-    WHERE d.branch_id = branch_id
+    WHERE d.branch_id = branchID
       AND d.valid_from <= CURRENT_DATE
       AND d.valid_to >= CURRENT_DATE;
 
