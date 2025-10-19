@@ -9,7 +9,7 @@ class Database {
   private pool: Pool;
   private isConnected = false;
 
-  constructor(connectToDb = false) {
+  public constructor() {
     this.pool = new Pool({
       host: ENV.Db.Host,
       port: ENV.Db.Port,
@@ -18,7 +18,8 @@ class Database {
       password: ENV.Db.Password,
       max: 20, // Maximum number of connections in pool
       idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
-      connectionTimeoutMillis: 2000, // Return error after 2 seconds if connection could not be established
+      // Return error after 2 seconds if connection could not be established
+      connectionTimeoutMillis: 2000,
       maxUses: 7500, // Close connections after 7500 uses (optional)
     });
 
@@ -59,7 +60,10 @@ class Database {
   /**
    * Execute a SQL query with optional parameters
    */
-  public async query(text: string, params?: unknown[]): Promise<QueryResult<QueryResultRow>> {
+  public async query(
+    text: string,
+    params?: unknown[],
+  ): Promise<QueryResult<QueryResultRow>> {
     if (!this.isConnected) {
       throw new Error("Database not connected. Call connect() first.");
     }

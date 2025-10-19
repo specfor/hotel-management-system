@@ -42,31 +42,150 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION calc_service_total()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.total_price := NEW.quantity * (SELECT unit_price FROM chargable_services WHERE service_id = NEW.service_id);
+    NEW.total_price := NEW.quantity * (SELECT unit_price FROM chargeable_services WHERE service_id = NEW.service_id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION update_outstanding_amount()
+CREATE OR REPLACE FUNCTION update_final_bill_total_amount()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.outstanding_amount := NEW.total_amount - NEW.paid_amount;
+    NEW.total_amount := COALESCE(NEW.room_charges,0) 
+                      + COALESCE(NEW.total_service_charges,0) 
+                      + COALESCE(NEW.total_tax,0) 
+                      + COALESCE(NEW.late_checkout_charge,0) 
+                      - COALESCE(NEW.total_discount,0);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION update_bill_on_payment()
+
+CREATE OR REPLACE FUNCTION update_final_bill_outstanding()
 RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE final_bill
-    SET paid_amount = paid_amount + NEW.paid_amount,
-        outstanding_amount = total_amount - (paid_amount + NEW.paid_amount)
-    WHERE bill_id = NEW.bill_id;
+    NEW.outstanding_amount := COALESCE(NEW.total_amount,0) - COALESCE(NEW.paid_amount,0);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+--------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION calculate_room_charges(p_booking_id INT)
+RETURNS NUMERIC AS $$
+DECLARE
+    nights INT;
+    room_rate NUMERIC;
+BEGIN
+    SELECT EXTRACT(DAY FROM (b.check_out - b.check_in)) 
+    INTO nights
+    FROM booking b
+    WHERE b.booking_id = p_booking_id;
+
+    SELECT rt.daily_rate
+    INTO room_rate
+    FROM booking b
+    JOIN room r ON b.room_id = r.room_id
+    JOIN room_type rt ON r.type_id = rt.type_id
+    WHERE b.booking_id = p_booking_id;
+
+    RETURN COALESCE(room_rate * nights, 0);
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION calculate_total_service_charges(p_booking_id INT)
+RETURNS NUMERIC AS $$
+DECLARE
+    service_total NUMERIC;
+BEGIN
+    SELECT COALESCE(SUM(su.total_price), 0)
+    INTO service_total
+    FROM service_usage su
+    WHERE su.booking_id = p_booking_id;
+
+    RETURN service_total;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION calculate_late_checkout_charge(p_booking_id INT)
+RETURNS NUMERIC AS $$
+DECLARE
+    late_hours NUMERIC;
+    late_rate NUMERIC;
+    check_out_time TIMESTAMP;
+BEGIN
+    -- Get the scheduled checkout time and the room's late checkout rate
+    SELECT b.check_out, rt.late_checkout_rate
+    INTO check_out_time, late_rate
+    FROM booking b
+    JOIN room r ON b.room_id = r.room_id
+    JOIN room_type rt ON r.type_id = rt.type_id
+    WHERE b.booking_id = p_booking_id;
+
+    -- Calculate hours late (if positive)
+    late_hours := EXTRACT(EPOCH FROM (NOW() - check_out_time)) / 3600;
+
+    IF late_hours < 0 THEN
+        late_hours := 0; -- not late yet
+    END IF;
+
+    RETURN COALESCE(late_hours * late_rate, 0);
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION calculate_total_discount(p_booking_id INT)
+RETURNS NUMERIC AS $$
+DECLARE
+    discount_total NUMERIC;
+    room_charges NUMERIC;
+    branch_id INT;
+BEGIN
+    -- Get room charges for this booking
+    SELECT calculate_room_charges(p_booking_id) INTO room_charges;
+
+    -- Get the branch of the booked room
+    SELECT r.branch_id
+    INTO branch_id
+    FROM booking b
+    JOIN room r ON b.room_id = r.room_id
+    WHERE b.booking_id = p_booking_id;
+
+    -- Sum all valid discounts for that branch
+    SELECT COALESCE(SUM(d.discount_rate * room_charges / 100),0)
+    INTO discount_total
+    FROM discount d
+    WHERE d.branch_id = branch_id
+      AND d.valid_from <= CURRENT_DATE
+      AND d.valid_to >= CURRENT_DATE;
+
+    RETURN discount_total;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION trg_update_final_bill_charges()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.room_charges := calculate_room_charges(NEW.booking_id);
+    NEW.late_checkout_charge := calculate_late_checkout_charge(NEW.booking_id);
+    NEW.total_service_charges := calculate_total_service_charges(NEW.booking_id);
+    NEW.total_discount := calculate_total_discount(NEW.booking_id);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+--------------------------------------------------------------------
+
+
+
+
+
+
+
+-- Trigger
 -- Example:
 -- CREATE TABLE example_table (
 --   id SERIAL PRIMARY KEY,
