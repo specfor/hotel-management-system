@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Plus, Eye, Pencil, Search, Building } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import { Plus, Eye, Pencil, Search, Building, Trash2 } from "lucide-react";
 import Table from "../../components/primary/Table";
 import Button from "../../components/primary/Button";
 import { useModal } from "../../hooks/useModal";
@@ -7,51 +7,20 @@ import { useAlert } from "../../hooks/useAlert";
 import NewBranchForm from "./NewBranchForm";
 import UpdateBranchForm from "./UpdateBranchForm";
 import BranchDetailsModal from "./BranchDetailsModal";
-import { getBranches, createBranch, updateBranch, deleteBranch } from "../../api_connection/branches";
+import {
+  createBranch,
+  getBranches,
+  updateBranch,
+  deleteBranch,
+  type Branch as ApiBranch,
+} from "../../api_connection/branches";
 
 interface Branch {
   branch_id: number;
   branch_name: string;
   city: string;
   address: string;
-  phone_number?: string;
-  email?: string;
-  created_at: string;
-  updated_at: string;
 }
-
-const mockBranches: Branch[] = [
-  {
-    branch_id: 1,
-    branch_name: "Main Branch",
-    city: "Colombo",
-    address: "123 Galle Road, Colombo 03",
-    phone_number: "+94 11 234 5678",
-    email: "main@hotel.com",
-    created_at: "2024-01-15T10:30:00Z",
-    updated_at: "2024-01-15T10:30:00Z",
-  },
-  {
-    branch_id: 2,
-    branch_name: "Kandy Branch",
-    city: "Kandy",
-    address: "456 Peradeniya Road, Kandy",
-    phone_number: "+94 81 234 5678",
-    email: "kandy@hotel.com",
-    created_at: "2024-02-01T14:20:00Z",
-    updated_at: "2024-02-01T14:20:00Z",
-  },
-  {
-    branch_id: 3,
-    branch_name: "Galle Branch",
-    city: "Galle",
-    address: "789 Fort Road, Galle",
-    phone_number: "+94 91 234 5678",
-    email: "galle@hotel.com",
-    created_at: "2024-03-10T09:15:00Z",
-    updated_at: "2024-03-10T09:15:00Z",
-  },
-];
 
 interface BranchFilters {
   branch_name?: string;
@@ -59,7 +28,7 @@ interface BranchFilters {
 }
 
 const BranchPage: React.FC = () => {
-  const [branches, setBranches] = useState<Branch[]>(mockBranches);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [loading] = useState(false);
   const [filters, setFilters] = useState<BranchFilters>({});
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
@@ -109,20 +78,6 @@ const BranchPage: React.FC = () => {
       ),
     },
     {
-      key: "phone_number",
-      title: "Phone",
-      sortable: false,
-      render: (value: unknown) => <span className="text-gray-600">{value ? String(value) : "N/A"}</span>,
-    },
-    {
-      key: "created_at",
-      title: "Created",
-      sortable: true,
-      render: (value: unknown) => (
-        <span className="text-gray-500 text-sm">{new Date(String(value)).toLocaleDateString()}</span>
-      ),
-    },
-    {
       key: "actions",
       title: "Actions",
       sortable: false,
@@ -146,6 +101,14 @@ const BranchPage: React.FC = () => {
             >
               <Pencil className="h-4 w-4" />
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDelete(branch)}
+              className="text-red-600 hover:text-red-800"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         );
       },
@@ -158,7 +121,12 @@ const BranchPage: React.FC = () => {
       title: "Create New Branch",
       size: "md",
       component: React.createElement(NewBranchForm, {
-        onSubmit: handleCreateBranch,
+        onSubmit: async (branchData: Omit<Branch, "branch_id">) => {
+          const success = await handleCreateBranch(branchData);
+          if (success) {
+            closeModal(modalId);
+          }
+        },
         onCancel: () => closeModal(modalId),
       }),
     });
@@ -171,7 +139,13 @@ const BranchPage: React.FC = () => {
       size: "md",
       component: React.createElement(UpdateBranchForm, {
         branch,
-        onSubmit: handleUpdateBranch,
+        onSubmit: async (branchData: Omit<Branch, "branch_id">) => {
+          const updatedBranch: Branch = { ...branchData, branch_id: branch.branch_id };
+          const success = await handleUpdateBranch(updatedBranch);
+          if (success) {
+            closeModal(modalId);
+          }
+        },
         onCancel: () => closeModal(modalId),
       }),
     });
@@ -193,58 +167,151 @@ const BranchPage: React.FC = () => {
     });
   };
 
-  const loadBranches = async () => {
+  const handleDelete = (branch: Branch) => {
+    const modalId = openModal({
+      title: "Delete Branch",
+      size: "sm",
+      component: React.createElement(
+        "div",
+        { className: "p-6" },
+        React.createElement(
+          "div",
+          { className: "flex items-center space-x-3 mb-4" },
+          React.createElement(Trash2, { className: "h-6 w-6 text-red-600" }),
+          React.createElement(
+            "div",
+            {},
+            React.createElement("h3", { className: "text-lg font-medium text-gray-900" }, "Delete Branch"),
+            React.createElement("p", { className: "text-sm text-gray-500" }, "This action cannot be undone")
+          )
+        ),
+        React.createElement(
+          "p",
+          { className: "text-sm text-gray-700 mb-6" },
+          `Are you sure you want to delete "${branch.branch_name}" located in ${branch.city}? This will permanently remove the branch and all associated data.`
+        ),
+        React.createElement(
+          "div",
+          { className: "flex justify-end space-x-3" },
+          React.createElement(
+            "button",
+            {
+              onClick: () => closeModal(modalId),
+              className:
+                "px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md font-medium transition-colors",
+            },
+            "Cancel"
+          ),
+          React.createElement(
+            "button",
+            {
+              onClick: async () => {
+                const success = await handleDeleteBranch(branch);
+                if (success) {
+                  closeModal(modalId);
+                }
+              },
+              className: "px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors",
+            },
+            "Delete Branch"
+          )
+        )
+      ),
+    });
+  };
+
+  const loadBranches = useCallback(async () => {
     try {
       const response = await getBranches();
       console.log(response);
-      //   setBranches(response.data);
+      setBranches(
+        response.data.map((b: ApiBranch) => ({
+          branch_id: b.branchid,
+          branch_name: b.branchname,
+          city: b.city || "",
+          address: b.address || "",
+        }))
+      );
     } catch {
       showError("Failed to load branches. Please try again.");
     }
-  };
+  }, [showError]);
 
-  const handleCreateBranch = async (branchData: Omit<Branch, "branch_id" | "created_at" | "updated_at">) => {
+  const handleCreateBranch = async (branchData: Omit<Branch, "branch_id">): Promise<boolean> => {
     try {
-      // Mock API call - replace with actual implementation
-      const newBranch: Branch = {
-        ...branchData,
-        branch_id: Math.max(...branches.map((b) => b.branch_id)) + 1,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      setBranches((prev) => [...prev, newBranch]);
-      showSuccess("Branch created successfully!");
+      const response = await createBranch({
+        address: branchData.address,
+        branchName: branchData.branch_name,
+        city: branchData.city,
+      });
+      if (response.success) {
+        loadBranches();
+        showSuccess("Branch created successfully!");
+        return true;
+      } else {
+        showError(response.message || "Failed to create branch. Please try again.");
+        return false;
+      }
     } catch {
       showError("Failed to create branch. Please try again.");
+      return false;
     }
   };
 
-  const handleUpdateBranch = async (branchData: Omit<Branch, "branch_id" | "created_at" | "updated_at">) => {
-    if (!selectedBranch) return;
+  const handleUpdateBranch = async (branchData: Branch): Promise<boolean> => {
+    if (!selectedBranch) return false;
 
     try {
-      // Mock API call - replace with actual implementation
-      const updatedBranch: Branch = {
-        ...selectedBranch,
-        ...branchData,
-        updated_at: new Date().toISOString(),
-      };
+      const response = await updateBranch(branchData.branch_id, {
+        address: branchData.address,
+        branchName: branchData.branch_name,
+        city: branchData.city,
+      });
 
-      setBranches((prev) =>
-        prev.map((branch) => (branch.branch_id === selectedBranch.branch_id ? updatedBranch : branch))
-      );
+      if (response.success) {
+        const updatedBranch: Branch = {
+          ...selectedBranch,
+          ...branchData,
+        };
 
-      setSelectedBranch(null);
-      showSuccess("Branch updated successfully!");
+        setBranches((prev) =>
+          prev.map((branch) => (branch.branch_id === selectedBranch.branch_id ? updatedBranch : branch))
+        );
+
+        setSelectedBranch(null);
+        showSuccess("Branch updated successfully!");
+        return true;
+      } else {
+        showError(response.message || "Failed to update branch. Please try again.");
+        return false;
+      }
     } catch {
       showError("Failed to update branch. Please try again.");
+      return false;
+    }
+  };
+
+  const handleDeleteBranch = async (branch: Branch): Promise<boolean> => {
+    try {
+      const response = await deleteBranch(branch.branch_id);
+
+      if (response.success) {
+        setBranches((prev) => prev.filter((b) => b.branch_id !== branch.branch_id));
+        showSuccess("Branch deleted successfully!");
+        return true;
+      } else {
+        showError(response.message || "Failed to delete branch. Please try again.");
+        return false;
+      }
+    } catch {
+      showError("Failed to delete branch. Please try again.");
+      return false;
     }
   };
 
   useEffect(() => {
     loadBranches();
-  }, [filters]);
+  }, [loadBranches, filters]);
 
   // Filter components
   const renderFilters = () => (
@@ -331,62 +398,6 @@ const BranchPage: React.FC = () => {
           emptyText="No branches found. Get started by creating your first branch location."
         />
       </div>
-
-      {/* Statistics Cards */}
-      {/* <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Building className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Branches</p>
-              <p className="text-2xl font-semibold text-gray-900">{branches.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Building className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Active Cities</p>
-              <p className="text-2xl font-semibold text-gray-900">{new Set(branches.map((b) => b.city)).size}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <Building className="h-6 w-6 text-yellow-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Newest Branch</p>
-              <p className="text-sm font-semibold text-gray-900">
-                {branches.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
-                  ?.branch_name || "N/A"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Building className="h-6 w-6 text-purple-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Avg. per City</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {(branches.length / new Set(branches.map((b) => b.city)).size).toFixed(1)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 };

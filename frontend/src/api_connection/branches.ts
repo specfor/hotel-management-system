@@ -1,15 +1,24 @@
 import { BaseApiService } from "./base";
 import type { ApiResponse } from "./base";
-import type { Branch } from "../types";
+
+// Updated Branch interface to match API response
+export interface Branch {
+  branchid: number;
+  branchname: string;
+  city: string;
+  address: string;
+}
+
+// API response wrapper for branches
+export interface BranchesApiResponse {
+  branchArr: Branch[];
+}
 
 // Branch-specific types for API operations
 export interface BranchCreateRequest {
-  branch_name: string;
+  branchName: string;
   city: string;
   address: string;
-  phone?: string;
-  email?: string;
-  manager_name?: string;
 }
 
 export type BranchUpdateRequest = Partial<BranchCreateRequest>;
@@ -63,13 +72,21 @@ export interface RevenueReport {
 }
 class BranchApiService extends BaseApiService {
   constructor() {
-    super("/branches");
+    super("/branch");
   }
 
   // Get all branches with optional filtering
   async getBranches(filters?: BranchFilters): Promise<ApiResponse<Branch[]>> {
     const params = this.buildQueryParams(filters);
-    return this.getAll<Branch>(params);
+    const response = await this.get<BranchesApiResponse>(this.endpoint, { params });
+
+    // Extract branchArr from the nested response
+    return {
+      success: response.success,
+      data: response.data.branchArr,
+      message: response.message,
+      errors: response.errors,
+    };
   }
 
   // Get branch by ID
@@ -121,7 +138,15 @@ class BranchApiService extends BaseApiService {
   // Search branches by name or city
   async searchBranches(query: string): Promise<ApiResponse<Branch[]>> {
     const params = { search: query };
-    return this.get<Branch[]>(`${this.endpoint}/search`, { params });
+    const response = await this.get<BranchesApiResponse>(`${this.endpoint}/search`, { params });
+
+    // Extract branchArr from the nested response
+    return {
+      success: response.success,
+      data: response.data.branchArr,
+      message: response.message,
+      errors: response.errors,
+    };
   }
 }
 

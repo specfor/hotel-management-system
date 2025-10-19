@@ -1,19 +1,15 @@
 import React, { useState } from "react";
-import { Building, MapPin, Phone, Mail } from "lucide-react";
+import { Building, MapPin } from "lucide-react";
 
 interface Branch {
   branch_id: number;
   branch_name: string;
   city: string;
   address: string;
-  phone_number?: string;
-  email?: string;
-  created_at: string;
-  updated_at: string;
 }
 
 interface NewBranchFormProps {
-  onSubmit: (data: Omit<Branch, "branch_id" | "created_at" | "updated_at">) => void;
+  onSubmit: (data: Omit<Branch, "branch_id">) => void;
   onCancel: () => void;
 }
 
@@ -22,8 +18,6 @@ const NewBranchForm: React.FC<NewBranchFormProps> = ({ onSubmit, onCancel }) => 
     branch_name: "",
     city: "",
     address: "",
-    phone_number: "",
-    email: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -44,14 +38,6 @@ const NewBranchForm: React.FC<NewBranchFormProps> = ({ onSubmit, onCancel }) => 
       newErrors.address = "Address is required";
     }
 
-    if (formData.phone_number && !/^\+?[\d\s\-()]+$/.test(formData.phone_number)) {
-      newErrors.phone_number = "Please enter a valid phone number";
-    }
-
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -67,8 +53,6 @@ const NewBranchForm: React.FC<NewBranchFormProps> = ({ onSubmit, onCancel }) => 
         branch_name: formData.branch_name.trim(),
         city: formData.city.trim(),
         address: formData.address.trim(),
-        phone_number: formData.phone_number.trim() || undefined,
-        email: formData.email.trim() || undefined,
       });
     } finally {
       setLoading(false);
@@ -142,46 +126,6 @@ const NewBranchForm: React.FC<NewBranchFormProps> = ({ onSubmit, onCancel }) => 
           onChange={(e) => handleChange("address", e.target.value)}
         />
         {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
-      </div>
-
-      {/* Phone Number */}
-      <div>
-        <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-          <Phone className="h-4 w-4 mr-2" />
-          Phone Number
-        </label>
-        <input
-          type="tel"
-          placeholder="e.g., +94 11 234 5678"
-          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.phone_number
-              ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-              : "border-gray-300 focus:border-blue-500"
-          }`}
-          value={formData.phone_number}
-          onChange={(e) => handleChange("phone_number", e.target.value)}
-        />
-        {errors.phone_number && <p className="mt-1 text-sm text-red-600">{errors.phone_number}</p>}
-      </div>
-
-      {/* Email */}
-      <div>
-        <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-          <Mail className="h-4 w-4 mr-2" />
-          Email Address
-        </label>
-        <input
-          type="email"
-          placeholder="e.g., branch@hotel.com"
-          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.email
-              ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-              : "border-gray-300 focus:border-blue-500"
-          }`}
-          value={formData.email}
-          onChange={(e) => handleChange("email", e.target.value)}
-        />
-        {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
       </div>
 
       {/* Form Actions */}
