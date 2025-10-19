@@ -1,5 +1,5 @@
 import logger from "jet-logger";
-
+import "../config";
 import ENV from "@src/common/constants/ENV";
 import server from "./server";
 import db from "@src/common/util/db";

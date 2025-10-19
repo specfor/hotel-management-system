@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "migrate": "ts-node ./scripts/migrate.ts",
     "db:drop": "ts-node ./scripts/dropDatabase.ts",
-    "start": "node -r ./config.js ./dist",
+    "start": "node ./dist",
     "test": "cross-env NODE_ENV=development vitest",
     "type-check": "tsc --noEmit"
   },
