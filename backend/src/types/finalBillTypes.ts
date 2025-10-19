@@ -1,4 +1,4 @@
-export interface FinalBillPublic {
+export interface FinalBillPublic{
   bill_id: number;
   user_id: number;
   booking_id: number;
@@ -13,3 +13,17 @@ export interface FinalBillPublic {
   created_at: string | Date | null;
 }
 
+export interface FinalBillInsert {
+  user_id: number;
+  booking_id: number;
+  // total_tax: number;
+  created_at?: string | Date | null;
+}
+
+export interface FinalBillUpdate {
+  bill_id: number;
+  user_id: number;
+  booking_id: number;
+  // total_tax: number;
+  created_at?: string | Date | null;
+}
