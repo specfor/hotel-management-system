@@ -1,9 +1,10 @@
 import React from "react";
-import { Mail, MapPin, Phone, User, Briefcase, DollarSign, Calendar, X } from "lucide-react";
+import { Mail, MapPin, Phone, User, Briefcase, DollarSign, X } from "lucide-react";
 import Modal from "../../components/Modal";
 import Button from "../../components/primary/Button";
 import Badge from "../../components/primary/Badge";
-import type { Staff, JobTitle } from "../../types/staff";
+import { JobTitle } from "../../types/staff";
+import type { Staff } from "../../types/staff";
 
 interface StaffDetailsModalProps {
   staff: Staff | null;
@@ -22,17 +23,17 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
 }) => {
   if (!staff) return null;
 
-  const getJobTitleBadgeVariant = (jobTitle: JobTitle) => {
+  const getJobTitleBadgeVariant = (jobTitle: string) => {
     switch (jobTitle) {
-      case "manager":
+      case JobTitle.MANAGER:
         return "primary";
-      case "receptionist":
+      case JobTitle.RECEPTIONIST:
         return "success";
-      case "housekeeping":
+      case JobTitle.HOUSEKEEPING:
         return "warning";
-      case "maintenance":
+      case JobTitle.MAINTENANCE:
         return "secondary";
-      case "security":
+      case JobTitle.SECURITY:
         return "error";
       default:
         return "secondary";
@@ -51,14 +52,6 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
       style: "currency",
       currency: "USD",
     }).format(salary);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
   };
 
   return (
@@ -133,14 +126,6 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
                   <p className="font-medium text-gray-900">{formatSalary(staff.salary)}</p>
                 </div>
               </div>
-
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 text-gray-500 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-500">Joined Date</p>
-                  <p className="font-medium text-gray-900">{formatDate(staff.created_at)}</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -148,14 +133,10 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
         {/* System Information */}
         <div className="bg-gray-50 rounded-lg p-4">
           <h3 className="text-sm font-semibold text-gray-700 mb-2">System Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 gap-3 text-sm">
             <div>
               <span className="text-gray-500">Staff ID:</span>
               <span className="ml-2 font-medium text-gray-900">#{staff.staff_id}</span>
-            </div>
-            <div>
-              <span className="text-gray-500">Last Updated:</span>
-              <span className="ml-2 font-medium text-gray-900">{formatDate(staff.updated_at)}</span>
             </div>
           </div>
         </div>

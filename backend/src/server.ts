@@ -12,6 +12,7 @@ import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import { RouteError } from "@src/common/util/route-errors";
 import { NodeEnvs } from "@src/common/constants";
 import { globalAuthMiddleware } from "@src/common/middleware/authMiddleware";
+import { jsonResponse } from "@src/common/util/response";
 
 /******************************************************************************
                                 Setup
@@ -61,7 +62,7 @@ app.use((err: Error, _: Request, res: Response, next: NextFunction) => {
   let status = HttpStatusCodes.BAD_REQUEST;
   if (err instanceof RouteError) {
     status = err.status;
-    res.status(status).json({ error: err.message });
+    jsonResponse(res, false, status, { error: err.message });
   }
   return next(err);
 });

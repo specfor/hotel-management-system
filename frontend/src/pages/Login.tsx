@@ -8,7 +8,7 @@ import type { LoginCredentials } from "../types/auth";
 const Login = () => {
   const { login, isAuthenticated, isLoading } = useAuth();
   const [credentials, setCredentials] = useState<LoginCredentials>({
-    email: "",
+    username: "",
     password: "",
   });
   const [error, setError] = useState<string>("");
@@ -28,7 +28,7 @@ const Login = () => {
       await login(credentials);
       // Navigation will happen automatically due to auth state change
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err?.message || "Login failed" : "Login failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -74,15 +74,15 @@ const Login = () => {
 
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email address
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                Username
               </label>
               <Input
-                id="email"
-                type="email"
-                value={credentials.email}
-                onChange={handleInputChange("email")}
-                placeholder="Enter your email"
+                id="username"
+                type="text"
+                value={credentials.username}
+                onChange={handleInputChange("username")}
+                placeholder="Enter your username"
                 required
                 disabled={isSubmitting}
                 className="w-full"
@@ -112,7 +112,7 @@ const Login = () => {
                 type="submit"
                 variant="primary"
                 size="lg"
-                disabled={isSubmitting || !credentials.email || !credentials.password}
+                disabled={isSubmitting || !credentials.username || !credentials.password}
                 className="w-full"
               >
                 {isSubmitting ? (

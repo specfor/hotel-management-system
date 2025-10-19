@@ -1,15 +1,11 @@
 import React from "react";
-import { Building, MapPin, Phone, Mail, Calendar, Clock, X } from "lucide-react";
+import { Building, MapPin, X } from "lucide-react";
 
 interface Branch {
   branch_id: number;
   branch_name: string;
   city: string;
   address: string;
-  phone_number?: string;
-  email?: string;
-  created_at: string;
-  updated_at: string;
 }
 
 interface BranchDetailsModalProps {
@@ -19,43 +15,6 @@ interface BranchDetailsModalProps {
 }
 
 const BranchDetailsModal: React.FC<BranchDetailsModalProps> = ({ branch, onClose, onEdit }) => {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-    if (diffInDays === 0) {
-      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-      if (diffInHours === 0) {
-        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-        return `${diffInMinutes} minutes ago`;
-      }
-      return `${diffInHours} hours ago`;
-    } else if (diffInDays === 1) {
-      return "Yesterday";
-    } else if (diffInDays < 7) {
-      return `${diffInDays} days ago`;
-    } else if (diffInDays < 30) {
-      const weeks = Math.floor(diffInDays / 7);
-      return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
-    } else {
-      const months = Math.floor(diffInDays / 30);
-      return `${months} month${months > 1 ? "s" : ""} ago`;
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -105,61 +64,6 @@ const BranchDetailsModal: React.FC<BranchDetailsModalProps> = ({ branch, onClose
               <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Address</label>
               <p className="text-sm text-gray-900 mt-1 leading-relaxed">{branch.address}</p>
             </div>
-          </div>
-        </div>
-
-        {/* Contact Information */}
-        {(branch.phone_number || branch.email) && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">Contact Information</h4>
-            <div className="space-y-3">
-              {branch.phone_number && (
-                <div className="flex items-center space-x-3">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Phone</label>
-                    <p className="text-sm text-gray-900">{branch.phone_number}</p>
-                  </div>
-                </div>
-              )}
-              {branch.email && (
-                <div className="flex items-center space-x-3">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Email</label>
-                    <p className="text-sm text-gray-900">{branch.email}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Timestamps */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
-            <Clock className="h-4 w-4 mr-2" />
-            Timeline
-          </h4>
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3">
-              <Calendar className="h-4 w-4 text-gray-400 mt-0.5" />
-              <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Created</label>
-                <p className="text-sm text-gray-900">{formatDate(branch.created_at)}</p>
-                <p className="text-xs text-gray-500">{formatRelativeTime(branch.created_at)}</p>
-              </div>
-            </div>
-            {branch.updated_at !== branch.created_at && (
-              <div className="flex items-start space-x-3">
-                <Clock className="h-4 w-4 text-gray-400 mt-0.5" />
-                <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Last Updated</label>
-                  <p className="text-sm text-gray-900">{formatDate(branch.updated_at)}</p>
-                  <p className="text-xs text-gray-500">{formatRelativeTime(branch.updated_at)}</p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 

@@ -1,9 +1,11 @@
 import React from "react";
 import type { RouteObject } from "react-router-dom";
 import Dashboard from "../pages/Dashboard";
-import Bookings from "../pages/Bookings";
+import Bookings from "../pages/booking/BookingManagement";
+import BookingDetails from "../pages/booking/BookingDetails";
 import Rooms from "../pages/room/Rooms";
-import Guests from "../pages/Guests";
+import Guests from "../pages/guests/GuestManagement";
+import Services from "../pages/services/Services";
 import Reports from "../pages/Reports";
 import SettingsPage from "../pages/Settings";
 import Login from "../pages/Login";
@@ -36,6 +38,13 @@ export const protectedRoutes: AppRoute[] = [
     allowedRoles: ["admin", "manager", "staff", "receptionist"], // All roles can access bookings
   },
   {
+    path: "/bookings/:bookingId",
+    element: BookingDetails,
+    label: "Booking Details",
+    protected: true,
+    allowedRoles: ["admin", "manager", "staff", "receptionist"], // All roles can access bookings
+  },
+  {
     path: "/rooms",
     element: Rooms,
     label: "Rooms",
@@ -48,6 +57,13 @@ export const protectedRoutes: AppRoute[] = [
     label: "Guests",
     protected: true,
     allowedRoles: ["admin", "manager", "staff", "receptionist"], // All roles can access guests
+  },
+  {
+    path: "/services",
+    element: Services,
+    label: "Services",
+    protected: true,
+    allowedRoles: ["admin", "manager"], // Only admin and manager can access services and discounts
   },
   {
     path: "/reports",
