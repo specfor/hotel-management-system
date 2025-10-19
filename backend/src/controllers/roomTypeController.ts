@@ -15,9 +15,10 @@ export async function getAllRoomTypes(req:Request, res: Response){
       return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
         message: "No room types stored",
       });
-    }else{
-      return jsonResponse({ res, success: true, status: HttpStatusCodes.OK, data: roomTypeArr });
     }
+
+    return jsonResponse(res,true, HttpStatusCodes.OK, {roomTypeArr});
+    
 
   }catch(err){
     console.log(err);
