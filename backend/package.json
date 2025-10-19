@@ -7,10 +7,9 @@
     "dev": "cross-env NODE_ENV=development ts-node ./src/index.ts",
     "dev:hot": "nodemon --exec \"npm run dev\" --watch ./src --ext .ts",
     "lint": "eslint .",
-    "migrate": "node ./dist/scripts/migrate.js",
+    "migrate": "ts-node ./scripts/migrate.ts",
     "db:drop": "ts-node ./scripts/dropDatabase.ts",
     "start": "node -r ./config.js -r module-alias/register ./dist",
-    "start:prod": "npm run migrate && npm start",
     "test": "cross-env NODE_ENV=development vitest",
     "type-check": "tsc --noEmit"
   },
