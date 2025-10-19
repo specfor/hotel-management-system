@@ -10,6 +10,7 @@
     "migrate": "node ./dist/scripts/migrate.js",
     "db:drop": "ts-node ./scripts/dropDatabase.ts",
     "start": "node -r ./config.js -r module-alias/register ./dist",
+    "start:prod": "npm run migrate && npm start",
     "test": "cross-env NODE_ENV=development vitest",
     "type-check": "tsc --noEmit"
   },
