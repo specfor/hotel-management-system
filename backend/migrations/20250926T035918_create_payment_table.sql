@@ -13,6 +13,7 @@ CREATE TABLE payment (
   bill_id INT,
   paid_method VARCHAR(50),
   paid_amount DECIMAL(10,2),
+  notes TEXT,
   date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_payment_bill FOREIGN KEY (bill_id) REFERENCES final_bill(bill_id)
 );
