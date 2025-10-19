@@ -13,17 +13,17 @@ const apiRouter = Router();
 apiRouter.get("/users", getUsers);
 
 // Get all guests
-apiRouter.get("/guests", getAllGuests);
+apiRouter.get("/guest", getAllGuests);
 // Get guest by ID
-apiRouter.get("/guests/:id", getGuestByID);
+apiRouter.get("/guest/:id", getGuestByID);
 // Add new guest
-apiRouter.post("/guests", addNewGuest);
+apiRouter.post("/guest", addNewGuest);
 // Update guest info
-apiRouter.put("/guests/:id", updateGuestInfo);
+apiRouter.put("/guest/:id", updateGuestInfo);
 // Change password
-apiRouter.put("/guests/:id/psw", changeGuestPassword);
+apiRouter.put("/guest/:id/psw", changeGuestPassword);
 // Delete guest
-apiRouter.delete("/guests/:id", deleteGuest);
+apiRouter.delete("/guest/:id", deleteGuest);
 
 // apiRouter.use("/api", apiRouter);
 

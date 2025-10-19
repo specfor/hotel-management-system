@@ -1,18 +1,61 @@
 import db from "@src/common/util/db";
 import { GuestPublic, GuestRepo, GuestPassword } from "@src/types/guestTypes";
 
-export async function getAllGuests_repo(): Promise<GuestPublic[]> {
+export async function getAllGuests_repo(
+  name?: string,
+  nic?: string,
+  minAge?: number,
+  maxAge?: number,
+  page: number = 1,
+  limit: number = 5
+): Promise<GuestPublic[]> {
   if (!db.isReady()) {
     await db.connect();
   }
 
-  const result = await db.query(
-    `SELECT guest_id, NIC, name, age, contact_no, email 
-    FROM guest 
-    ORDER BY guest_id ASC`,
-  );
+  // Start building the query
+  let query = `SELECT guest_id, nic, name, age, contact_no, email, room_id, booking_status FROM guest_main_view WHERE 1=1`;
+  const values: any[] = [];
+  let idx = 1;
 
-  return result.rows as GuestPublic[];
+  // Filtering
+  if (name) {
+    query += ` AND LOWER(name) LIKE $${idx}`;
+    values.push(`%${name.toLowerCase()}%`);
+    idx++;
+  }
+  if (nic) {
+    query += ` AND nic = $${idx}`;
+    values.push(nic);
+    idx++;
+  }
+  if (minAge !== undefined) {
+    query += ` AND age >= $${idx}`;
+    values.push(minAge);
+    idx++;
+  }
+  if (maxAge !== undefined) {
+    query += ` AND age <= $${idx}`;
+    values.push(maxAge);
+    idx++;
+  }
+
+  // Paging
+  query += ` ORDER BY guest_id ASC LIMIT $${idx} OFFSET $${idx + 1}`;
+  values.push(limit, (page - 1) * limit);
+
+  const result = await db.query(query, values);
+
+  return result.rows.map((row: any) => ({
+    guest_id: row.guest_id,
+    nic: row.nic ?? null,
+    name: row.name ?? null,
+    age: row.age ?? null,
+    contact_no: row.contact_no ?? null,
+    email: row.email ?? null,
+    room_id: row.room_id ?? null,
+    booking_status: row.booking_status ?? null,
+  }));
 }
 
 export async function getGuestByID_repo(id: number): Promise<GuestPublic | null> {
@@ -21,8 +64,8 @@ export async function getGuestByID_repo(id: number): Promise<GuestPublic | null>
   }
 
   const result = await db.query(
-    `SELECT guest_id, nic, name, age, contact_no, email 
-    FROM guest 
+    `select guest_id, NIC, name, age,  contact_no, email, room_id, booking_status
+    FROM guest_main_view 
     WHERE guest_id = $1`,
     [id], 
   );
@@ -39,6 +82,8 @@ export async function getGuestByID_repo(id: number): Promise<GuestPublic | null>
     age: row.age ?? null,
     contact_no: row.contact_no ?? null,
     email: row.email ?? null,
+    room_id: row.room_id ?? null,
+    booking_status: row.booking_status ?? null,
   };
 }
 
@@ -65,7 +110,8 @@ export async function addNewGuest_repo(record: GuestRepo): Promise<number | null
 }
 
 export async function updateGuestInfo_repo(
-  record: GuestPublic,
+  record: GuestRepo,
+  guest_id: number
 ): Promise<GuestPublic | null> {
 
   if (!db.isReady()) {
@@ -87,7 +133,7 @@ export async function updateGuestInfo_repo(
     record.age, 
     record.contact_no, 
     record.email, 
-    record.guest_id,
+    guest_id,
   ];
 
   const result = await db.query(query, values);
@@ -100,6 +146,8 @@ export async function updateGuestInfo_repo(
     age: row.age ?? null,
     contact_no: row.contact_no ?? null,
     email: row.email ?? null,
+    room_id: null,
+    booking_status: null,
   }; 
 }
 
