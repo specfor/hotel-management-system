@@ -7,8 +7,6 @@ export interface Staff {
   email: string;
   job_title: JobTitle;
   salary: number;
-  created_at: string;
-  updated_at: string;
   // Populated fields for display
   branch_name?: string;
 }
