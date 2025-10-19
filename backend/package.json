@@ -9,9 +9,12 @@
     "lint": "eslint .",
     "migrate": "ts-node ./scripts/migrate.ts",
     "db:drop": "ts-node ./scripts/dropDatabase.ts",
-    "start": "node -r ./config.js ./dist",
+    "start": "node -r ./config.js -r module-alias/register ./dist",
     "test": "cross-env NODE_ENV=development vitest",
     "type-check": "tsc --noEmit"
+  },
+  "_moduleAliases": {
+    "@src": "dist"
   },
   "engines": {
     "node": ">=16.0.0"
