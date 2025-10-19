@@ -15,6 +15,9 @@ RUN npm ci
 # Copy all source files
 COPY .. .
 
+# Set environment to production to skip dotenv loading during build
+ENV NODE_ENV=production
+
 # Build TypeScript to JavaScript
 RUN npm run build
 
