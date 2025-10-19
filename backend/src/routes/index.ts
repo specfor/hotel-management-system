@@ -94,6 +94,7 @@ apiRouter.put("/service/:serviceID", serviceController.updateChargeableService);
 apiRouter.delete("/service/:serviceID", serviceController.deleteChargeableService);
 
 // endpoints for booking
+apiRouter.get("/booking/availability", bookingController.checkRoomAvailability);
 apiRouter.get("/booking", bookingController.getAllBookings);
 apiRouter.post("/booking", bookingController.createBooking);
 apiRouter.get("/booking/:bookingID", bookingController.getBookingByID);
