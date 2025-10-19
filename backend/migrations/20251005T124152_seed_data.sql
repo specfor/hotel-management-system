@@ -57,10 +57,10 @@ INSERT INTO staff (staff_id, branch_id, name, contact_no, email, job_title, sala
 -- =========================
 -- 6. Users (staff login)
 -- =========================
-INSERT INTO "user" (staff_id, username, password_hash) VALUES
-(1, 'alice', 'hashedpass1'),
-(2, 'bob', 'hashedpass2'),
-(3, 'charlie', 'hashedpass3');
+-- INSERT INTO "user" (staff_id, username, password_hash) VALUES
+-- (1, 'alice', 'hashedpass1'),
+-- (2, 'bob', 'hashedpass2'),
+-- (3, 'charlie', 'hashedpass3');
 
 -- =========================
 -- 7. Chargable Services
@@ -76,18 +76,18 @@ INSERT INTO chargable_services (service_id, branch_id, service_name, unit_price,
 -- =========================
 -- 8. Bookings
 -- =========================
-INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, payment_method, date_time, check_in, check_out) VALUES
-(1, 1, 1, 1, 'Booked', 'Credit Card', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
-(2, 2, 2, 2, 'Checked-In', 'Cash', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
-(3, 1, 3, 3, 'Cancelled', 'Bank Transfer', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
+-- INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, payment_method, date_time, check_in, check_out) VALUES
+-- (1, 1, 1, 1, 'Booked', 'Credit Card', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
+-- (2, 2, 2, 2, 'Checked-In', 'Cash', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
+-- (3, 1, 3, 3, 'Cancelled', 'Bank Transfer', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
 
 -- =========================
 -- 9. Service Usage
 -- =========================
-INSERT INTO service_usage (record_id, service_id, booking_id, date_time, quantity, total_price) VALUES
-(1, 1, 1, '2025-10-02 10:00', 2, 20.00),
-(2, 2, 1, '2025-10-03 09:00', 3, 15.00),
-(3, 4, 2, '2025-09-29 18:00', 1, 15.00);
+-- INSERT INTO service_usage (record_id, service_id, booking_id, date_time, quantity, total_price) VALUES
+-- (1, 1, 1, '2025-10-02 10:00', 2, 20.00),
+-- (2, 2, 1, '2025-10-03 09:00', 3, 15.00),
+-- (3, 4, 2, '2025-09-29 18:00', 1, 15.00);
 
 -- =========================
 -- 10. Payments
@@ -108,17 +108,17 @@ INSERT INTO discount (branch_id, discount_name, discount_type, discount_value, m
 -- =========================
 -- 12. Revenue
 -- =========================
-INSERT INTO revenue (record_id, branch_id, month, calculated_data_time, amount) VALUES
-(1, 1, 9, NOW(), 5000.00),
-(2, 2, 9, NOW(), 3000.00),
-(3, 3, 9, NOW(), 4000.00);
+-- INSERT INTO revenue (record_id, branch_id, month, calculated_data_time, amount) VALUES
+-- (1, 1, 9, NOW(), 5000.00),
+-- (2, 2, 9, NOW(), 3000.00),
+-- (3, 3, 9, NOW(), 4000.00);
 
 -- =========================
 -- 13. Logs
 -- =========================
-INSERT INTO log (record_id, user_id, action, date_time, action_rec_id) VALUES
-(1, 1, 'Created booking', NOW(), 1),
-(2, 2, 'Checked-in guest', NOW(), 2);
+-- INSERT INTO log (record_id, user_id, action, date_time, action_rec_id) VALUES
+-- (1, 1, 'Created booking', NOW(), 1),
+-- (2, 2, 'Checked-in guest', NOW(), 2);
 
 -- =========================
 -- Reset Sequences
