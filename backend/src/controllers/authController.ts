@@ -115,6 +115,7 @@ export async function login(req: Request, res: Response) {
       user: {
         staff_id: user.staff_id,
         username: user.username,
+        role: user.job_title,
       },
       token,
     });
