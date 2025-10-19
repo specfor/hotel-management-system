@@ -29,12 +29,25 @@ FOR EACH ROW
 EXECUTE FUNCTION calc_service_total();
 
 
-CREATE TRIGGER trg_update_outstanding
-BEFORE INSERT OR UPDATE ON final_bill
+CREATE TRIGGER trg_update_total_amount
+BEFORE INSERT OR UPDATE OF room_charges, total_service_charges, total_tax, total_discount, late_checkout_charge
+ON final_bill
 FOR EACH ROW
-EXECUTE FUNCTION update_outstanding_amount();
+EXECUTE FUNCTION update_final_bill_total_amount();
 
 
+CREATE TRIGGER trg_update_outstanding_amount
+BEFORE INSERT OR UPDATE OF total_amount, paid_amount
+ON final_bill
+FOR EACH ROW
+EXECUTE FUNCTION update_final_bill_outstanding();
+
+
+CREATE TRIGGER trg_final_bill_charges
+BEFORE INSERT OR UPDATE OF booking_id
+ON final_bill
+FOR EACH ROW
+EXECUTE FUNCTION trg_update_final_bill_charges();
 
 
 -- Example:
