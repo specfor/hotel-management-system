@@ -1,5 +1,4 @@
 import { FinalBillInsert, FinalBillUpdate } from "@src/types/finalBillTypes";
-import { BookingPublic } from "@src/types/bookingTypes";
 import { UserPublic } from "@src/types/userTypes";
 import { getUserByID_repo } from "@src/repos/userRepo";
 import { getBookingByID_repo } from "@src/repos/bookingRepo";

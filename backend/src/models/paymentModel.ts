@@ -10,6 +10,7 @@ import {
 import {
   getPaymentByID_repo,
   getTotalPaidAmountByID_repo,
+  getAllPaymentsByBillID_repo,
 } from "@src/repos/paymentRepo";
 import { PaymentPrivate, PaymentPublic } from "@src/types/paymentTypes";
 import { FinalBillPublic } from "@src/types/finalBillTypes";
@@ -32,6 +33,32 @@ function getCurrentTimestamp(): string {
 async function updateFinalBillPaidAmount(bill_id: number) {
   const totalPaid = await getTotalPaidAmountByID_repo(bill_id);
   await updateFinalBillPaidAmount_repo(bill_id, totalPaid);
+}
+
+export async function getAllPaymentsByBillID_model(
+  bill_id: number,
+  method: string | undefined,
+  reference: string | undefined,
+  notes: string | undefined,
+  date_time: string | undefined,
+): Promise<{
+  success: boolean;
+  payments?: PaymentPublic[] | null;
+  error?: string;
+}> {
+  const finalBill = await getFinalBillByID_repo(bill_id);
+  if (finalBill) {
+    const payments = await getAllPaymentsByBillID_repo(
+      bill_id,
+      method,
+      reference,
+      notes,
+      date_time
+    );
+    return { success: true, payments: payments };
+  } else {
+    return { success: false, error: "Bill Id not found" };
+  }
 }
 
 export async function addNewPayment_model(newPay: PaymentPrivate) {

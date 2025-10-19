@@ -7,12 +7,11 @@ import {
   addNewPayment_model,
   deletePayment_model,
   updatePaymentInfo_model,
+  getAllPaymentsByBillID_model,
 } from "@src/models/paymentModel";
 import {
   getAllPayments_repo,
   getPaymentByID_repo,
-  updatePaymentInfo_repo,
-  deletePayment_repo,
 } from "@src/repos/paymentRepo";
 import { PaymentPrivate, PaymentPublic } from "@src/types/paymentTypes";
 // ES Modules
@@ -41,12 +40,61 @@ export async function getAllPayments(
       return;
     }
     jsonResponse(res, true, HttpStatusCodes.OK, { Payments });
-  } catch (error) {
+  } catch {
     jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
       error: "Database Error - Error Happened in the repo",
     });
   }
-  
+}
+
+export async function getAllPaymentsByBillID(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    // Extract query params
+    const method =
+      typeof req.query.method === "string" ? req.query.method : undefined;
+    const reference =
+      typeof req.query.reference === "string" ? req.query.reference : undefined;
+    const notes =
+      typeof req.query.notes === "string" ? req.query.notes : undefined;
+    const date_time =
+      typeof req.query.date_time === "string" ? req.query.date_time : undefined;
+
+    const bill_id = parseInt(req.params.bill_id);
+    if (isNaN(bill_id)) {
+      jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        error: "Invalid Bill ID",
+      });
+      return;
+    }
+    const result = await getAllPaymentsByBillID_model(
+      bill_id,
+      method,
+      reference,
+      notes,
+      date_time
+    );
+
+    if (!result.success) {
+      jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {
+        error: result.error,
+      });
+      return;
+    }
+    if (result.payments === null) {
+      jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {
+        error: "Payments not found for the given Bill ID",
+      });
+      return;
+    }
+    jsonResponse(res, true, HttpStatusCodes.OK, { Payments: result.payments });
+  } catch {
+    jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      error: "Database Error - Error Happened in the repo",
+    });
+  }
 }
 
 export async function getPaymentByID(
