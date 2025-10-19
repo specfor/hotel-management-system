@@ -2,16 +2,23 @@ import {RoomPublic} from "@src/types/room";
 import db from "@src/common/util/db";
 
 export async function getAllRoomsDB():Promise<RoomPublic[] | null>{
-  try{
-    const sql = `
-        SELECT * FROM room;
+
+  const sql = `
+        SELECT
+            room_id AS "roomID",
+            branch_id AS "branchID",
+            type_id AS "typeID",
+            room_status AS "roomStatus"
+        FROM room;
     `;
-    const results = await db.query(sql);
-    return results.rows as RoomPublic[];
-  }catch(err){
-    console.error(err);
+  const results = await db.query(sql);
+
+  if(results.rows.length == 0){
     return null;
   }
+
+  return results.rows as RoomPublic[];
+  
 }
 
 export async function getRoomsByBranchDB(
@@ -20,8 +27,8 @@ export async function getRoomsByBranchDB(
   status?: string,
 ): Promise<RoomPublic[] | null> {
 
-  try {
-    let sql = `
+
+  let sql = `
       SELECT 
         r.room_id AS "roomID",
         r.branch_id AS "branchID",
@@ -31,50 +38,52 @@ export async function getRoomsByBranchDB(
       JOIN room_type rt ON r.type_id = rt.type_id
       WHERE r.branch_id = $1
     `;
-    const values: any[] = [branchID];
-    let paramIndex = 2;
+  const values: (string | number)[] = [branchID];
+  let paramIndex = 2;
 
-    if (type) {
-      sql += ` AND rt.type_name = $${paramIndex++}`;
-      values.push(type);
-    }
+  if (type) {
+    sql += ` AND rt.type_name = $${paramIndex++}`;
+    values.push(type);
+  }
 
-    if (status) {
-      sql += ` AND r.room_status = $${paramIndex++}`;
-      values.push(status);
-    }
+  if (status) {
+    sql += ` AND r.room_status = $${paramIndex++}`;
+    values.push(status);
+  }
 
-    sql += " ORDER BY r.room_id ASC;";
+  sql += " ORDER BY r.room_id ASC;";
 
-    const result = await db.query(sql, values);
-    return result.rows as RoomPublic[];
+  const result = await db.query(sql, values);
 
-  } catch (err) {
-    console.error(err);
+  if(result.rows.length == 0){
     return null;
   }
+
+  return result.rows as RoomPublic[];
 
 }
 
-export async function createRoomDB(branchIdInt, roomTypeId):Promise<RoomPublic>{
-  try {
-    const sql = `
+export async function createRoomDB(
+  branchIdInt: number, roomTypeId: number):Promise<RoomPublic | null>{
+
+  const sql = `
       INSERT INTO room (branch_id, type_id, room_status)
       VALUES ($1, $2, 'Available')
       RETURNING 
-        room_id AS "roomID",
-        branch_id AS "branchID",
-        type_id AS "typeID",
-        room_status AS "status";
+        room_id AS "roomId",
+        branch_id AS "branchId",
+        type_id AS "typeId",
+        room_status AS "roomStatus";
     `;
 
-    const result = await db.query(sql, [branchIdInt, roomTypeId]);
-    return result.rows[0] as RoomPublic;
+  const result = await db.query(sql, [branchIdInt, roomTypeId]);
 
-  } catch (err) {
-    console.error(err);
+  if(result.rows.length == 0){
     return null;
   }
+
+  return result.rows[0] as RoomPublic;
+    
 }
 
 export async function updateRoomDB(
@@ -82,26 +91,26 @@ export async function updateRoomDB(
   typeID?: number,
   status?: string,
 ): Promise<RoomPublic | null> {
-  try {
-    const updates: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
 
-    if (typeID) {
-      updates.push(`type_id = $${paramIndex++}`);
-      values.push(typeID);
-    }
+  const updates: string[] = [];
+  const values: (string | number)[] = [];
+  let paramIndex = 1;
 
-    if (status) {
-      updates.push(`room_status = $${paramIndex++}`);
-      values.push(status);
-    }
+  if (typeID) {
+    updates.push(`type_id = $${paramIndex++}`);
+    values.push(typeID);
+  }
 
-    if (updates.length === 0) return null;
+  if (status) {
+    updates.push(`room_status = $${paramIndex++}`);
+    values.push(status);
+  }
 
-    values.push(roomID);
+  if (updates.length === 0) return null;
 
-    const sql = `
+  values.push(roomID);
+
+  const sql = `
       UPDATE room
       SET ${updates.join(", ")}
       WHERE room_id = $${paramIndex}
@@ -112,42 +121,57 @@ export async function updateRoomDB(
         room_status AS "status";
     `;
 
-    const result = await db.query(sql, values);
-    return result.rows[0] as RoomPublic;
-  } catch (err) {
-    console.error(err);
+  const result = await db.query(sql, values);
+  if (result.rows.length === 0){
     return null;
   }
+  return result.rows[0] as RoomPublic;
+
 }
 
 export async function deleteRoomDB(roomID: number): Promise<boolean> {
-  try {
-    const sql = `
+
+  const sql = `
       DELETE FROM room
       WHERE room_id = $1
       RETURNING room_id;
     `;
 
-    const result = await db.query(sql, [roomID]);
-    return result.rowCount > 0;
-  } catch (err) {
-    console.error(err);
-    return false;
-  }
+  const result = await db.query(sql, [roomID]);
+
+  return (result.rows.length ?? 0) > 0;
+
 }
 
-export async function getBranchIdOfRoom(roomID: number):Promise<{branchID: number}>{
-  try {
-    const sql = `
-            SELECT branch_id AS "branchID"
+export async function getBranchIdOfRoom(
+  roomID: number,
+): Promise<{ branchId: number } | null> {
+  const sql = `
+            SELECT branch_id AS "branchId"
             FROM room
             WHERE room_id = $1;
         `;
 
-    const result = await db.query(sql, [roomID]);
-    return result.rows[0];
-  } catch (err) {
-    console.error(err);
-    return false;
+  const result = await db.query(sql, [roomID]);
+  if(result.rows.length == 0){
+    return null;
   }
+  return result.rows[0] as {branchId: number};
+  
+}
+
+export async function getRoomByIdDB(roomId: number):Promise<RoomPublic | null>{
+  const sql = `
+    SELECT *
+    FROM room
+    WHERE room_id = $1;
+  `;
+
+  const result = await db.query(sql, [roomId]);
+
+  if(result.rows.length == 0){
+    return null;
+  }
+
+  return result.rows[0] as RoomPublic;
 }

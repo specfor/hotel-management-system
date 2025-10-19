@@ -1,145 +1,274 @@
-/* eslint-disable max-len */
 import {jsonResponse} from "@src/common/util/response";
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import {Request, Response} from "express";
-import {getAllRoomTypesDB, getRoomTypesByBranchDB, createRoomTypeDB, updateRoomTypeDB, deleteRoomTypeDB} from "@src/repos/roomTypeRepo";
+import {getAllRoomTypesDB, getRoomTypesByBranchDB,
+  createRoomTypeDB, updateRoomTypeDB, deleteRoomTypeDB} from "@src/repos/roomTypeRepo";
 import {getBranchByIdDB} from "@src/repos/branchRepo";
 import * as console from "node:console";
+import Joi from "joi";
 
-export async function getAllRoomTypes(req:Request, res: Response):Promise<void>{
+export async function getAllRoomTypes(req:Request, res: Response){
   try{
     const roomTypeArr = await getAllRoomTypesDB();
 
     if(!roomTypeArr){
-      return jsonResponse(res, true, HttpStatusCodes.OK, {message: "No room types stored or query execution failed"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "No room types stored",
+      });
     }else{
-      return jsonResponse(res, true, HttpStatusCodes.OK, roomTypeArr);
+      return jsonResponse( res, success: true, status: HttpStatusCodes.OK, data: roomTypeArr );
     }
 
   }catch(err){
     console.log(err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error"});
+    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      message: "Server error",
+    });
   }
 
 }
 
-export async function getRoomTypesByBranch(req:Request, res: Response):Promise<void>{
+export async function getRoomTypesByBranch(req:Request, res: Response){
   try{
-    const roomTypeIDInt: number = parseInt(req.params.branchID, 10);
-    const roomTypeArr = await getRoomTypesByBranchDB(roomTypeIDInt);
+    const paramSchema = Joi.object<{branchId: number}>({
+      branchId: Joi.number().integer().positive().required(),
+    });
+
+    const paramResult = paramSchema.validate(req.params, {
+      abortEarly : false,
+    });
+
+    if(paramResult.error){
+      const messages = paramResult.error.details.map((details) => details.message);
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "invalid input data",
+        details: messages,
+      });
+    }
+
+    const roomTypeId = paramResult.value.branchId;
+
+    const roomTypeArr = await getRoomTypesByBranchDB(roomTypeId);
 
     if(!roomTypeArr){
-      return jsonResponse(res, true, HttpStatusCodes.OK, {message: "No room types stored or query execution failed"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "No room types stored",
+      });
     }else{
-      return jsonResponse(res, true, HttpStatusCodes.OK, roomTypeArr);
+      return jsonResponse(res, true, HttpStatusCodes.OK, {roomTypeArr});
     }
 
   }catch(err){
     console.log(err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error"});
+    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      message: "Server error",
+    });
   }
 }
 
-export async function createRoomType(req: Request, res: Response):Promise<void>{
+export async function createRoomType(req: Request, res: Response){
   try{
-    const {branchID, roomTypeName, dailyRate, lateCheckoutRate, capacity, amentities} = req.body;
+    const bodySchema = Joi.object<{
+        branchId:number, roomTypeName:string,
+        dailyRate:number, lateCheckoutRate?:number,
+        capacity?:number, amenities?:string,
+    }>({
+      branchId: Joi.number().integer().positive().required(),
+      roomTypeName: Joi.string().required(),
+      dailyRate: Joi.number().integer().positive().required(),
+      lateCheckoutRate: Joi.number().integer().positive().optional(),
+      capacity: Joi.number().integer().positive().optional(),
+      amenities: Joi.string().optional(),
+    });
 
-    const branchIDInt: number = parseInt(branchID, 10);
-    const dailyRateInt: number = parseInt(dailyRate, 10);
-    const lateCheckoutRateInt: number = parseInt(lateCheckoutRate, 10);
-    const capacityInt: number = parseInt(capacity, 10);
+    const bodyResult = bodySchema.validate(req.body, {
+      abortEarly: false,
+    });
 
-    if(isNaN(branchIDInt)){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Branch ID is not a number"});
+    if(bodyResult.error){
+      const messages = bodyResult.error.details.map((details) => details.message);
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "invalid input data",
+        details: messages,
+      });
     }
 
-    if(!(await getBranchByIdDB(branchIDInt))){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Branch ID is not valid"});
+    const branchId = bodyResult.value.branchId;
+    const roomTypeName = bodyResult.value.roomTypeName;
+    const dailyRateInt = bodyResult.value.dailyRate;
+    const lateCheckoutRateInt = bodyResult.value.lateCheckoutRate;
+    const capacityInt = bodyResult.value.capacity;
+    const amenities = bodyResult.value.amenities;
+
+    if(!(await getBranchByIdDB(branchId))){
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "Branch ID is not valid",
+      });
     }
 
-    if(isNaN(dailyRateInt)){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Daily rate is not a number"});
+    const roomTypesAvailable = await getRoomTypesByBranchDB(branchId);
+
+    console.log("before the for loop");
+
+    if (roomTypesAvailable) {
+      for (const roomType of roomTypesAvailable) {
+        console.log(roomType.roomTypeName);
+        if (roomType.roomTypeName === roomTypeName) {
+          return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+            message: `Room type '${roomTypeName}' already exists in branch ${branchId}`,
+          });
+        }
+      }
     }
 
-    if(isNaN(lateCheckoutRateInt)){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Late checkout rate is not a number"});
-    }
+    console.log("after the for loop");
 
-    if(isNaN(capacityInt)){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Capacity is not a number"});
-    }
-
-    const roomType = await createRoomTypeDB(branchIDInt, roomTypeName, dailyRateInt, lateCheckoutRateInt, capacityInt, amentities);
+    const roomType = await createRoomTypeDB(
+      branchId, roomTypeName,
+      dailyRateInt, lateCheckoutRateInt,
+      capacityInt, amenities,
+    );
 
     if(!roomType){
-      return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Room type was not created"});
+      return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+        message: "Room type was not created",
+      });
     }else{
 
-      return jsonResponse(res, true, HttpStatusCodes.CREATED, {message: "Room type created successfully", roomType});
+      return jsonResponse(res, true, HttpStatusCodes.OK, {
+        message: "Room type created successfully", roomType,
+      });
     }
 
   }catch(err){
     console.log(err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error"});
+    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      message: "Server error",
+    });
   }
 }
 
-export async function updateRoomType(req: Request, res: Response): Promise<void>{
+export async function updateRoomType(req: Request, res: Response){
   try{
-    const branchIDInt:number = parseInt(req.params.branchID, 10);
-    const roomTypeName: string = req.params.roomTypeName;
+    const paramSchema = Joi.object<{branchId: number, roomTypeName: string}>({
+      branchId: Joi.number().integer().positive().required(),
+      roomTypeName: Joi.string().required(),
+    });
 
-    const{dailyRate, lateCheckoutRate, capacity, amenities} = req.body;
+    const paramResult = paramSchema.validate(req.params, {
+      abortEarly: false,
+    });
 
-    if(isNaN(branchIDInt)){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Branch ID is not a number"});
+    if(paramResult.error) {
+      const messages = paramResult.error.details.map((details) => details.message);
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "invalid input data",
+        details: messages,
+      });
     }
 
-    if(!(await getBranchByIdDB(branchIDInt))){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Branch ID is not valid"});
+    const branchId = paramResult.value.branchId;
+    const roomTypeName = paramResult.value.roomTypeName;
+
+    const bodySchema = Joi.object<{
+        dailyRate?:number, lateCheckoutRate?:number,
+        capacity?: number, amenities?: string,
+    }>({
+      dailyRate: Joi.number().integer().positive().optional(),
+      lateCheckoutRate: Joi.number().integer().positive().optional(),
+      capacity: Joi.number().integer().positive().optional(),
+      amenities: Joi.string().optional(),
+    });
+
+    const bodyResult = bodySchema.validate(req.body, {
+      abortEarly: false,
+    });
+
+    if(bodyResult.error) {
+      const messages = bodyResult.error.details.map((details) => details.message);
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "invalid input data",
+        details: messages,
+      });
     }
+
+    const dailyRate = bodyResult.value.dailyRate;
+    const lateCheckoutRate = bodyResult.value.lateCheckoutRate;
+    const capacity = bodyResult.value.capacity;
+    const amenities = bodyResult.value.amenities;
 
     if(!dailyRate && !lateCheckoutRate && !capacity && !amenities){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "At least one field should be not null"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "At least one field should be not null",
+      });
     }
 
-    const roomType = await updateRoomTypeDB(branchIDInt, roomTypeName, dailyRate, lateCheckoutRate, capacity, amenities);
+    if(!(await getBranchByIdDB(branchId))){
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "Branch ID is not valid",
+      });
+    }
+
+    const roomType = await updateRoomTypeDB(
+      branchId, roomTypeName, dailyRate, lateCheckoutRate, capacity, amenities,
+    );
 
     if(!roomType){
-      return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Updating unsuccessful"});
-    }else{
-      return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Room type updated successfully"});
+      return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+        message: "Updating unsuccessful",
+      });
     }
+
+    return jsonResponse(res, true, HttpStatusCodes.OK, {
+      message: "Room type updated successfully",
+    });
 
   }catch(err){
     console.log(err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error"});
+    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      message: "Server error",
+    });
   }
 }
 
-export async function deleteRoomType(req: Request, res: Response): Promise<void>{
+export async function deleteRoomType(req: Request, res: Response){
   try{
-    const branchIDInt:number = parseInt(req.params.branchID, 10);
-    const roomTypeName: string = req.params.roomTypeName;
+    const paramSchema = Joi.object<{branchId: number, roomTypeName: string}>({
+      branchId: Joi.number().integer().positive().required(),
+      roomTypeName: Joi.string().required(),
+    });
 
-    if(isNaN(branchIDInt)){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Branch ID is not a number"});
+    const paramResult = paramSchema.validate(req.params, {
+      abortEarly: false,
+    });
+
+    if(paramResult.error){
+      const messages = paramResult.error.details.map((details) => details.message);
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "invalid input data",
+        details: messages,
+      });
     }
 
-    if(!(await getBranchByIdDB(branchIDInt))){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {message: "Branch ID is not valid"});
-    }
+    const branchId = paramResult.value.branchId;
+    const roomTypeName = paramResult.value.roomTypeName;
 
-    const deleted = await deleteRoomTypeDB(branchIDInt, roomTypeName);
+    const deleted = await deleteRoomTypeDB(branchId, roomTypeName);
 
     if (!deleted) {
-      return jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {message: "Deletion unsuccessful"});
-    }else{
-      return jsonResponse(res, true, HttpStatusCodes.OK, {message: "Deleted successfully"});
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        message: "Deletion unsuccessful",
+      });
     }
 
+    return jsonResponse(res, true, HttpStatusCodes.OK, {
+      message: "Deleted successfully",
+    });
+    
   }catch(err){
     console.log(err);
-    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {message: "Server error"});
+    return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      message: "Server error",
+    });
   }
 }

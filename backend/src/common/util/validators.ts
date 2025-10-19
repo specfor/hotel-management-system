@@ -17,5 +17,5 @@ export function isRelationalKey(arg: unknown): arg is number {
  */
 export const transIsDate = transform(
   (arg) => new Date(arg as string),
-  (arg) => isDate(arg)
+  (arg) => isDate(arg),
 );

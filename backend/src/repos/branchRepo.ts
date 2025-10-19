@@ -1,11 +1,10 @@
-/* eslint-disable max-len */
 import {BranchPublic} from "@src/types/branchTypes";    // named export
 import db from "@src/common/util/db";
-import * as console from "node:console";   // default export
+import {QueryResult} from "pg";
 
 export async function getAllBranchesDB(): Promise<BranchPublic[] | null>{
-  try{
-    const sql = `
+
+  const sql = `
         SELECT
             branch_id as branchID,
             branch_name as branchName,
@@ -14,17 +13,19 @@ export async function getAllBranchesDB(): Promise<BranchPublic[] | null>{
         FROM
             branch;
     `;
-    const result = await db.query(sql);
-    return result.rows as BranchPublic[];
-  }catch(err){
-    console.error(err);
+  const result = await db.query(sql);
+
+  if(result.rows.length == 0){
     return null;
   }
+
+  return result.rows as BranchPublic[];
+
 }
 
 export async function getBranchByIdDB(branchID:number): Promise<BranchPublic | null>{
-  try{
-    const sql = `
+
+  const sql = `
         SELECT
             branch_id as branchID,
             branch_name as branchName,
@@ -36,102 +37,91 @@ export async function getBranchByIdDB(branchID:number): Promise<BranchPublic | n
             branch_id = $1;
         `;
 
-    const result = await db.query(sql, [branchID]);
+  const result = await db.query(sql, [branchID]);
 
-    if(result.rows.length == 0){
-      return null;
-    }else{
-      return result.rows[0] as BranchPublic;
-    }
-  }catch(err){
-    console.error(err);
+  if(result.rows.length == 0){
     return null;
   }
+  return result.rows[0] as BranchPublic;
+
 }
 
-export async function createBranchDB(branchName: string, city: string, address: string): Promise<BranchPublic | null>{
+export async function createBranchDB(
+  branchName: string, city: string,
+  address: string): Promise<BranchPublic | null>{
 
-  try{
-    const sql = `
+  const sql = `
         INSERT INTO branch (branch_name, city, address)
         VALUES ($1, $2, $3)
         RETURNING 
-            branch_id AS "branchID",
+            branch_id AS "branchId",
             branch_name AS "branchName",
             city,
             address;
         `;
 
-    const createdBranch = await db.query(sql, [branchName, city, address]);
-    return createdBranch.rows[0] as BranchPublic;
+  const createdBranch = await db.query(sql, [branchName, city, address]);
 
-  }catch(err){
-    console.error(err);
+  if(createdBranch.rows.length == 0){
     return null;
   }
+  return createdBranch.rows[0] as BranchPublic;
 
 }
 
-export async function updateBranchDB(branchID: number, branchName?: string, city?: string, address?: string): Promise<BranchPublic | null>{
-  try{
-    const updates: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
+export async function updateBranchDB(
+  branchID: number, branchName?: string,
+  city?: string, address?: string): Promise<BranchPublic | null>{
 
-    if(branchName){
-      updates.push("branch_name = $"+paramIndex);
-      values.push(branchName);
-      paramIndex++;
-    }
+  const updates: string[] = [];
+  const values:  (string | number)[] = [];
+  let paramIndex = 1;
 
-    if(city){
-      updates.push("city = $"+paramIndex);
-      values.push(city);
-      paramIndex++;
-    }
+  if(branchName){
+    updates.push("branch_name = $"+paramIndex);
+    values.push(branchName);
+    paramIndex++;
+  }
 
-    if(address){
-      updates.push("address = $"+paramIndex);
-      values.push(address);
-      paramIndex++;
-    }
+  if(city){
+    updates.push("city = $"+paramIndex);
+    values.push(city);
+    paramIndex++;
+  }
 
-    const sql = `
+  if(address){
+    updates.push("address = $"+paramIndex);
+    values.push(address);
+    paramIndex++;
+  }
+
+  const sql = `
       UPDATE branch
       SET ${updates.join(", ")}
       WHERE branch_id = $${paramIndex}
       RETURNING branch_id as "branchID", branch_name as "branchName", city, address;
     `;
-    values.push(branchID);
+  values.push(branchID);
 
-    const result = await db.query(sql, values);
+  const result = await db.query(sql, values);
 
-    if (result.rows.length === 0){
-      return null;
-    }
-    return result.rows[0] as BranchPublic;
-
-  }catch(err){
-    console.error(err);
+  if (result.rows.length === 0){
     return null;
   }
+  return result.rows[0] as BranchPublic;
 
 }
 
-export async function deleteBranchDB(branchID: number): Promise<void>{
-  try {
-    const sql = `
+export async function deleteBranchDB(branchID: number): Promise<boolean>{
+
+  const sql = `
       DELETE FROM branch
       WHERE branch_id = $1
       RETURNING branch_id;
     `;
 
-    const result = await db.query(sql, [branchID]);
+  const result: QueryResult= await db.query(sql, [branchID]);
 
-    return result.rowCount > 0;
+  return (result.rowCount ?? 0) > 0;
 
-  } catch (err) {
-    console.error("Database error:", err);
-    return false;
-  }
 }

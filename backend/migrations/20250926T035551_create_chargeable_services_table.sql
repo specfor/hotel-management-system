@@ -8,16 +8,16 @@
 
 -- Add your SQL statements here
 -- Example:
-CREATE TABLE chargable_services (
+CREATE TABLE chargeable_services (
   service_id SERIAL PRIMARY KEY,
   branch_id INT,
   service_name VARCHAR(50),
   unit_price DECIMAL(10,2),
   unit_type VARCHAR(30),
-  CONSTRAINT fk_chargable_services_branch FOREIGN KEY (branch_id) REFERENCES branch(branch_id)
+  CONSTRAINT fk_chargeable_services_branch FOREIGN KEY (branch_id) REFERENCES branch(branch_id)
 );
 
-CREATE INDEX idx_service_branch_name ON chargable_services(branch_id, service_name);
+CREATE INDEX idx_service_branch_name ON chargeable_services(branch_id, service_name);
 
 
 -- CREATE TABLE example_table (
