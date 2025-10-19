@@ -69,7 +69,7 @@ apiRouter.delete("/room-type/:branchId/:roomTypeName", roomTypeController.delete
 
 // endpoints for payment
 apiRouter.get("/payment", paymentController.getAllPayments);
-apiRouter.get("/payment/:id", paymentController.getPaymentByID);
+apiRouter.get("/payment/:id", paymentController.getAllPaymentsByBillID);
 apiRouter.post("/payment", paymentController.addNewPayment);
 apiRouter.put("/payment/:id", paymentController.updatePayment);
 apiRouter.delete("/payment/:id", paymentController.deletePayment);
