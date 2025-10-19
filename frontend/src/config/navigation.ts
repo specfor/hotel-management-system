@@ -1,4 +1,14 @@
-import { LayoutDashboard, Calendar, Bed, Users, BarChart3, Settings, Building, UserCheck } from "lucide-react";
+import {
+  LayoutDashboard,
+  Calendar,
+  Bed,
+  Users,
+  BarChart3,
+  Settings,
+  Building,
+  UserCheck,
+  DollarSign,
+} from "lucide-react";
 import type { NavigationItem } from "../types";
 
 export const navigationItems: NavigationItem[] = [
@@ -30,6 +40,13 @@ export const navigationItems: NavigationItem[] = [
     path: "/guests",
     icon: Users,
     allowedRoles: ["admin", "manager", "staff", "receptionist"], // All roles can access guests
+  },
+  {
+    id: "services",
+    label: "Services",
+    path: "/services",
+    icon: DollarSign,
+    allowedRoles: ["admin", "manager"], // Only admin and manager can access services and discounts
   },
   {
     id: "branches",

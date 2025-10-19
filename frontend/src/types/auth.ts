@@ -25,7 +25,7 @@ export type Permission =
   | "view_branches";
 
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
 }
 

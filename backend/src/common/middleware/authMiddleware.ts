@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { verifyToken, JwtPayload } from "@src/common/util/auth";
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import { isPublicRoute } from "@src/common/config/publicRoutes";
+import { jsonResponse } from "@src/common/util/response";
 
 //Extended Request interface with user information
 export interface AuthRequest extends Request {
@@ -24,8 +25,7 @@ export function globalAuthMiddleware(
     const authHeader = req.headers.authorization;
 
     if (!authHeader?.startsWith("Bearer ")) {
-      return res.status(HttpStatusCodes.BAD_REQUEST).json({
-        success: false,
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
         error: "No token provided. Authorization header must be: Bearer <token>",
       });
     }
@@ -33,8 +33,7 @@ export function globalAuthMiddleware(
     const token = authHeader.split(" ")[1];
 
     if (!token) {
-      return res.status(HttpStatusCodes.BAD_REQUEST).json({
-        success: false,
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
         error: "No token provided",
       });
     }
@@ -43,8 +42,7 @@ export function globalAuthMiddleware(
     req.user = decoded;
     next();
   } catch {
-    return res.status(HttpStatusCodes.BAD_REQUEST).json({
-      success: false,
+    return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
       error: "Invalid or expired token",
     });
   }
@@ -60,8 +58,7 @@ export function authenticate(
     const authHeader = req.headers.authorization;
 
     if (!authHeader?.startsWith("Bearer ")) {
-      return res.status(HttpStatusCodes.BAD_REQUEST).json({
-        success: false,
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
         error: "No token provided. Authorization header must be: Bearer <token>",
       });
     }
@@ -69,8 +66,7 @@ export function authenticate(
     const token = authHeader.split(" ")[1];
 
     if (!token) {
-      return res.status(HttpStatusCodes.BAD_REQUEST).json({
-        success: false,
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
         error: "No token provided",
       });
     }
@@ -79,8 +75,7 @@ export function authenticate(
     req.user = decoded;
     next();
   } catch {
-    return res.status(HttpStatusCodes.BAD_REQUEST).json({
-      success: false,
+    return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
       error: "Invalid or expired token",
     });
   }
