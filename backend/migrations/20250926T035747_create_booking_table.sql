@@ -9,7 +9,6 @@
 -- Add your SQL statements here
 -- Example:
 CREATE TYPE booking_status_enum AS ENUM ('Booked', 'Checked-In', 'Checked-Out', 'Cancelled');
-CREATE TYPE payment_method_enum AS ENUM ('Cash','Credit Card','Debit Card','Bank Transfer','Online Wallet');
 
 CREATE TABLE booking (
   booking_id SERIAL PRIMARY KEY,
@@ -17,8 +16,7 @@ CREATE TABLE booking (
   guest_id INT NOT NULL,
   room_id INT NOT NULL,
   booking_status booking_status_enum,
-  payment_method payment_method_enum,
-  date_time TIMESTAMP,
+  date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   check_in TIMESTAMP,
   check_out TIMESTAMP,
   CONSTRAINT fk_booking_user FOREIGN KEY (user_id) REFERENCES "user"(staff_id) ON DELETE SET NULL,

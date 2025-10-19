@@ -12,10 +12,10 @@ CREATE TABLE service_usage (
   record_id SERIAL PRIMARY KEY,
   service_id INT,
   booking_id INT,
-  date_time TIMESTAMP,
+  date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   quantity DECIMAL(10,2),
   total_price DECIMAL(10,2),
-  CONSTRAINT fk_service_usage_service FOREIGN KEY (service_id) REFERENCES chargable_services(service_id)
+  CONSTRAINT fk_service_usage_service FOREIGN KEY (service_id) REFERENCES chargeable_services(service_id)
 );
 
 CREATE INDEX idx_serviceusage_serviceid on service_usage(service_id);

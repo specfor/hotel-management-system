@@ -11,7 +11,7 @@ import app from "@src/server";
 
 let agent: TestAgent<Test>;
 
-beforeAll(async () => {
+beforeAll(() => {
   agent = supertest.agent(app);
   // await MockOrm.cleanDb();
 });
