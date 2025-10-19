@@ -18,7 +18,7 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/config.ts"
+    "scripts/**/*.ts"
   ],
   "exclude": [
     "tests",
