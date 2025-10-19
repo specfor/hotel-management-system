@@ -23,7 +23,12 @@ import {
  */
 export async function getAllBookings(req: Request, res: Response) {
   try {
-    const bookings = await getAllBookingsModel({});
+    const { guestId, roomId, branchId } = req.query;
+    const bookings = await getAllBookingsModel({
+      guestId: guestId ? Number(guestId) : undefined,
+      roomId: roomId ? Number(roomId) : undefined,
+      branchId: branchId ? Number(branchId) : undefined,
+    });
               
     return jsonResponse(res, true, HttpStatusCodes.OK, { bookings });
   } catch (err) {
@@ -58,7 +63,7 @@ export async function getBookingByID(req: Request, res: Response) {
       return jsonResponse(
         res, 
         false, 
-        HttpStatusCodes.NOT_FOUND, 
+        HttpStatusCodes.BAD_REQUEST, 
         { message: "No booking found with that ID" });
     } else {
       return jsonResponse(
@@ -139,7 +144,7 @@ export async function getBookingsByRoomID(req: Request, res: Response) {
       return jsonResponse(
         res, 
         false, 
-        HttpStatusCodes.NOT_FOUND, 
+        HttpStatusCodes.BAD_REQUEST, 
         { message: "No bookings found for this room" });
     } else {
       return jsonResponse(
@@ -204,7 +209,7 @@ export async function checkRoomAvailability(req: Request, res: Response) {
         { message: "Room is available for the requested period." });
     } else {
       // Conflicts found
-      return jsonResponse(res, false, HttpStatusCodes.CONFLICT, { 
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
         message: "Room is unavailable due to conflicting booking(s).",
         conflictingBookings,
       });
@@ -264,7 +269,7 @@ export async function createBooking(req: Request, res: Response) {
       return jsonResponse(
         res, 
         true, 
-        HttpStatusCodes.CREATED, 
+        HttpStatusCodes.OK, 
         { message: "Booking created successfully", createdBooking });
     }
   } catch (err) {
@@ -389,7 +394,7 @@ export async function deleteBooking(req: Request, res: Response) {
       return jsonResponse(
         res, 
         false, 
-        HttpStatusCodes.NOT_FOUND, 
+        HttpStatusCodes.BAD_REQUEST, 
         { message: "No booking found with ID " + bookingIDInt });
     } else {
       return jsonResponse(

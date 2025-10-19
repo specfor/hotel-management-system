@@ -29,6 +29,7 @@ import * as serviceUsageController from "@src/controllers/serviceUsageController
 ******************************************************************************/
 
 const apiRouter = Router();
+apiRouter.use("/api", apiRouter);
 
 // Auth Routes (Public)
 
@@ -51,7 +52,6 @@ apiRouter.post("/staff", createStaffMember);
 apiRouter.put("/staff/:staffId", updateStaffMember);
 apiRouter.delete("/staff/:staffId", deleteStaffMember);
 
-apiRouter.use("/api", apiRouter);
 // endpoints for branch
 apiRouter.get("/branch", branchController.getAllBranches);
 apiRouter.get("/branch/:branchId", branchController.getBranchByID);
@@ -94,12 +94,9 @@ apiRouter.put("/service/:serviceID", serviceController.updateChargeableService);
 apiRouter.delete("/service/:serviceID", serviceController.deleteChargeableService);
 
 // endpoints for booking
-apiRouter.get("/booking/guest/:guestID", bookingController.getBookingsByGuestID);
-apiRouter.get("/booking/room/:roomID", bookingController.getBookingsByRoomID);
-apiRouter.get("/booking/availability", bookingController.checkRoomAvailability); // Uses query params: ?roomID=1&checkIn=...&checkOut=...
 apiRouter.get("/booking", bookingController.getAllBookings);
-apiRouter.get("/booking/:bookingID", bookingController.getBookingByID);
 apiRouter.post("/booking", bookingController.createBooking);
+apiRouter.get("/booking/:bookingID", bookingController.getBookingByID);
 apiRouter.put("/booking/:bookingID", bookingController.updateBooking);
 apiRouter.delete("/booking/:bookingID", bookingController.deleteBooking);
 
