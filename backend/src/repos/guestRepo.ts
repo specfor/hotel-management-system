@@ -7,7 +7,7 @@ export async function getAllGuests_repo(
   minAge?: number,
   maxAge?: number,
   page = 1,
-  limit = 5,
+  limit = 5
 ): Promise<GuestPublic[] | null> {
   if (!db.isReady()) {
     await db.connect();
@@ -48,15 +48,11 @@ export async function getAllGuests_repo(
   values.push(limit, (page - 1) * limit);
 
   const { rows } = await db.query(query, values);
-  if (rows.length === 0) {
-    return null;
-  }
+
   return rows as GuestPublic[];
 }
 
-export async function getGuestByID_repo(
-  id: number,
-): Promise<GuestPublic | null> {
+export async function getGuestByID_repo(id: number): Promise<GuestPublic | null> {
   if (!db.isReady()) {
     await db.connect();
   }
@@ -65,7 +61,7 @@ export async function getGuestByID_repo(
     `select guest_id, NIC, name, age,  contact_no, email, room_id, booking_status
     FROM guest_main_view 
     WHERE guest_id = $1`,
-    [id],
+    [id]
   );
 
   if (result.rows.length === 0) {
@@ -85,9 +81,7 @@ export async function getGuestByID_repo(
   };
 }
 
-export async function addNewGuest_repo(
-  record: GuestRepo,
-): Promise<number | null> {
+export async function addNewGuest_repo(record: GuestRepo): Promise<number | null> {
   if (!db.isReady()) {
     await db.connect();
   }
@@ -95,24 +89,14 @@ export async function addNewGuest_repo(
                   ($1, $2, $3, $4, $5, $6)
                   RETURNING "guest_id";`;
 
-  const values = [
-    record.nic,
-    record.name,
-    record.age,
-    record.contact_no,
-    record.email,
-    record.password,
-  ];
+  const values = [record.nic, record.name, record.age, record.contact_no, record.email, record.password];
 
   const result = await db.query(query, values);
   const newguest_id = result.rows[0].guest_id as number;
   return newguest_id;
 }
 
-export async function updateGuestInfo_repo(
-  record: GuestRepo,
-  guest_id: number,
-): Promise<GuestPublic | null> {
+export async function updateGuestInfo_repo(record: GuestRepo, guest_id: number): Promise<GuestPublic | null> {
   if (!db.isReady()) {
     await db.connect();
   }
@@ -126,14 +110,7 @@ export async function updateGuestInfo_repo(
       WHERE guest_id = $6
       RETURNING guest_id, nic, name, age, contact_no, email;`;
 
-  const values = [
-    record.nic,
-    record.name,
-    record.age,
-    record.contact_no,
-    record.email,
-    guest_id,
-  ];
+  const values = [record.nic, record.name, record.age, record.contact_no, record.email, guest_id];
 
   const result = await db.query(query, values);
 
@@ -150,9 +127,7 @@ export async function updateGuestInfo_repo(
   };
 }
 
-export async function changeGuestPassword_repo(
-  record: GuestPassword,
-): Promise<void> {
+export async function changeGuestPassword_repo(record: GuestPassword): Promise<void> {
   if (!db.isReady()) {
     await db.connect();
   }

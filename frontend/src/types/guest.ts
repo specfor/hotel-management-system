@@ -37,6 +37,15 @@ export interface GuestFormData {
   email: string;
 }
 
+// Backend form data interface (for API calls)
+export interface GuestFormDataBackend {
+  nic: string;
+  name: string;
+  age: number;
+  contact_no: string; // Backend field name
+  email: string;
+}
+
 // Guest details modal props
 export interface GuestDetailsModalProps {
   guest: Guest | null;
