@@ -1,16 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Search, Edit, Trash2, DollarSign } from "lucide-react";
 import Button from "../../components/primary/Button";
 import Input from "../../components/primary/Input";
 import Badge from "../../components/primary/Badge";
 import Modal from "../../components/Modal";
 import Card from "../../components/primary/Card";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import { useAlert } from "../../hooks/useAlert";
+import { useModal } from "../../hooks/useModal";
 import { ServiceUnitType } from "../../types";
 import type { ChargeableService, Branch } from "../../types";
+import { getServices, createService, updateService, deleteService } from "../../api_connection/services";
+import { getBranches } from "../../api_connection/branches";
 
 const ServiceManagement: React.FC = () => {
   const { showSuccess, showError } = useAlert();
+  const { openModal, closeModal } = useModal();
   const [services, setServices] = useState<ChargeableService[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,60 +34,61 @@ const ServiceManagement: React.FC = () => {
     unit_price: "",
   });
 
-  // Mock data for testing - replace with actual API calls
+  const loadServices = useCallback(async () => {
+    try {
+      const response = await getServices();
+      if (response.success) {
+        setServices(
+          response.data.map((service) => ({
+            service_id: service.service_id,
+            service_name: service.service_name,
+            branch_id: service.branch_id,
+            unit_type: service.unit_type,
+            unit_price: Number(service.unit_price),
+            created_at: service.created_at,
+            updated_at: service.updated_at,
+          }))
+        );
+      } else {
+        showError(response.message || "Failed to load services");
+      }
+    } catch (error) {
+      console.error("Error loading services:", error);
+      showError("Failed to load services");
+    }
+  }, [showError]);
+
+  const loadBranches = useCallback(async () => {
+    try {
+      const response = await getBranches();
+      if (response.success) {
+        // Transform branch data to match expected format
+        const transformedBranches = response.data.map(
+          (branch: { branchid: number; branchname: string; city: string; address: string }) => ({
+            branch_id: branch.branchid,
+            branch_name: branch.branchname,
+            city: branch.city,
+            address: branch.address,
+          })
+        );
+        setBranches(transformedBranches);
+      } else {
+        showError(response.message || "Failed to load branches");
+      }
+    } catch (error) {
+      console.error("Error loading branches:", error);
+      showError("Failed to load branches");
+    }
+  }, [showError]);
+
+  // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
       await loadServices();
       await loadBranches();
     };
     loadData();
-  }, []);
-
-  const loadServices = async () => {
-    try {
-      // TODO: Replace with actual API call
-      const mockServices: ChargeableService[] = [
-        {
-          service_id: 1,
-          service_name: "Room Service",
-          branch_id: 1,
-          unit_type: ServiceUnitType.PER_ITEM,
-          unit_price: 15.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          service_id: 2,
-          service_name: "Spa Treatment",
-          branch_id: 1,
-          unit_type: ServiceUnitType.PER_HOUR,
-          unit_price: 120.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ];
-      setServices(mockServices);
-    } catch {
-      showError("Failed to load services");
-    }
-  };
-
-  const loadBranches = async () => {
-    try {
-      // TODO: Replace with actual API call
-      const mockBranches: Branch[] = [
-        {
-          branch_id: 1,
-          branch_name: "Main Branch",
-          city: "New York",
-          address: "123 Main St",
-        },
-      ];
-      setBranches(mockBranches);
-    } catch {
-      showError("Failed to load branches");
-    }
-  };
+  }, [loadServices, loadBranches]);
 
   const filteredServices = services.filter((service) => {
     const branchName = branches.find((b) => b.branch_id === service.branch_id)?.branch_name || "";
@@ -109,35 +115,33 @@ const ServiceManagement: React.FC = () => {
 
     try {
       const serviceData = {
-        service_name: formData.service_name,
-        branch_id: parseInt(formData.branch_id),
-        unit_type: formData.unit_type as ServiceUnitType,
-        unit_price: unitPrice,
+        serviceName: formData.service_name,
+        branchId: parseInt(formData.branch_id),
+        unitType: formData.unit_type,
+        unitPrice: unitPrice,
       };
 
       if (editingService) {
-        // TODO: Replace with actual API call
-        const updatedService = {
-          ...editingService,
-          ...serviceData,
-          updated_at: new Date().toISOString(),
-        };
-        setServices(services.map((s) => (s.service_id === editingService.service_id ? updatedService : s)));
-        showSuccess("Service updated successfully");
+        const response = await updateService(editingService.service_id, serviceData);
+        if (response.success) {
+          showSuccess("Service updated successfully");
+          await loadServices(); // Reload to get updated data
+        } else {
+          showError(response.message || "Failed to update service");
+        }
       } else {
-        // TODO: Replace with actual API call
-        const newService = {
-          service_id: Math.max(...services.map((s) => s.service_id)) + 1,
-          ...serviceData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setServices([...services, newService]);
-        showSuccess("Service created successfully");
+        const response = await createService(serviceData);
+        if (response.success) {
+          showSuccess("Service created successfully");
+          await loadServices(); // Reload to get new data
+        } else {
+          showError(response.message || "Failed to create service");
+        }
       }
 
       resetForm();
-    } catch {
+    } catch (error) {
+      console.error("Error submitting service:", error);
       showError(editingService ? "Failed to update service" : "Failed to create service");
     }
   };
@@ -154,13 +158,40 @@ const ServiceManagement: React.FC = () => {
   };
 
   const handleDelete = async (serviceId: number) => {
-    if (!confirm("Are you sure you want to delete this service?")) return;
+    const service = services.find((s) => s.service_id === serviceId);
+    const serviceName = service?.service_name || "this service";
 
+    const modalId = openModal({
+      component: (
+        <ConfirmationModal
+          title="Delete Service"
+          message={`Are you sure you want to delete "${serviceName}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={() => {
+            closeModal(modalId);
+            performDelete(serviceId);
+          }}
+          onCancel={() => closeModal(modalId)}
+        />
+      ),
+      size: "sm",
+      showCloseButton: false,
+    });
+  };
+
+  const performDelete = async (serviceId: number) => {
     try {
-      // TODO: Replace with actual API call
-      setServices(services.filter((s) => s.service_id !== serviceId));
-      showSuccess("Service deleted successfully");
-    } catch {
+      const response = await deleteService(serviceId);
+      if (response.success) {
+        showSuccess("Service deleted successfully");
+        await loadServices(); // Reload to update the list
+      } else {
+        showError(response.message || "Failed to delete service");
+      }
+    } catch (error) {
+      console.error("Error deleting service:", error);
       showError("Failed to delete service");
     }
   };
