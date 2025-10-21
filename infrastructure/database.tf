@@ -4,7 +4,7 @@
 resource "kubernetes_namespace" "database" {
   metadata {
     name = "${var.project_name}-database"
-    
+
     labels = {
       name        = "${var.project_name}-database"
       environment = var.environment
@@ -41,7 +41,7 @@ resource "kubernetes_persistent_volume_claim" "postgres" {
 
   spec {
     access_modes = ["ReadWriteOnce"]
-    
+
     resources {
       requests = {
         storage = "10Gi"
@@ -62,9 +62,9 @@ resource "kubernetes_config_map" "postgres" {
   }
 
   data = {
-    POSTGRES_DB       = var.db_name
-    POSTGRES_USER     = var.db_username
-    PGDATA           = "/var/lib/postgresql/data/pgdata"
+    POSTGRES_DB   = var.db_name
+    POSTGRES_USER = var.db_username
+    PGDATA        = "/var/lib/postgresql/data/pgdata"
   }
 
   depends_on = [kubernetes_namespace.database]
@@ -75,7 +75,7 @@ resource "kubernetes_deployment" "postgres" {
   metadata {
     name      = "postgres"
     namespace = kubernetes_namespace.database.metadata[0].name
-    
+
     labels = {
       app = "postgres"
     }
@@ -104,7 +104,7 @@ resource "kubernetes_deployment" "postgres" {
 
           port {
             container_port = 5432
-            name          = "postgres"
+            name           = "postgres"
           }
 
           env_from {
@@ -162,7 +162,7 @@ resource "kubernetes_deployment" "postgres" {
 
         volume {
           name = "postgres-storage"
-          
+
           persistent_volume_claim {
             claim_name = kubernetes_persistent_volume_claim.postgres.metadata[0].name
           }
@@ -189,7 +189,7 @@ resource "kubernetes_service" "postgres" {
   metadata {
     name      = "postgres-service"
     namespace = kubernetes_namespace.database.metadata[0].name
-    
+
     labels = {
       app = "postgres"
     }

@@ -4,7 +4,7 @@
 resource "kubernetes_namespace" "app" {
   metadata {
     name = "${var.project_name}-app"
-    
+
     labels = {
       name        = "${var.project_name}-app"
       environment = var.environment
@@ -26,18 +26,18 @@ resource "kubernetes_secret" "backend" {
   data = {
     NODE_ENV = base64encode(var.environment == "prod" ? "production" : "development")
     PORT     = base64encode("3000")
-    
+
     # Database connection
     DB_HOST     = base64encode("postgres-service.${kubernetes_namespace.database.metadata[0].name}.svc.cluster.local")
     DB_PORT     = base64encode("5432")
     DB_NAME     = base64encode(var.db_name)
     DB_USERNAME = base64encode(var.db_username)
     DB_PASSWORD = base64encode(random_password.db_password.result)
-    
+
     # JWT secrets (you should generate these)
-    JWT_SECRET      = base64encode(random_password.jwt_secret.result)
-    JWT_EXPIRES_IN  = base64encode("7d")
-    
+    JWT_SECRET     = base64encode(random_password.jwt_secret.result)
+    JWT_EXPIRES_IN = base64encode("7d")
+
     # CORS origins
     CORS_ORIGINS = base64encode("*") # Configure this for production
   }
@@ -59,7 +59,7 @@ resource "kubernetes_config_map" "backend" {
   }
 
   data = {
-    LOG_LEVEL = "info"
+    LOG_LEVEL  = "info"
     API_PREFIX = "/api"
   }
 
@@ -71,14 +71,14 @@ resource "kubernetes_deployment" "backend" {
   metadata {
     name      = "backend"
     namespace = kubernetes_namespace.app.metadata[0].name
-    
+
     labels = {
       app = "backend"
     }
   }
 
   spec {
-    replicas = 1  # Single replica for demo to save resources
+    replicas = 1 # Single replica for demo to save resources
 
     selector {
       match_labels = {
@@ -100,7 +100,7 @@ resource "kubernetes_deployment" "backend" {
 
           port {
             container_port = 3000
-            name          = "http"
+            name           = "http"
           }
 
           env_from {
@@ -194,7 +194,7 @@ resource "kubernetes_service" "backend" {
   metadata {
     name      = "backend-service"
     namespace = kubernetes_namespace.app.metadata[0].name
-    
+
     labels = {
       app = "backend"
     }
@@ -223,7 +223,7 @@ resource "kubernetes_ingress_v1" "backend" {
   metadata {
     name      = "backend-ingress"
     namespace = kubernetes_namespace.app.metadata[0].name
-    
+
     annotations = {
       "kubernetes.io/ingress.class"                = "alb"
       "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
@@ -239,7 +239,7 @@ resource "kubernetes_ingress_v1" "backend" {
         path {
           path      = "/api"
           path_type = "Prefix"
-          
+
           backend {
             service {
               name = kubernetes_service.backend.metadata[0].name
@@ -305,8 +305,8 @@ resource "aws_iam_role" "aws_load_balancer_controller" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "${replace(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}:sub": "system:serviceaccount:kube-system:aws-load-balancer-controller"
-            "${replace(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}:aud": "sts.amazonaws.com"
+            "${replace(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}:sub" : "system:serviceaccount:kube-system:aws-load-balancer-controller"
+            "${replace(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}:aud" : "sts.amazonaws.com"
           }
         }
       }

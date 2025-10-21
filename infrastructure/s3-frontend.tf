@@ -169,7 +169,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   # SSL certificate
   viewer_certificate {
     cloudfront_default_certificate = var.domain_name == "" ? true : false
-    
+
     dynamic "acm_certificate_arn" {
       for_each = var.domain_name != "" ? [1] : []
       content {
@@ -206,7 +206,7 @@ resource "aws_acm_certificate" "frontend" {
 # Route53 hosted zone (if domain is provided)
 resource "aws_route53_zone" "main" {
   count = var.domain_name != "" ? 1 : 0
-  
+
   name = var.domain_name
 
   tags = local.common_tags
