@@ -45,19 +45,19 @@ variable "public_subnets" {
 variable "node_instance_types" {
   description = "EC2 instance types for EKS worker nodes"
   type        = list(string)
-  default     = ["t3.micro"]  # Smallest instance for demo
+  default     = ["t3.micro"] # Smallest instance for demo
 }
 
 variable "node_desired_capacity" {
   description = "Desired number of worker nodes"
   type        = number
-  default     = 1  # Single node for cost optimization
+  default     = 1 # Single node for cost optimization
 }
 
 variable "node_max_capacity" {
   description = "Maximum number of worker nodes"
   type        = number
-  default     = 2  # Limit max scaling for cost control
+  default     = 2 # Limit max scaling for cost control
 }
 
 variable "node_min_capacity" {
@@ -75,7 +75,7 @@ variable "db_instance_class" {
 variable "db_allocated_storage" {
   description = "RDS allocated storage"
   type        = number
-  default     = 10  # Minimal storage for demo
+  default     = 10 # Minimal storage for demo
 }
 
 variable "db_name" {
@@ -112,7 +112,7 @@ variable "tags" {
   description = "Common tags for all resources"
   type        = map(string)
   default = {
-    Project     = "hotel-management-system"
-    ManagedBy   = "terraform"
+    Project   = "hotel-management-system"
+    ManagedBy = "terraform"
   }
 }

@@ -2,7 +2,7 @@
 
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -53,7 +53,7 @@ data "aws_region" "current" {}
 # Local values
 locals {
   cluster_name = "${var.project_name}-${var.environment}-eks"
-  
+
   common_tags = merge(var.tags, {
     Environment = var.environment
     ClusterName = local.cluster_name
