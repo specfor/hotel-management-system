@@ -2,8 +2,10 @@
   "name": "backend",
   "version": "0.0.0",
   "scripts": {
-    "build": "ts-node ./scripts/build.ts",
-    "clean-install": "rd /s /q node_modules && del package-lock.json && npm i",
+    "build": "tsc --project tsconfig.prod.json",
+    "migrate": "node ./dist/scripts/migrate.js",
+    "db:drop": "ts-node ./scripts/dropDatabase.ts",
+    "clean-install": "rm -rf node_modules package-lock.json && npm i",
     "dev": "cross-env NODE_ENV=development ts-node ./src/index.ts",
     "dev:hot": "nodemon --exec \"npm run dev\" --watch ./src --ext .ts",
     "build:docker": "tsc --build tsconfig.prod.json",
