@@ -42,7 +42,7 @@ RUN npm ci --only=production && npm cache clean --force
 
 # Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/config.js ./config.js
+# COPY --from=builder --chown=nodejs:nodejs /app/config.js ./config.js
 
 # Create necessary directories
 RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app
