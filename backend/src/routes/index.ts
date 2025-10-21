@@ -107,8 +107,6 @@ apiRouter.put("/service/:serviceID", serviceController.updateChargeableService);
 apiRouter.delete("/service/:serviceID", serviceController.deleteChargeableService);
 
 // endpoints for booking
-apiRouter.get("/booking/guest/:guestID", bookingController.getBookingsByGuestID);
-apiRouter.get("/booking/room/:roomID", bookingController.getBookingsByRoomID);
 apiRouter.get("/booking/availability", bookingController.checkRoomAvailability); // Uses query params: ?roomID=1&checkIn=...&checkOut=...
 apiRouter.get("/booking", bookingController.getAllBookings);
 apiRouter.post("/booking", bookingController.createBooking);
