@@ -155,12 +155,14 @@ const BookingManagement: React.FC = () => {
           id: "1",
           name: "Alice Johnson",
           email: "alice.johnson@hotel.com",
+          username: "alice.johnson@hotel.com",
           role: "manager",
         },
         {
           id: "2",
           name: "Bob Wilson",
           email: "bob.wilson@hotel.com",
+          username: "bob.wilson@hotel.com",
           role: "receptionist",
         },
       ];
