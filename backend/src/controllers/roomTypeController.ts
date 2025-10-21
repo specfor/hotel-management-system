@@ -16,13 +16,7 @@ export async function getAllRoomTypes(req: Request, res: Response) {
   try {
     const roomTypeArr = await getAllRoomTypesDB();
 
-    if (!roomTypeArr) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-        message: "No room types stored",
-      });
-    } else {
-      return jsonResponse(res, true, HttpStatusCodes.OK, roomTypeArr);
-    }
+    return jsonResponse(res, true, HttpStatusCodes.OK, roomTypeArr);
   } catch (err) {
     console.log(err);
     return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {

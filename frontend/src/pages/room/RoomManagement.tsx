@@ -1,16 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Search, Edit, Trash2, Bed } from "lucide-react";
 import Button from "../../components/primary/Button";
 import Input from "../../components/primary/Input";
 import Badge from "../../components/primary/Badge";
 import Modal from "../../components/Modal";
 import Card from "../../components/primary/Card";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import { useAlert } from "../../hooks/useAlert";
+import { useModal } from "../../hooks/useModal";
 import { RoomStatus } from "../../types/room";
 import type { Room, Branch, RoomType } from "../../types/room";
+import { getBranches } from "../../api_connection/branches";
+import { getAllRooms, getAllRoomTypes, createRoom, updateRoom, deleteRoom } from "../../api_connection/rooms";
 
 const RoomManagement: React.FC = () => {
   const { showSuccess, showError } = useAlert();
+  const { openModal, closeModal } = useModal();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
@@ -32,104 +37,62 @@ const RoomManagement: React.FC = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  // Mock data - Replace with API calls
+  // Load data
+  const loadBranches = useCallback(async () => {
+    try {
+      const response = await getBranches();
+      if (response.success && response.data) {
+        const transformedBranches = response.data.map(
+          (branch: { branchid: number; branchname: string; city: string; address: string }) => ({
+            branch_id: branch.branchid,
+            branch_name: branch.branchname,
+            city: branch.city,
+            address: branch.address,
+          })
+        );
+        setBranches(transformedBranches);
+      } else {
+        showError("Failed to load branches");
+      }
+    } catch (error) {
+      console.error("Error loading branches:", error);
+      showError("Failed to load branches");
+    }
+  }, [showError]);
+
+  const loadRooms = useCallback(async () => {
+    try {
+      const response = await getAllRooms();
+      if (response.success && response.data) {
+        setRooms(response.data);
+      } else {
+        showError("Failed to load rooms");
+      }
+    } catch (error) {
+      console.error("Error loading rooms:", error);
+      showError("Failed to load rooms");
+    }
+  }, [showError]);
+
+  const loadRoomTypes = useCallback(async () => {
+    try {
+      const response = await getAllRoomTypes();
+      if (response.success && response.data) {
+        setRoomTypes(response.data);
+      } else {
+        showError("Failed to load room types");
+      }
+    } catch (error) {
+      console.error("Error loading room types:", error);
+      showError("Failed to load room types");
+    }
+  }, [showError]);
+
   useEffect(() => {
-    // Mock rooms data
-    setRooms([
-      {
-        room_id: 1,
-        room_number: "101",
-        branch_id: 1,
-        room_type_id: 1,
-        status: RoomStatus.AVAILABLE,
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
-        branch_name: "Downtown Branch",
-        room_type_name: "Standard Single",
-      },
-      {
-        room_id: 2,
-        room_number: "102",
-        branch_id: 1,
-        room_type_id: 2,
-        status: RoomStatus.OCCUPIED,
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
-        branch_name: "Downtown Branch",
-        room_type_name: "Deluxe Double",
-      },
-      {
-        room_id: 3,
-        room_number: "201",
-        branch_id: 2,
-        room_type_id: 3,
-        status: RoomStatus.MAINTENANCE,
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
-        branch_name: "Airport Branch",
-        room_type_name: "Suite",
-      },
-    ]);
-
-    // Mock branches data
-    setBranches([
-      {
-        branch_id: 1,
-        branch_name: "Downtown Branch",
-        city: "Downtown",
-        address: "123 Main St",
-      },
-      {
-        branch_id: 2,
-        branch_name: "Airport Branch",
-        city: "Airport",
-        address: "456 Airport Rd",
-      },
-      {
-        branch_id: 3,
-        branch_name: "Beach Resort",
-        city: "Beach",
-        address: "789 Beach Ave",
-      },
-    ]);
-
-    // Mock room types data
-    setRoomTypes([
-      {
-        room_type_id: 1,
-        room_type_name: "Standard Single",
-        branch_id: 1,
-        daily_rate: 120,
-        late_checkout_rate: 30,
-        capacity: 1,
-        amenities: ["WiFi", "TV"],
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
-      },
-      {
-        room_type_id: 2,
-        room_type_name: "Deluxe Double",
-        branch_id: 1,
-        daily_rate: 180,
-        late_checkout_rate: 40,
-        capacity: 2,
-        amenities: ["WiFi", "TV", "Mini Bar"],
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
-      },
-      {
-        room_type_id: 3,
-        room_type_name: "Suite",
-        branch_id: 2,
-        daily_rate: 350,
-        late_checkout_rate: 75,
-        capacity: 4,
-        amenities: ["WiFi", "TV", "Mini Bar", "Balcony"],
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
-      },
-    ]);
-  }, []);
+    loadBranches();
+    loadRooms();
+    loadRoomTypes();
+  }, [loadBranches, loadRooms, loadRoomTypes]);
 
   const filteredRooms = rooms.filter((room) => {
     return (
@@ -159,7 +122,7 @@ const RoomManagement: React.FC = () => {
 
   const getFilteredRoomTypes = () => {
     if (!formData.branch_id) return [];
-    return roomTypes.filter((rt) => rt.branch_id === parseInt(formData.branch_id));
+    return roomTypes.filter((rt) => rt.branchid === parseInt(formData.branch_id));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -186,40 +149,40 @@ const RoomManagement: React.FC = () => {
         return;
       }
 
-      const branch = branches.find((b) => b.branch_id === parseInt(formData.branch_id));
-      const roomType = roomTypes.find((rt) => rt.room_type_id === parseInt(formData.room_type_id));
+      const roomType = roomTypes.find((rt) => rt.roomtypeid === parseInt(formData.room_type_id));
 
       if (editingRoom) {
         // Update existing room
-        const updatedRoom: Room = {
-          ...editingRoom,
-          room_number: formData.room_number,
-          branch_id: parseInt(formData.branch_id),
-          room_type_id: parseInt(formData.room_type_id),
-          status: formData.status as RoomStatus,
-          branch_name: branch?.branch_name,
-          room_type_name: roomType?.room_type_name,
-          updated_at: new Date().toISOString(),
+        const updateRequest = {
+          roomStatus: formData.status,
+          roomTypeName: roomType?.roomtypename,
         };
 
-        setRooms(rooms.map((room) => (room.room_id === editingRoom.room_id ? updatedRoom : room)));
-        showSuccess("Room updated successfully!");
+        const response = await updateRoom(editingRoom.room_id, updateRequest);
+
+        if (response.success) {
+          await loadRooms(); // Reload to get updated data
+          showSuccess("Room updated successfully!");
+        } else {
+          showError(response.message || "Failed to update room");
+          return;
+        }
       } else {
         // Create new room
-        const newRoom: Room = {
-          room_id: Math.max(...rooms.map((r) => r.room_id), 0) + 1,
-          room_number: formData.room_number,
-          branch_id: parseInt(formData.branch_id),
-          room_type_id: parseInt(formData.room_type_id),
-          status: formData.status as RoomStatus,
-          branch_name: branch?.branch_name,
-          room_type_name: roomType?.room_type_name,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+        const createRequest = {
+          branchId: parseInt(formData.branch_id),
+          roomType: roomType?.roomtypename || "Single", // Default to Single if not found
         };
 
-        setRooms([...rooms, newRoom]);
-        showSuccess("Room created successfully!");
+        const response = await createRoom(createRequest);
+
+        if (response.success) {
+          await loadRooms(); // Reload to get updated data
+          showSuccess("Room created successfully!");
+        } else {
+          showError(response.message || "Failed to create room");
+          return;
+        }
       }
 
       resetForm();
@@ -242,12 +205,41 @@ const RoomManagement: React.FC = () => {
   };
 
   const handleDelete = async (roomId: number) => {
-    if (!window.confirm("Are you sure you want to delete this room?")) return;
+    const room = rooms.find((r) => r.room_id === roomId);
+    const roomInfo = room ? `Room ${room.room_number}` : "this room";
 
+    const modalId = openModal({
+      component: (
+        <ConfirmationModal
+          title="Delete Room"
+          message={`Are you sure you want to delete "${roomInfo}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={() => {
+            closeModal(modalId);
+            performDeleteRoom(roomId);
+          }}
+          onCancel={() => closeModal(modalId)}
+        />
+      ),
+      size: "sm",
+      showCloseButton: false,
+    });
+  };
+
+  const performDeleteRoom = async (roomId: number) => {
     try {
-      setRooms(rooms.filter((room) => room.room_id !== roomId));
-      showSuccess("Room deleted successfully!");
-    } catch {
+      const response = await deleteRoom(roomId);
+
+      if (response.success) {
+        await loadRooms(); // Reload to get updated data
+        showSuccess("Room deleted successfully!");
+      } else {
+        showError(response.message || "Failed to delete room");
+      }
+    } catch (error) {
+      console.error("Error deleting room:", error);
       showError("Failed to delete room");
     }
   };
@@ -405,8 +397,8 @@ const RoomManagement: React.FC = () => {
             >
               <option value="">Select a room type</option>
               {getFilteredRoomTypes().map((roomType) => (
-                <option key={roomType.room_type_id} value={roomType.room_type_id}>
-                  {roomType.room_type_name}
+                <option key={roomType.roomtypeid} value={roomType.roomtypeid}>
+                  {roomType.roomtypename}
                 </option>
               ))}
             </select>

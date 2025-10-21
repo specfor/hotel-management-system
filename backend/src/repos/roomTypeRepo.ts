@@ -1,8 +1,7 @@
-import {RoomTypePublic} from "@src/types/roomTypes";
+import { RoomTypePublic } from "@src/types/roomTypes";
 import db from "@src/common/util/db";
 
-export async function getAllRoomTypesDB():Promise<RoomTypePublic[] | null>{
-
+export async function getAllRoomTypesDB(): Promise<RoomTypePublic[]> {
   const sql = `
         SELECT 
             type_id as roomTypeId, 
@@ -16,16 +15,11 @@ export async function getAllRoomTypesDB():Promise<RoomTypePublic[] | null>{
       `;
 
   const result = await db.query(sql);
-  if(result.rowCount === 0){
-    return null;
-  }
-  return result.rows as RoomTypePublic[];
 
+  return result.rows as RoomTypePublic[];
 }
 
-export async function getRoomTypesByBranchDB(
-  branchId: number):Promise<RoomTypePublic[] | null>{
-
+export async function getRoomTypesByBranchDB(branchId: number): Promise<RoomTypePublic[] | null> {
   const sql = `
         SELECT
             type_id as roomTypeId,
@@ -41,19 +35,21 @@ export async function getRoomTypesByBranchDB(
 
   const result = await db.query(sql, [branchId]);
 
-  if(result.rows.length == 0){
+  if (result.rows.length == 0) {
     return null;
   }
 
   return result.rows as RoomTypePublic[];
-    
 }
 
 export async function createRoomTypeDB(
-  branchIDInt: number, roomTypeName: string,
-  dailyRateInt: number, lateCheckoutRateInt?: number,
-  capacityInt?: number, amenities?: string): Promise<RoomTypePublic | null>{
-
+  branchIDInt: number,
+  roomTypeName: string,
+  dailyRateInt: number,
+  lateCheckoutRateInt?: number,
+  capacityInt?: number,
+  amenities?: string
+): Promise<RoomTypePublic | null> {
   const sql = `
       INSERT INTO room_type (
         branch_id, type_name, daily_rate, late_checkout_rate,
@@ -70,52 +66,52 @@ export async function createRoomTypeDB(
           amenities as "amenities";
       `;
 
-  const values = [branchIDInt, roomTypeName,
-    dailyRateInt, lateCheckoutRateInt,
-    capacityInt, amenities];
+  const values = [branchIDInt, roomTypeName, dailyRateInt, lateCheckoutRateInt, capacityInt, amenities];
   const result = await db.query(sql, values);
 
-  if(result.rows.length == 0){
+  if (result.rows.length == 0) {
     return null;
   }
   return result.rows[0] as RoomTypePublic;
-
 }
 
 export async function updateRoomTypeDB(
-  branchIDInt: number, roomTypeName: string,
-  dailyRate?: number, lateCheckoutRate?: number,
-  capacity?: number, amenities?:string): Promise<RoomTypePublic | null>{
-
+  branchIDInt: number,
+  roomTypeName: string,
+  dailyRate?: number,
+  lateCheckoutRate?: number,
+  capacity?: number,
+  amenities?: string
+): Promise<RoomTypePublic | null> {
   const updates: string[] = [];
   const values: (string | number)[] = [];
   let paramIndex = 1;
 
-  if(dailyRate){
+  if (dailyRate) {
     updates.push("daily_rate = $" + paramIndex);
     values.push(dailyRate);
     paramIndex++;
   }
 
-  if(lateCheckoutRate){
+  if (lateCheckoutRate) {
     updates.push("late_checkout_rate = $" + paramIndex);
     values.push(lateCheckoutRate);
     paramIndex++;
   }
 
-  if(capacity){
+  if (capacity) {
     updates.push("capacity = $" + paramIndex);
     values.push(capacity);
     paramIndex++;
   }
 
-  if(amenities){
+  if (amenities) {
     updates.push("amenities = $" + paramIndex);
     values.push(amenities);
     paramIndex++;
   }
 
-  if (updates.length === 0){
+  if (updates.length === 0) {
     return null;
   }
 
@@ -138,17 +134,14 @@ export async function updateRoomTypeDB(
     `;
 
   const result = await db.query(sql, values);
-  if(result.rows.length === 0){
+  if (result.rows.length === 0) {
     return null;
   }
 
   return result.rows[0] as RoomTypePublic;
-
 }
 
-export async function deleteRoomTypeDB(
-  branchIDInt: number, roomTypeName: string): Promise<boolean> {
-
+export async function deleteRoomTypeDB(branchIDInt: number, roomTypeName: string): Promise<boolean> {
   const sql = `
       DELETE FROM room_type
       WHERE branch_id = $1 and type_name = $2
@@ -158,12 +151,9 @@ export async function deleteRoomTypeDB(
   const result = await db.query(sql, [branchIDInt, roomTypeName]);
 
   return (result.rowCount ?? 0) > 0;
-
 }
 
-export async function getRoomTypeByNameDB(
-  branchID: number, typeName: string): Promise<{ typeID: number } | null> {
-
+export async function getRoomTypeByNameDB(branchID: number, typeName: string): Promise<{ typeID: number } | null> {
   const sql = `
       SELECT type_id AS "typeID"
       FROM room_type
@@ -171,11 +161,9 @@ export async function getRoomTypeByNameDB(
     `;
   const result = await db.query(sql, [branchID, typeName]);
 
-  if(result.rows.length == 0){
+  if (result.rows.length == 0) {
     return null;
   }
 
   return result.rows[0] as { typeID: number };
-    
 }
-

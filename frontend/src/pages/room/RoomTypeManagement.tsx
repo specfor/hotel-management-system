@@ -1,14 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Search, Edit, Trash2, Settings, DollarSign, Users } from "lucide-react";
 import Button from "../../components/primary/Button";
 import Input from "../../components/primary/Input";
 import Modal from "../../components/Modal";
 import Card from "../../components/primary/Card";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import { useAlert } from "../../hooks/useAlert";
+import { useModal } from "../../hooks/useModal";
 import type { Branch, RoomType } from "../../types/room";
+import { getBranches } from "../../api_connection/branches";
+import { getAllRoomTypes, createRoomType, updateRoomType, deleteRoomType } from "../../api_connection/rooms";
 
 const RoomTypeManagement: React.FC = () => {
   const { showSuccess, showError } = useAlert();
+  const { openModal, closeModal } = useModal();
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,77 +31,57 @@ const RoomTypeManagement: React.FC = () => {
   const [amenityInput, setAmenityInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Mock data - Replace with API calls
-  useEffect(() => {
-    // Mock room types data
-    setRoomTypes([
-      {
-        room_type_id: 1,
-        room_type_name: "Standard Single",
-        branch_id: 1,
-        daily_rate: 120,
-        late_checkout_rate: 30,
-        capacity: 1,
-        amenities: ["WiFi", "TV", "Air Conditioning"],
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
-        branch_name: "Downtown Branch",
-      },
-      {
-        room_type_id: 2,
-        room_type_name: "Deluxe Double",
-        branch_id: 1,
-        daily_rate: 180,
-        late_checkout_rate: 40,
-        capacity: 2,
-        amenities: ["WiFi", "TV", "Mini Bar", "Room Service"],
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
-        branch_name: "Downtown Branch",
-      },
-      {
-        room_type_id: 3,
-        room_type_name: "Executive Suite",
-        branch_id: 2,
-        daily_rate: 350,
-        late_checkout_rate: 75,
-        capacity: 4,
-        amenities: ["WiFi", "TV", "Mini Bar", "Balcony", "Jacuzzi", "Butler Service"],
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
-        branch_name: "Airport Branch",
-      },
-    ]);
+  // Load data
+  const loadBranches = useCallback(async () => {
+    try {
+      const response = await getBranches();
+      if (response.success && response.data) {
+        const transformedBranches = response.data.map(
+          (branch: { branchid: number; branchname: string; city: string; address: string }) => ({
+            branch_id: branch.branchid,
+            branch_name: branch.branchname,
+            city: branch.city,
+            address: branch.address,
+          })
+        );
+        setBranches(transformedBranches);
+      } else {
+        showError("Failed to load branches");
+      }
+    } catch (error) {
+      console.error("Error loading branches:", error);
+      showError("Failed to load branches");
+    }
+  }, [showError]);
 
-    // Mock branches data
-    setBranches([
-      {
-        branch_id: 1,
-        branch_name: "Downtown Branch",
-        city: "Downtown",
-        address: "123 Main St",
-      },
-      {
-        branch_id: 2,
-        branch_name: "Airport Branch",
-        city: "Airport",
-        address: "456 Airport Rd",
-      },
-      {
-        branch_id: 3,
-        branch_name: "Beach Resort",
-        city: "Beach",
-        address: "789 Beach Ave",
-      },
-    ]);
-  }, []);
+  const loadRoomTypes = useCallback(async () => {
+    try {
+      const response = await getAllRoomTypes();
+      if (response.success && response.data) {
+        setRoomTypes(
+          response.data.map((rt) => ({
+            ...rt,
+            amenities: typeof rt.amenities === "string" ? rt.amenities.split(",").map((a) => a.trim()) : [],
+          }))
+        );
+      } else {
+        showError("Failed to load room types");
+      }
+    } catch (error) {
+      console.error("Error loading room types:", error);
+      showError("Failed to load room types");
+    }
+  }, [showError]);
+
+  useEffect(() => {
+    loadBranches();
+    loadRoomTypes();
+  }, [loadBranches, loadRoomTypes]);
 
   const filteredRoomTypes = roomTypes.filter((roomType) => {
     return (
-      (!searchTerm ||
-        roomType.room_type_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        roomType.branch_name?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (!branchFilter || roomType.branch_id === parseInt(branchFilter))
+      (!searchTerm || roomType.roomtypename.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (!branchFilter || roomType.branchid === parseInt(branchFilter))
     );
   });
 
@@ -114,9 +99,9 @@ const RoomTypeManagement: React.FC = () => {
       // Check for duplicate room type name in the same branch
       const isDuplicate = roomTypes.some(
         (roomType) =>
-          roomType.room_type_name.toLowerCase() === formData.room_type_name.toLowerCase() &&
-          roomType.branch_id === parseInt(formData.branch_id) &&
-          roomType.room_type_id !== editingRoomType?.room_type_id
+          roomType.roomtypename.toLowerCase() === formData.room_type_name.toLowerCase() &&
+          roomType.branchid === parseInt(formData.branch_id) &&
+          roomType.roomtypeid !== editingRoomType?.roomtypeid
       );
 
       if (isDuplicate) {
@@ -124,45 +109,44 @@ const RoomTypeManagement: React.FC = () => {
         return;
       }
 
-      const branch = branches.find((b) => b.branch_id === parseInt(formData.branch_id));
-
       if (editingRoomType) {
         // Update existing room type
-        const updatedRoomType: RoomType = {
-          ...editingRoomType,
-          room_type_name: formData.room_type_name,
-          branch_id: parseInt(formData.branch_id),
-          daily_rate: parseFloat(formData.daily_rate),
-          late_checkout_rate: parseFloat(formData.late_checkout_rate) || 0,
+        const updateRequest = {
+          dailyRate: parseFloat(formData.daily_rate),
+          lateCheckoutRate: parseFloat(formData.late_checkout_rate) || 0,
           capacity: parseInt(formData.capacity),
-          amenities: formData.amenities,
-          branch_name: branch?.branch_name,
-          updated_at: new Date().toISOString(),
+          amenities: formData.amenities.join(", "), // Convert array to string
         };
 
-        setRoomTypes(
-          roomTypes.map((roomType) =>
-            roomType.room_type_id === editingRoomType.room_type_id ? updatedRoomType : roomType
-          )
-        );
-        showSuccess("Room type updated successfully!");
+        const response = await updateRoomType(editingRoomType.branchid, editingRoomType.roomtypename, updateRequest);
+
+        if (response.success) {
+          await loadRoomTypes(); // Reload to get updated data
+          showSuccess("Room type updated successfully!");
+        } else {
+          showError(response.message || "Failed to update room type");
+          return;
+        }
       } else {
         // Create new room type
-        const newRoomType: RoomType = {
-          room_type_id: Math.max(...roomTypes.map((rt) => rt.room_type_id), 0) + 1,
-          room_type_name: formData.room_type_name,
-          branch_id: parseInt(formData.branch_id),
-          daily_rate: parseFloat(formData.daily_rate),
-          late_checkout_rate: parseFloat(formData.late_checkout_rate) || 0,
+        const createRequest = {
+          branchId: parseInt(formData.branch_id),
+          roomTypeName: formData.room_type_name,
+          dailyRate: parseFloat(formData.daily_rate),
+          lateCheckoutRate: parseFloat(formData.late_checkout_rate) || 0,
           capacity: parseInt(formData.capacity),
-          amenities: formData.amenities,
-          branch_name: branch?.branch_name,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          amenities: formData.amenities.join(", "), // Convert array to string
         };
 
-        setRoomTypes([...roomTypes, newRoomType]);
-        showSuccess("Room type created successfully!");
+        const response = await createRoomType(createRequest);
+
+        if (response.success) {
+          await loadRoomTypes(); // Reload to get updated data
+          showSuccess("Room type created successfully!");
+        } else {
+          showError(response.message || "Failed to create room type");
+          return;
+        }
       }
 
       resetForm();
@@ -174,12 +158,14 @@ const RoomTypeManagement: React.FC = () => {
   };
 
   const handleEdit = (roomType: RoomType) => {
+    console.log(roomType);
+
     setEditingRoomType(roomType);
     setFormData({
-      room_type_name: roomType.room_type_name,
-      branch_id: roomType.branch_id.toString(),
-      daily_rate: roomType.daily_rate.toString(),
-      late_checkout_rate: roomType.late_checkout_rate.toString(),
+      room_type_name: roomType.roomtypename,
+      branch_id: roomType.branchid.toString(),
+      daily_rate: roomType.dailyrate.toString(),
+      late_checkout_rate: roomType.latecheckoutrate.toString(),
       capacity: roomType.capacity.toString(),
       amenities: [...roomType.amenities],
     });
@@ -187,12 +173,47 @@ const RoomTypeManagement: React.FC = () => {
   };
 
   const handleDelete = async (roomTypeId: number) => {
-    if (!window.confirm("Are you sure you want to delete this room type?")) return;
+    const roomType = roomTypes.find((rt) => rt.roomtypeid === roomTypeId);
+    const roomTypeName = roomType ? roomType.roomtypename : "this room type";
 
+    const modalId = openModal({
+      component: (
+        <ConfirmationModal
+          title="Delete Room Type"
+          message={`Are you sure you want to delete "${roomTypeName}"? This action cannot be undone and may affect existing rooms.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={() => {
+            closeModal(modalId);
+            performDeleteRoomType(roomTypeId);
+          }}
+          onCancel={() => closeModal(modalId)}
+        />
+      ),
+      size: "sm",
+      showCloseButton: false,
+    });
+  };
+
+  const performDeleteRoomType = async (roomTypeId: number) => {
     try {
-      setRoomTypes(roomTypes.filter((roomType) => roomType.room_type_id !== roomTypeId));
-      showSuccess("Room type deleted successfully!");
-    } catch {
+      const roomType = roomTypes.find((rt) => rt.roomtypeid === roomTypeId);
+      if (!roomType) {
+        showError("Room type not found");
+        return;
+      }
+
+      const response = await deleteRoomType(roomType.branchid, roomType.roomtypename);
+
+      if (response.success) {
+        await loadRoomTypes(); // Reload to get updated data
+        showSuccess("Room type deleted successfully!");
+      } else {
+        showError(response.message || "Failed to delete room type");
+      }
+    } catch (error) {
+      console.error("Error deleting room type:", error);
       showError("Failed to delete room type");
     }
   };
@@ -266,11 +287,11 @@ const RoomTypeManagement: React.FC = () => {
       {/* Room Types Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredRoomTypes.map((roomType) => (
-          <Card key={roomType.room_type_id} className="p-6">
+          <Card key={roomType.roomtypeid} className="p-6">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center space-x-2">
                 <Settings className="h-5 w-5 text-gray-500" />
-                <h3 className="text-lg font-semibold text-gray-900">{roomType.room_type_name}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{roomType.roomtypename}</h3>
               </div>
               <div className="flex space-x-2">
                 <Button
@@ -284,7 +305,7 @@ const RoomTypeManagement: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDelete(roomType.room_type_id)}
+                  onClick={() => handleDelete(roomType.roomtypeid)}
                   className="text-red-600 hover:text-red-800"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -295,7 +316,9 @@ const RoomTypeManagement: React.FC = () => {
             <div className="space-y-3 mb-4">
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Branch:</span>
-                <span className="text-sm font-medium">{roomType.branch_name}</span>
+                <span className="text-sm font-medium">
+                  {branches.find((branch) => branch.branch_id === roomType.branchid)?.branch_name}
+                </span>
               </div>
 
               <div className="flex justify-between">
@@ -310,14 +333,14 @@ const RoomTypeManagement: React.FC = () => {
                 <div className="text-center">
                   <div className="flex items-center justify-center space-x-1">
                     <DollarSign className="h-4 w-4 text-green-600" />
-                    <span className="text-lg font-bold text-green-600">{roomType.daily_rate}</span>
+                    <span className="text-lg font-bold text-green-600">{roomType.dailyrate}</span>
                   </div>
                   <span className="text-xs text-gray-500">Daily Rate</span>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center space-x-1">
                     <DollarSign className="h-4 w-4 text-orange-600" />
-                    <span className="text-lg font-bold text-orange-600">{roomType.late_checkout_rate}</span>
+                    <span className="text-lg font-bold text-orange-600">{roomType.latecheckoutrate}</span>
                   </div>
                   <span className="text-xs text-gray-500">Late Checkout</span>
                 </div>
@@ -326,8 +349,18 @@ const RoomTypeManagement: React.FC = () => {
               <div>
                 <span className="text-sm text-gray-600 block mb-2">Amenities:</span>
                 <div className="flex flex-wrap gap-1">
-                  {roomType.amenities.length > 0 ? (
-                    roomType.amenities.map((amenity, index) => (
+                  {(Array.isArray(roomType.amenities)
+                    ? roomType.amenities
+                    : roomType.amenities
+                    ? roomType.amenities.split(",").map((a) => a.trim())
+                    : []
+                  ).length > 0 ? (
+                    (Array.isArray(roomType.amenities)
+                      ? roomType.amenities
+                      : roomType.amenities
+                      ? roomType.amenities.split(",").map((a) => a.trim())
+                      : []
+                    ).map((amenity, index) => (
                       <span
                         key={index}
                         className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
