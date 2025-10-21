@@ -76,10 +76,10 @@
 -- =========================
 -- 8. Bookings
 -- =========================
--- INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES
--- (1, 1, 1, 101, 'Booked', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
--- (2, 2, 2, 102, 'Checked-In', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
--- (3, 1, 3, 103, 'Cancelled', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
+INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES
+(1, 1, 1, 101, 'Booked', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
+(2, 2, 2, 102, 'Checked-In', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
+(3, 1, 3, 103, 'Cancelled', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
 
 -- =========================
 -- 9. Service Usage
@@ -129,6 +129,7 @@ SELECT setval('room_type_type_id_seq', (SELECT COALESCE(MAX(type_id), 1) FROM ro
 SELECT setval('room_room_id_seq', (SELECT COALESCE(MAX(room_id), 1) FROM room));
 SELECT setval('guest_guest_id_seq', (SELECT COALESCE(MAX(guest_id), 1) FROM guest));
 SELECT setval('staff_staff_id_seq', (SELECT COALESCE(MAX(staff_id), 1) FROM staff));
+SELECT setval('chargeable_services_service_id_seq', (SELECT COALESCE(MAX(service_id), 1) FROM chargeable_services));
 SELECT setval('chargeable_services_service_id_seq', (SELECT COALESCE(MAX(service_id), 1) FROM chargeable_services));
 SELECT setval('booking_booking_id_seq', (SELECT COALESCE(MAX(booking_id), 1) FROM booking));
 SELECT setval('service_usage_record_id_seq', (SELECT COALESCE(MAX(record_id), 1) FROM service_usage));

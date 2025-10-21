@@ -23,7 +23,10 @@ export async function findUserByStaffId(
     "SELECT staff_id, username, password_hash FROM \"user\" WHERE staff_id = $1",
     [staffId],
   );
-  return (result.rows[0] as User) || null;
+  if (result.rowCount === 0) {
+    return null;
+  }
+  return (result.rows[0] as User);
 }
 
 //Create a new user

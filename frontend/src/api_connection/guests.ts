@@ -75,26 +75,6 @@ export class GuestApiService extends BaseApiService {
   }
 
   /**
-   * Transform frontend guest data to backend format
-   */
-  private transformGuestToBackend(frontendGuest: Partial<Guest>): Partial<BackendGuest> {
-    const backendData: Partial<BackendGuest> = {
-      nic: frontendGuest.nic,
-      name: frontendGuest.name,
-      age: frontendGuest.age,
-      contact_no: frontendGuest.contact_number, // Map contact_number to contact_no
-      email: frontendGuest.email,
-    };
-
-    // Add guest_id if it exists (for updates)
-    if (frontendGuest.guest_id) {
-      backendData.guest_id = frontendGuest.guest_id;
-    }
-
-    return backendData;
-  }
-
-  /**
    * Get all guests with optional filters and pagination
    */
   async getGuests(params?: GuestListParams): Promise<ApiResponse<Guest[]>> {
