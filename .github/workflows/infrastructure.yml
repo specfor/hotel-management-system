@@ -1,0 +1,190 @@
+# Infrastructure Management Workflow
+name: Infrastructure Management
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "Infrastructure operation"
+        required: true
+        default: "plan"
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+          - refresh
+          - import
+      environment:
+        description: "Environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      auto_approve:
+        description: "Auto-approve changes (careful!)"
+        required: false
+        default: false
+        type: boolean
+      resource_target:
+        description: "Target specific resource (optional)"
+        required: false
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+  PROJECT_NAME: hotel-management-system
+  TF_VAR_project_name: hotel-management-system
+
+jobs:
+  infrastructure-management:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Validate Production Branch
+        if: github.event.inputs.environment == 'prod'
+        run: |
+          if [ "${{ github.ref }}" != "refs/heads/production" ]; then
+            echo "❌ Production infrastructure changes can only be made from the 'production' branch"
+            echo "Current branch: ${{ github.ref_name }}"
+            echo "Required branch: production"
+            exit 1
+          fi
+          echo "✅ Production infrastructure change approved from production branch"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform Variables
+        run: |
+          cd infrastructure
+
+          # Create terraform.tfvars
+          cat > terraform.tfvars << EOF
+          project_name = "${{ env.PROJECT_NAME }}"
+          environment  = "${{ github.event.inputs.environment }}"
+          aws_region   = "${{ env.AWS_REGION }}"
+
+          # Environment-specific settings
+          node_instance_types = ["t3.micro"]
+          node_desired_capacity = 1
+          node_max_capacity = 2
+          node_min_capacity = 1
+          node_capacity_type = "SPOT"
+
+          db_allocated_storage = 10
+
+          tags = {
+            Environment = "${{ github.event.inputs.environment }}"
+            Project     = "${{ env.PROJECT_NAME }}"
+            ManagedBy   = "github-actions"
+            Branch      = "${{ github.ref_name }}"
+            WorkflowRun = "${{ github.run_id }}"
+          }
+          EOF
+
+      - name: Terraform Init
+        run: |
+          cd infrastructure
+          terraform init
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd infrastructure
+
+          TARGET_FLAG=""
+          if [ -n "${{ github.event.inputs.resource_target }}" ]; then
+            TARGET_FLAG="-target=${{ github.event.inputs.resource_target }}"
+          fi
+
+          terraform plan $TARGET_FLAG -detailed-exitcode -out=tfplan.out
+
+          # Save plan output
+          terraform show -no-color tfplan.out > tfplan.txt
+
+          # Set output for next steps
+          echo "changes_detected=$?" >> $GITHUB_OUTPUT
+
+      - name: Terraform Apply
+        if: github.event.inputs.operation == 'apply' && (github.event.inputs.auto_approve == 'true' || steps.plan.outputs.changes_detected == '2')
+        run: |
+          cd infrastructure
+
+          TARGET_FLAG=""
+          if [ -n "${{ github.event.inputs.resource_target }}" ]; then
+            TARGET_FLAG="-target=${{ github.event.inputs.resource_target }}"
+          fi
+
+          if [ "${{ github.event.inputs.auto_approve }}" = "true" ]; then
+            terraform apply -auto-approve $TARGET_FLAG
+          else
+            terraform apply tfplan.out
+          fi
+
+      - name: Terraform Destroy (with confirmation)
+        if: github.event.inputs.operation == 'destroy'
+        run: |
+          cd infrastructure
+
+          echo "⚠️ DESTROY OPERATION REQUESTED"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Auto-approve: ${{ github.event.inputs.auto_approve }}"
+
+          if [ "${{ github.event.inputs.environment }}" = "prod" ]; then
+            echo "❌ Production destruction is not allowed through automation"
+            exit 1
+          fi
+
+          TARGET_FLAG=""
+          if [ -n "${{ github.event.inputs.resource_target }}" ]; then
+            TARGET_FLAG="-target=${{ github.event.inputs.resource_target }}"
+          fi
+
+          if [ "${{ github.event.inputs.auto_approve }}" = "true" ]; then
+            terraform destroy -auto-approve $TARGET_FLAG
+          else
+            echo "❌ Destroy operation requires auto_approve=true for safety"
+            echo "Please re-run with auto_approve enabled if you're sure"
+            exit 1
+          fi
+
+      - name: Terraform Refresh
+        if: github.event.inputs.operation == 'refresh'
+        run: |
+          cd infrastructure
+          terraform refresh
+
+      - name: Operation Summary
+        run: |
+          echo "## 🛠️ Infrastructure Operation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Operation**: ${{ github.event.inputs.operation }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Auto Approve**: ${{ github.event.inputs.auto_approve }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "${{ github.event.inputs.resource_target }}" ]; then
+            echo "- **Target Resource**: ${{ github.event.inputs.resource_target }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ steps.plan.outputs.changes_detected }}" = "0" ]; then
+            echo "- **Status**: ✅ No changes detected" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.plan.outputs.changes_detected }}" = "2" ]; then
+            echo "- **Status**: ⚠️ Changes detected and will be applied" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -1,0 +1,130 @@
+# Database Management Workflow
+name: Database Operations
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "Database operation to perform"
+        required: true
+        default: "migrate"
+        type: choice
+        options:
+          - migrate
+          - rollback
+          - seed
+          - backup
+          - restore
+      environment:
+        description: "Environment to operate on"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      migration_name:
+        description: "Migration name (for rollback)"
+        required: false
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+  PROJECT_NAME: hotel-management-system
+
+jobs:
+  database-operation:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Validate Production Branch
+        if: github.event.inputs.environment == 'prod'
+        run: |
+          if [ "${{ github.ref }}" != "refs/heads/production" ]; then
+            echo "❌ Production database operations can only be performed from the 'production' branch"
+            echo "Current branch: ${{ github.ref_name }}"
+            echo "Required branch: production"
+            exit 1
+          fi
+          echo "✅ Production database operation approved from production branch"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup kubectl
+        run: |
+          # Get cluster name from terraform state or use default
+          CLUSTER_NAME="${{ env.PROJECT_NAME }}-${{ github.event.inputs.environment }}-cluster"
+
+          # Configure kubectl
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name $CLUSTER_NAME
+
+      - name: Database Migration
+        if: github.event.inputs.operation == 'migrate'
+        run: |
+          echo "🔄 Running database migrations..."
+
+          # Get backend pod
+          BACKEND_POD=$(kubectl get pods -n ${{ env.PROJECT_NAME }}-app -l app=backend -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+
+          if [ -n "$BACKEND_POD" ]; then
+            # Copy migration files to pod
+            kubectl cp backend/migrations ${{ env.PROJECT_NAME }}-app/$BACKEND_POD:/app/migrations/
+            
+            # Run migrations
+            kubectl exec -n ${{ env.PROJECT_NAME }}-app $BACKEND_POD -- npm run migrate
+            
+            echo "✅ Database migrations completed"
+          else
+            echo "❌ No backend pods found"
+            exit 1
+          fi
+
+      - name: Database Seed
+        if: github.event.inputs.operation == 'seed'
+        run: |
+          echo "🌱 Seeding database..."
+
+          BACKEND_POD=$(kubectl get pods -n ${{ env.PROJECT_NAME }}-app -l app=backend -o jsonpath='{.items[0].metadata.name}')
+
+          if [ -n "$BACKEND_POD" ]; then
+            # Copy seed files
+            kubectl cp backend/migrations ${{ env.PROJECT_NAME }}-app/$BACKEND_POD:/app/migrations/
+            
+            # Run seed
+            kubectl exec -n ${{ env.PROJECT_NAME }}-app $BACKEND_POD -- npm run seed || {
+              echo "Seed command not found, trying manual seed file execution..."
+              kubectl exec -n ${{ env.PROJECT_NAME }}-app $BACKEND_POD -- psql \
+                -h postgresql \
+                -U hotel_user \
+                -d hotel_management \
+                -f /app/migrations/20251005T124152_seed_data.sql
+            }
+            
+            echo "✅ Database seeded successfully"
+          else
+            echo "❌ No backend pods found"
+            exit 1
+          fi
+
+      - name: Operation Summary
+        run: |
+          echo "## 🗄️ Database Operation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Operation**: ${{ github.event.inputs.operation }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event.inputs.operation }}" = "migrate" ]; then
+            echo "- **Result**: Database migrations applied successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ github.event.inputs.operation }}" = "seed" ]; then
+            echo "- **Result**: Database seeded with initial data" >> $GITHUB_STEP_SUMMARY
+          fi
