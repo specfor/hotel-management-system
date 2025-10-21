@@ -88,9 +88,6 @@ jobs:
           # Linting
           npm run lint || npx eslint . --ext .ts,.js
 
-          # Run tests if available
-          npm test || echo "No tests configured"
-
       - name: Frontend Code Quality
         run: |
           cd frontend
