@@ -39,6 +39,11 @@ env:
   PROJECT_NAME: hotel-management-system
   TF_VAR_project_name: hotel-management-system
 
+permissions:
+  contents: read
+  id-token: write
+  actions: read
+
 jobs:
   infrastructure-management:
     runs-on: ubuntu-latest

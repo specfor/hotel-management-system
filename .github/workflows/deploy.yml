@@ -22,6 +22,11 @@ env:
   AWS_REGION: us-east-1
   PROJECT_NAME: hotel-management-system
 
+permissions:
+  contents: read
+  id-token: write
+  actions: read
+
 jobs:
   # Test Backend
   test-backend:
