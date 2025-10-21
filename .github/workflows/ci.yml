@@ -178,30 +178,56 @@ jobs:
         with:
           context: ./backend
           push: false
+          load: true
           tags: hotel-backend:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Verify Docker Image
+        run: |
+          echo "Checking if Docker image was built successfully..."
+          docker images | grep hotel-backend || {
+            echo "❌ Docker image not found"
+            exit 1
+          }
+          echo "✅ Docker image found"
+
       - name: Test Backend Docker Image
         run: |
+          echo "🚀 Starting backend container test..."
+
           # Start the container in background
           docker run -d --name test-backend -p 3000:3000 hotel-backend:test
 
-          # Wait a bit for startup
-          sleep 10
+          # Wait a bit for startup and check if container is still running
+          sleep 15
 
           # Check if container is running
           if docker ps | grep test-backend; then
             echo "✅ Backend container started successfully"
+            
+            # Try to check if the service is responding (optional health check)
+            if command -v curl >/dev/null 2>&1; then
+              echo "🔍 Testing service health..."
+              # Wait a bit more for the service to be ready
+              sleep 5
+              # Try health check (don't fail if endpoint doesn't exist)
+              curl -f http://localhost:3000/health || echo "Health endpoint not available (this is OK)"
+            fi
           else
             echo "❌ Backend container failed to start"
+            echo "📋 Container logs:"
             docker logs test-backend
+            echo "📋 Container status:"
+            docker ps -a | grep test-backend
             exit 1
           fi
 
           # Cleanup
+          echo "🧹 Cleaning up test container..."
           docker stop test-backend
           docker rm test-backend
+          echo "✅ Cleanup completed"
 
   # Generate PR Summary
   pr-summary:
