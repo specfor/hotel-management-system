@@ -54,7 +54,7 @@ export async function getRoomsByBranch(req: Request, res: Response) {
       });
     }
 
-    const querySchema = Joi.object<{ type?: string; status?: string }>({
+    const querySchema = Joi.object<{ type?: string, status?: string }>({
       type: Joi.string().valid("Single", "Double", "Suite").insensitive().optional(),
       status: Joi.string().valid("Occupied", "Available").insensitive().optional(),
     });
@@ -114,7 +114,7 @@ export async function createRoom(req: Request, res: Response) {
     const branchId = paramResult.value.branchId;
 
     const querySchema = Joi.object<{ roomType: string }>({
-      roomType: Joi.string().valid("Single", "Double", "Suite").trim().insensitive().required(),
+      roomType: Joi.string().trim().insensitive().required(),
     });
 
     const queryResult = querySchema.validate(req.query, {
@@ -192,7 +192,7 @@ export async function updateRoom(req: Request, res: Response) {
       });
     }
 
-    const bodySchema = Joi.object<{ roomStatus?: string; roomTypeName?: string }>({
+    const bodySchema = Joi.object<{ roomStatus?: string, roomTypeName?: string }>({
       roomStatus: Joi.string().valid("Occupied", "Available").insensitive().optional(),
       roomTypeName: Joi.string().valid("Single", "Double", "Suite").insensitive().trim().optional(),
     });
