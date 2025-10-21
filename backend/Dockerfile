@@ -1,27 +1,31 @@
-# Use Node.js 18 Alpine as base image
-FROM node:18-alpine AS builder
+# Use Node.js 24 Alpine as base image
+FROM node:24-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and configs
 COPY package*.json ./
 COPY tsconfig*.json ./
-COPY config*.ts ./
-COPY config*.js ./
+COPY *.config.* ./
+COPY config.* ./
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci && npm cache clean --force
 
-# Copy source code
+# Copy configuration and source code
+COPY config/ ./config/
 COPY src/ ./src/
 COPY scripts/ ./scripts/
+
+# Debug: List files to verify copying
+RUN ls -la *.config.* || echo "No config files found"
 
 # Build the application
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:24-alpine AS production
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs

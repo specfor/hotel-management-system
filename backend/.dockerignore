@@ -14,4 +14,3 @@ tests/
 *.test.ts
 *.test.js
 vitest.config.mts
-eslint.config.ts
