@@ -92,7 +92,7 @@ export async function createChargeableService(req: Request, res: Response) {
     const createdService = await createChargeableServiceModel(req.body as ChargeableServiceCreate);
 
     // If no error was thrown, creation succeeded.
-    return jsonResponse(res, true, HttpStatusCodes.CREATED, { message: "Service created successfully", createdService });
+    return jsonResponse(res, true, HttpStatusCodes.OK, { message: "Service created successfully", createdService });
         
   } catch (err) {
     // Catches validation (400) and internal server errors (500) from the Model.

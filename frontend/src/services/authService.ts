@@ -1,14 +1,7 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import type { LoginCredentials, AuthResponse, User, JwtPayload } from "../types/auth";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-
-// Create axios instance
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-});
+import apiClient from "../api_connection/base";
 
 // Token storage keys
 const TOKEN_KEY = "hotel_auth_token";
@@ -22,31 +15,35 @@ export class AuthService {
       const demoUsers = {
         "admin@hotel.com": {
           id: "1",
+          username: "admin@hotel.com",
           email: "admin@hotel.com",
           name: "Hotel Administrator",
           role: "admin" as const,
         },
         "manager@hotel.com": {
           id: "2",
+          username: "manager@hotel.com",
           email: "manager@hotel.com",
           name: "Hotel Manager",
           role: "manager" as const,
         },
         "staff@hotel.com": {
           id: "3",
+          username: "staff@hotel.com",
           email: "staff@hotel.com",
           name: "Hotel Staff",
           role: "staff" as const,
         },
         "receptionist@hotel.com": {
           id: "4",
+          username: "receptionist@hotel.com",
           email: "receptionist@hotel.com",
           name: "Hotel Receptionist",
           role: "receptionist" as const,
         },
       };
 
-      const demoUser = demoUsers[credentials.email as keyof typeof demoUsers];
+      const demoUser = demoUsers[credentials.username as keyof typeof demoUsers];
 
       if (demoUser && credentials.password === "password123") {
         // Create a mock JWT token (for demo - in real app, this comes from backend)
@@ -62,19 +59,19 @@ export class AuthService {
       }
 
       // Uncomment this when backend is ready:
-      /*
-      const response = await api.post<AuthResponse>('/auth/login', credentials);
-      const { token, user } = response.data;
-      
-      // Store token and user data
-      this.setToken(token);
-      this.setUser(user);
-      
-      return response.data;
-      */
+
+      // const response = await apiClient.post<{ data: AuthResponse }>("/auth/login", credentials);
+
+      // const { token, user } = response.data.data;
+
+      // // Store token and user data
+      // this.setToken(token);
+      // this.setUser(user);
+
+      // return response.data.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.message || "Login failed");
+        throw new Error(error.response?.data?.data.message || "Login failed");
       }
       throw error;
     }
@@ -84,7 +81,7 @@ export class AuthService {
   static logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    delete api.defaults.headers.common["Authorization"];
+    delete apiClient.defaults.headers.common["Authorization"];
   }
 
   // Get stored token
@@ -95,7 +92,7 @@ export class AuthService {
   // Set token
   static setToken(token: string): void {
     localStorage.setItem(TOKEN_KEY, token);
-    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    apiClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   }
 
   // Get stored user
@@ -137,24 +134,28 @@ export class AuthService {
           admin: {
             id: "1",
             email: "admin@hotel.com",
+            username: "admin@hotel.com",
             name: "Hotel Administrator",
             role: "admin" as const,
           },
           manager: {
             id: "2",
             email: "manager@hotel.com",
+            username: "manager@hotel.com",
             name: "Hotel Manager",
             role: "manager" as const,
           },
           staff: {
             id: "3",
             email: "staff@hotel.com",
+            username: "staff@hotel.com",
             name: "Hotel Staff",
             role: "staff" as const,
           },
           receptionist: {
             id: "4",
             email: "receptionist@hotel.com",
+            username: "receptionist@hotel.com",
             name: "Hotel Receptionist",
             role: "receptionist" as const,
           },
@@ -166,6 +167,7 @@ export class AuthService {
       const decoded: JwtPayload = jwtDecode(token);
       return {
         id: decoded.sub,
+        username: decoded.email,
         email: decoded.email,
         name: decoded.name,
         role: decoded.role,
@@ -208,7 +210,7 @@ export class AuthService {
   // Refresh token (if backend supports it)
   static async refreshToken(): Promise<string | null> {
     try {
-      const response = await api.post<{ token: string }>("/auth/refresh");
+      const response = await apiClient.post<{ token: string }>("/auth/refresh");
       const { token } = response.data;
       this.setToken(token);
       return token;
@@ -220,7 +222,7 @@ export class AuthService {
 }
 
 // Request interceptor to add auth token
-api.interceptors.request.use(
+apiClient.interceptors.request.use(
   (config) => {
     const token = AuthService.getToken();
     if (token) {
@@ -232,7 +234,7 @@ api.interceptors.request.use(
 );
 
 // Response interceptor to handle auth errors
-api.interceptors.response.use(
+apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
@@ -242,5 +244,3 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-export default api;

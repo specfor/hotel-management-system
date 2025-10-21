@@ -1,0 +1,43 @@
+# terraform.tfvars.example
+# Copy this file to terraform.tfvars and customize the values
+
+# Project configuration
+project_name = "hotel-management-system"
+environment  = "dev"  # dev, staging, prod
+
+# AWS configuration
+aws_region = "us-east-1"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# Network configuration
+vpc_cidr = "10.0.0.0/16"
+private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
+public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
+
+# EKS configuration - DEMO/DEV optimized for cost
+node_instance_types   = ["t3.micro"]  # Smallest instance for demo
+node_desired_capacity = 1             # Single node for demo
+node_max_capacity     = 2             # Max 2 nodes
+node_min_capacity     = 1             # Keep minimum at 1
+# node_capacity_type    = "SPOT"      # Uncomment for 70% cost savings (less reliable)
+
+# Database configuration - DEMO optimized
+db_instance_class    = "db.t3.micro"  # Smallest RDS instance
+db_allocated_storage = 10             # Minimal storage for demo
+db_name             = "hotelmanagement"
+db_username         = "postgres"
+
+# Domain configuration (optional)
+# Uncomment and set your domain if you have one
+# domain_name = "your-domain.com"
+
+# Logging configuration
+enable_logging = true
+
+# Tags
+tags = {
+  Project     = "hotel-management-system"
+  Environment = "dev"
+  Owner       = "your-name"
+  ManagedBy   = "terraform"
+}

@@ -11,10 +11,10 @@
 
 CREATE TABLE guest (
   guest_id SERIAL PRIMARY KEY,
-  NIC BIGINT,
+  NIC VARCHAR(20),
   name VARCHAR(100),
   age INT,
-  contact_no BIGINT,
+  contact_no VARCHAR(15),     -- there can be foreign guests
   email VARCHAR(50),
   password VARCHAR(255)
 );

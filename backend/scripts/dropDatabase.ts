@@ -92,6 +92,5 @@ async function dropDatabase(): Promise<void> {
 dropDatabase().catch((error: unknown) => {
   logger.err("❌ Failed to drop database:");
   logger.err(error);
-  // eslint-disable-next-line n/no-process-exit
-  process.exit(1);
+  throw error;
 });

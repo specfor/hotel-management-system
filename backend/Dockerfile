@@ -1,85 +1,57 @@
-## ------------------------------
-## 1️⃣ Build stage
-## ------------------------------
-#FROM node:20-alpine AS builder
-#
-## Set working directory
-#WORKDIR /app
-#
-## Copy package files first (better caching)
-#COPY package*.json ./
-#
-## Install all dependencies
-#RUN npm ci
-#
-## Copy all source files
-#COPY .. .
-#
-## Set environment to production to skip dotenv loading during build
-#ENV NODE_ENV=production
-#
-## Build TypeScript to JavaScript
-#RUN npm run build
-#
-## ------------------------------
-## 2️⃣ Production stage
-## ------------------------------
-#FROM node:20-alpine AS production
-#
-## Set working directory
-#WORKDIR /app
-#
-## Copy only the built output and essentials
-#COPY --from=builder /app/package*.json ./
-#COPY --from=builder /app/dist ./dist
-#COPY --from=builder /app/config ./config
-#
-## Install only production dependencies
-#RUN npm ci --omit=dev
-#
-## Expose your app port
-#EXPOSE 3000
-#
-## Define environment variables (can be overridden in Railway)
-#ENV NODE_ENV=production
-#
-## Start the backend
-#CMD ["npm", "run", "start"]
+# Use Node.js 18 Alpine as base image
+FROM node:18-alpine AS builder
 
-
-# ------------------------------
-# 1️⃣ Build stage
-# ------------------------------
-FROM node:20-alpine AS builder
-
+# Set working directory
 WORKDIR /app
 
-# Copy and install dependencies
+# Copy package files
 COPY package*.json ./
-RUN npm ci
+COPY tsconfig*.json ./
+COPY config*.ts ./
+COPY config*.js ./
 
-# Copy all source files
-COPY . .
+# Install dependencies
+RUN npm ci --only=production && npm cache clean --force
 
-# Build TypeScript → JavaScript
+# Copy source code
+COPY src/ ./src/
+COPY scripts/ ./scripts/
+
+# Build the application
 RUN npm run build
 
-# ------------------------------
-# 2️⃣ Production stage
-# ------------------------------
-FROM node:20-alpine AS production
+# Production stage
+FROM node:18-alpine AS production
 
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+
+# Set working directory
 WORKDIR /app
 
-# Copy necessary files from build stage
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/config ./config
+# Copy package files
+COPY package*.json ./
 
-RUN npm ci --omit=dev
+# Install only production dependencies
+RUN npm ci --only=production && npm cache clean --force
 
+# Copy built application from builder stage
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/config.js ./config.js
+
+# Create necessary directories
+RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app
+
+# Switch to non-root user
+USER nodejs
+
+# Expose port
 EXPOSE 3000
-ENV NODE_ENV=production
 
-# Run migrations first (optional but recommended)
-CMD ["sh", "-c", "npm run migrate && npm start"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Start the application
+CMD ["npm", "start"]

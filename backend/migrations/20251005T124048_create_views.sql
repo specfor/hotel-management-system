@@ -6,6 +6,16 @@
 -- UP MIGRATION
 -- =====================================================
 
+create view guest_main_view as
+select g.guest_id, g.NIC, g.name, g.age,  g.contact_no, g.email, b.room_id, b.booking_status
+from guest g
+left join booking b
+on g.guest_id = b.guest_id
+order by b.date_time desc
+
+
+
+
 -- Add your SQL statements here
 -- Example:
 -- CREATE TABLE example_table (

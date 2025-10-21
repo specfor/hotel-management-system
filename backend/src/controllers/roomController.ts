@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import {jsonResponse} from "@src/common/util/response";
+import { jsonResponse } from "@src/common/util/response";
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import {
   getAllRoomsDB,
@@ -7,26 +7,20 @@ import {
   createRoomDB,
   updateRoomDB,
   deleteRoomDB,
-  getBranchIdOfRoom, getRoomByIdDB,
+  getBranchIdOfRoom,
+  getRoomByIdDB,
 } from "@src/repos/roomRepo";
-import {getBranchByIdDB} from "@src/repos/branchRepo";
-import {getRoomTypeByNameDB} from "@src/repos/roomTypeRepo";
+import { getBranchByIdDB } from "@src/repos/branchRepo";
+import { getRoomTypeByNameDB } from "@src/repos/roomTypeRepo";
 import * as console from "node:console";
 import Joi from "joi";
 
-export async function getAllRooms(req:Request, res: Response){
-  try{
+export async function getAllRooms(req: Request, res: Response) {
+  try {
     const roomArr = await getAllRoomsDB();
 
-    if(!roomArr){
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-        message: "No rooms exist or query execution failed",
-      });
-    }
-
-    return jsonResponse(res, true, HttpStatusCodes.OK, {roomArr});
-
-  }catch(err){
+    return jsonResponse(res, true, HttpStatusCodes.OK, { roomArr });
+  } catch (err) {
     console.error(err);
     return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
       message: "Server error",
@@ -34,7 +28,7 @@ export async function getAllRooms(req:Request, res: Response){
   }
 }
 
-export async function getRoomsByBranch(req: Request, res: Response){
+export async function getRoomsByBranch(req: Request, res: Response) {
   try {
     const paramSchema = Joi.object<{ branchId: number }>({
       branchId: Joi.number().integer().positive().required(),
@@ -54,19 +48,15 @@ export async function getRoomsByBranch(req: Request, res: Response){
 
     const branchId: number = paramResult.value.branchId;
 
-    if(await getBranchByIdDB(branchId) == null){
+    if ((await getBranchByIdDB(branchId)) == null) {
       return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
         message: "Invalid branch ID",
       });
     }
 
-    const querySchema = Joi.object<{ type?: string, status?: string }>({
-      type: Joi.string()
-        .valid("Single", "Double", "Suite").insensitive()
-        .optional(),
-      status: Joi.string()
-        .valid("Occupied", "Available").insensitive()
-        .optional(),
+    const querySchema = Joi.object<{ type?: string; status?: string }>({
+      type: Joi.string().valid("Single", "Double", "Suite").insensitive().optional(),
+      status: Joi.string().valid("Occupied", "Available").insensitive().optional(),
     });
 
     const queryResult = querySchema.validate(req.query, {
@@ -95,7 +85,6 @@ export async function getRoomsByBranch(req: Request, res: Response){
       message: "Rooms fetched successfully",
       details: rooms,
     });
-
   } catch (err) {
     console.error(err);
     return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
@@ -104,7 +93,7 @@ export async function getRoomsByBranch(req: Request, res: Response){
   }
 }
 
-export async function createRoom(req: Request, res: Response){
+export async function createRoom(req: Request, res: Response) {
   try {
     const paramSchema = Joi.object<{ branchId: number }>({
       branchId: Joi.number().integer().positive().required(),
@@ -125,8 +114,7 @@ export async function createRoom(req: Request, res: Response){
     const branchId = paramResult.value.branchId;
 
     const querySchema = Joi.object<{ roomType: string }>({
-      roomType: Joi.string().valid("Single", "Double", "Suite")
-        .trim().insensitive().required(),
+      roomType: Joi.string().valid("Single", "Double", "Suite").trim().insensitive().required(),
     });
 
     const queryResult = querySchema.validate(req.query, {
@@ -170,17 +158,15 @@ export async function createRoom(req: Request, res: Response){
       message: "Room created successfully",
       details: createdRoom,
     });
-
   } catch (err) {
     console.error(err);
     return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
       message: "Server error",
     });
   }
-
 }
 
-export async function updateRoom(req: Request, res: Response){
+export async function updateRoom(req: Request, res: Response) {
   try {
     const paramSchema = Joi.object<{ roomId: number }>({
       roomId: Joi.number().integer().positive().required(),
@@ -200,22 +186,15 @@ export async function updateRoom(req: Request, res: Response){
 
     const roomId: number = paramResult.value.roomId;
 
-    if(await getRoomByIdDB(roomId) == null){
+    if ((await getRoomByIdDB(roomId)) == null) {
       return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
         message: "Invalid room ID",
       });
     }
 
-    const bodySchema = Joi.object<{ roomStatus?: string, roomTypeName?: string }>({
-      roomStatus: Joi.string()
-        .valid("Occupied", "Available")
-        .insensitive()
-        .optional(),
-      roomTypeName: Joi.string()
-        .valid("Single", "Double", "Suite")
-        .insensitive()
-        .trim()
-        .optional(),
+    const bodySchema = Joi.object<{ roomStatus?: string; roomTypeName?: string }>({
+      roomStatus: Joi.string().valid("Occupied", "Available").insensitive().optional(),
+      roomTypeName: Joi.string().valid("Single", "Double", "Suite").insensitive().trim().optional(),
     });
 
     const bodyResult = bodySchema.validate(req.body, {
@@ -252,12 +231,9 @@ export async function updateRoom(req: Request, res: Response){
 
       const roomType = await getRoomTypeByNameDB(branchObj.branchId, roomTypeName);
 
-
       if (!roomType) {
         return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-          message:
-            `Room type '${roomTypeName}' not found in branch ` +
-            `${branchObj.branchId}`,
+          message: `Room type '${roomTypeName}' not found in branch ` + `${branchObj.branchId}`,
         });
       }
 
@@ -276,7 +252,6 @@ export async function updateRoom(req: Request, res: Response){
       message: "Room updated successfully",
       details: updatedRoom,
     });
-
   } catch (err) {
     console.log(err);
     return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
@@ -285,7 +260,7 @@ export async function updateRoom(req: Request, res: Response){
   }
 }
 
-export async function deleteRoom(req: Request, res: Response){
+export async function deleteRoom(req: Request, res: Response) {
   try {
     const paramSchema = Joi.object<{ roomId: number }>({
       roomId: Joi.number().integer().positive().required(),
@@ -316,7 +291,6 @@ export async function deleteRoom(req: Request, res: Response){
     return jsonResponse(res, true, HttpStatusCodes.OK, {
       message: "Room with ID " + roomId + " deleted successfully",
     });
-
   } catch (err) {
     console.log(err);
     return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {

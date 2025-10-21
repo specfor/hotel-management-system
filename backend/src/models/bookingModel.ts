@@ -122,8 +122,8 @@ export async function updateBookingModel(data: IncomingBookingUpdateData): Promi
   return updateBookingDB(updateData);
 }
 
-export async function getAllBookingsModel({ guestId, roomId }: { guestId?: number, roomId?: number }): Promise<BookingPublic[]> {
-  const filters = { guestId, roomId };
+export async function getAllBookingsModel({ guestId, roomId, branchId }: { guestId?: number, roomId?: number, branchId?: number }): Promise<BookingPublic[]> {
+  const filters = { guestId, roomId, branchId };
   const bookings = await getAllBookingsDB(filters);
   if (!bookings) {
     throw new RouteError(HttpStatusCodes.NOT_FOUND, "Booking not found");

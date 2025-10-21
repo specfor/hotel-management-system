@@ -32,7 +32,9 @@ const mapToPublic = (row: BookingRow): BookingPublic => ({
 /**
  * Get all booking records. (READ All)
  */
-export async function getAllBookingsDB(filters: { guestId?: number, roomId?: number } = {}): Promise<BookingPublic[] | null> {
+export async function getAllBookingsDB(filters: { guestId?: number,
+   roomId?: number,
+  branchId?: number, } = {}): Promise<BookingPublic[] | null> {
 
   let sql = `
             SELECT 
@@ -58,16 +60,22 @@ export async function getAllBookingsDB(filters: { guestId?: number, roomId?: num
     values.push(filters.roomId);
     paramIndex++;
   }
+  // 3. Check for branchId filter
+  if (filters.branchId !== undefined) {
+    conditions.push(`room_id IN (SELECT room_id FROM room WHERE branch_id = $${paramIndex})`);
+    values.push(filters.branchId);
+    paramIndex++;
+  }
 
-  // 3. Build the WHERE clause dynamically
+  // 4. Build the WHERE clause dynamically
   if (conditions.length > 0) {
     sql += ` WHERE ${conditions.join(" AND ")}`;
   }
-    
-  // 4. Add ORDER BY clause
+
+  // 5. Add ORDER BY clause
   sql += " ORDER BY check_in DESC;";
-    
-  // 5. Execute the dynamic query
+
+  // 6. Execute the dynamic query
   const result = await db.query(sql, values);
 
   if (result.rows.length === 0) {

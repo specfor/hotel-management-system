@@ -1,5 +1,6 @@
 export interface User {
   id: string;
+  username: string;
   email: string;
   name: string;
   role: UserRole;
@@ -25,7 +26,7 @@ export type Permission =
   | "view_branches";
 
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
 }
 

@@ -1,11 +1,6 @@
 /* eslint-disable max-len */
 import { Router } from "express";
-import { 
-  getUsers,
-  getUserByStaffId,
-  getUserByUsername,
-  deleteUserByStaffId,
-} from "@src/controllers/userController";
+import { getUsers, getUserByStaffId, getUserByUsername, deleteUserByStaffId } from "@src/controllers/userController";
 import { register, login } from "@src/controllers/authController";
 import {
   getStaffMembers,
@@ -20,15 +15,17 @@ import * as roomTypeController from "@src/controllers/roomTypeController";
 import * as paymentController from "@src/controllers/paymentController";
 import * as roomController from "@src/controllers/roomController";
 import * as discountController from "@src/controllers/discountController";
-import * as serviceController from "@src/controllers/chargeableServiceController"; 
+import * as serviceController from "@src/controllers/chargeableServiceController";
 import * as bookingController from "@src/controllers/bookingController";
 import * as serviceUsageController from "@src/controllers/serviceUsageController";
+import * as guestController from "@src/controllers/guestController";
 
 /******************************************************************************
                                 Setup
 ******************************************************************************/
 
 const apiRouter = Router();
+apiRouter.use("/api", apiRouter);
 
 // Auth Routes (Public)
 
@@ -51,7 +48,15 @@ apiRouter.post("/staff", createStaffMember);
 apiRouter.put("/staff/:staffId", updateStaffMember);
 apiRouter.delete("/staff/:staffId", deleteStaffMember);
 
-apiRouter.use("/api", apiRouter);
+// endpoints for guest
+apiRouter.get("/guest", guestController.getAllGuests);
+apiRouter.get("/guest/:id", guestController.getGuestByID);
+apiRouter.post("/guest", guestController.addNewGuest);
+apiRouter.put("/guest/:id", guestController.updateGuestInfo);
+apiRouter.put("/guest/:id/psw", guestController.changeGuestPassword);
+apiRouter.delete("/guest/:id", guestController.deleteGuest);
+
+// apiRouter.use("/api", apiRouter);
 // endpoints for branch
 apiRouter.get("/branch", branchController.getAllBranches);
 apiRouter.get("/branch/:branchId", branchController.getBranchByID);
@@ -86,7 +91,7 @@ apiRouter.get("/discount/:discountId", discountController.getDiscountById);
 apiRouter.get("/discount/branch/:branchId", discountController.getDiscountsByBranch);
 apiRouter.post("/discount", discountController.createDiscount);
 apiRouter.put("/discount/:discountId", discountController.updateDiscount);
-apiRouter.delete("/discount/:discountId", discountController.deleteDiscount);// endpoints for service
+apiRouter.delete("/discount/:discountId", discountController.deleteDiscount); // endpoints for service
 apiRouter.get("/service", serviceController.getAllChargeableServices);
 apiRouter.post("/service", serviceController.createChargeableService);
 apiRouter.get("/service/:serviceID", serviceController.getChargeableServiceByID);
@@ -98,8 +103,8 @@ apiRouter.get("/booking/guest/:guestID", bookingController.getBookingsByGuestID)
 apiRouter.get("/booking/room/:roomID", bookingController.getBookingsByRoomID);
 apiRouter.get("/booking/availability", bookingController.checkRoomAvailability); // Uses query params: ?roomID=1&checkIn=...&checkOut=...
 apiRouter.get("/booking", bookingController.getAllBookings);
-apiRouter.get("/booking/:bookingID", bookingController.getBookingByID);
 apiRouter.post("/booking", bookingController.createBooking);
+apiRouter.get("/booking/:bookingID", bookingController.getBookingByID);
 apiRouter.put("/booking/:bookingID", bookingController.updateBooking);
 apiRouter.delete("/booking/:bookingID", bookingController.deleteBooking);
 
