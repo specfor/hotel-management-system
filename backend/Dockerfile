@@ -38,3 +38,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
 
 # Start the server
 CMD ["npm", "start"]
+
