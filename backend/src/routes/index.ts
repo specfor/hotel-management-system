@@ -20,6 +20,7 @@ import * as serviceController from "@src/controllers/chargeableServiceController
 import * as bookingController from "@src/controllers/bookingController";
 import * as serviceUsageController from "@src/controllers/serviceUsageController";
 import * as guestController from "@src/controllers/guestController";
+import * as dashboardController from "@src/controllers/dashboardController";
 
 /******************************************************************************
                                 Setup
@@ -120,6 +121,9 @@ apiRouter.post("/service-usage", serviceUsageController.createServiceUsage);
 apiRouter.get("/service-usage/:usageID", serviceUsageController.getServiceUsageByID);
 apiRouter.put("/service-usage/:usageID", serviceUsageController.updateServiceUsage);
 apiRouter.delete("/service-usage/:usageID", serviceUsageController.deleteServiceUsage);
+
+// endpoints for dashboard
+apiRouter.get("/dashboard", dashboardController.getDashboardStats);
 
 /******************************************************************************
  Export default
