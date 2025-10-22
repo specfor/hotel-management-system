@@ -52,6 +52,7 @@ apiRouter.delete("/staff/:staffId", deleteStaffMember);
 // endpoints for guest
 apiRouter.get("/guest", guestController.getAllGuests);
 apiRouter.get("/guest/:id", guestController.getGuestByID);
+apiRouter.get("/guest/:id/bookings", guestController.guestBookings);
 apiRouter.post("/guest", guestController.addNewGuest);
 apiRouter.put("/guest/:id", guestController.updateGuestInfo);
 apiRouter.put("/guest/:id/psw", guestController.changeGuestPassword);

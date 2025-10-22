@@ -10,6 +10,7 @@ import {
   changeGuestPassword_repo,
   deleteGuest_repo,
 } from "@src/repos/guestRepo";
+import { getCurrentBookingByGuestID } from "@src/repos/bookingRepo";
 import { 
   GuestPassword, 
   GuestCreate, 
@@ -180,4 +181,28 @@ export async function deleteGuest(req: Request, res: Response): Promise<void> {
   await deleteGuest_repo(id);
 
   jsonResponse(res, true, HttpStatusCodes.OK, {});
+}
+
+export async function guestBookings(req: Request, res: Response): Promise<void> {
+  try{
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        error: "Invalid guest ID",
+      });
+      return;
+    }
+    const bookings = await getCurrentBookingByGuestID(id);
+    if (!bookings) {
+      jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {
+        error: "No active bookings found for the guest",
+      });
+      return;
+    }
+    jsonResponse(res, true, HttpStatusCodes.OK, { bookings });
+  }catch{
+    jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      error: "Failed to retrieve guest bookings",
+    });
+  }
 }
