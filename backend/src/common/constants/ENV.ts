@@ -23,6 +23,8 @@ const ENV = jetEnv({
     Secret: str,
     Exp: str,
   },
+  AdminUsername: str,
+  AdminPassword: str,
 });
 
 /******************************************************************************
