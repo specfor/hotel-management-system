@@ -10,7 +10,11 @@ import {
   changeGuestPassword_repo,
   deleteGuest_repo,
 } from "@src/repos/guestRepo";
-import { GuestRepo, GuestPassword } from "@src/types/guestTypes";
+import { 
+  GuestPassword, 
+  GuestCreate, 
+  GuestUpdate, 
+} from "@src/types/guestTypes";
 
 /**
  * Handles the HTTP request to retrieve all guests.
@@ -101,7 +105,7 @@ export async function addNewGuest(req: Request, res: Response): Promise<void> {
   }
 
   try {
-    const guest = await addNewGuest_repo(req.body as GuestRepo);
+    const guest = await addNewGuest_repo(req.body as GuestCreate);
     jsonResponse(res, true, HttpStatusCodes.CREATED, { guest });
   } catch {
     jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
@@ -140,7 +144,7 @@ export async function updateGuestInfo(
   }
 
   try {
-    await updateGuestInfo_repo(req.body as GuestRepo, id);
+    await updateGuestInfo_repo(req.body as GuestUpdate, id);
     jsonResponse(res, true, HttpStatusCodes.OK, {});
   } catch {
     jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {

@@ -1,5 +1,11 @@
 import db from "@src/common/util/db";
-import { GuestPublic, GuestRepo, GuestPassword } from "@src/types/guestTypes";
+import { 
+  GuestPublic, 
+  GuestCreate, 
+  GuestUpdate, 
+  GuestsAllPublic, 
+  GuestPassword, 
+} from "@src/types/guestTypes";
 
 export async function getAllGuests_repo(
   name?: string,
@@ -8,15 +14,15 @@ export async function getAllGuests_repo(
   maxAge?: number,
   page = 1,
   limit = 5,
-): Promise<GuestPublic[] | null> {
+): Promise<GuestsAllPublic[] | null> {
   if (!db.isReady()) {
     await db.connect();
   }
 
   // Start building the query
   let query = `
-    SELECT guest_id, nic, name, age, contact_no, email, room_id, booking_status 
-    FROM guest_main_view 
+    SELECT guest_id, nic, name, age, contact_no, email
+    FROM guest 
     WHERE 1=1`;
   const values: (string | number | null)[] = [];
   let idx = 1;
@@ -60,8 +66,8 @@ export async function getGuestByID_repo(
   }
 
   const result = await db.query(
-    `select guest_id, NIC, name, age,  contact_no, email, room_id, booking_status
-    FROM guest_main_view 
+    `select guest_id, NIC, name, age,  contact_no, email, created_at, updated_at
+    FROM guest
     WHERE guest_id = $1`,
     [id],
   );
@@ -78,13 +84,13 @@ export async function getGuestByID_repo(
     age: row.age ?? null,
     contact_no: row.contact_no ?? null,
     email: row.email ?? null,
-    room_id: row.room_id ?? null,
-    booking_status: row.booking_status ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
   };
 }
 
 export async function addNewGuest_repo(
-  record: GuestRepo,
+  record: GuestCreate,
 ): Promise<number | null> {
   if (!db.isReady()) {
     await db.connect();
@@ -99,7 +105,6 @@ export async function addNewGuest_repo(
     record.age,
     record.contact_no,
     record.email,
-    record.password,
   ];
 
   const result = await db.query(query, values);
@@ -108,7 +113,7 @@ export async function addNewGuest_repo(
 }
 
 export async function updateGuestInfo_repo(
-  record: GuestRepo,
+  record: GuestUpdate,
   guest_id: number,
 ): Promise<void> {
   if (!db.isReady()) {
