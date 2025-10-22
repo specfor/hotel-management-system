@@ -173,11 +173,12 @@ resource "aws_eks_node_group" "main" {
 
 # EBS CSI Driver Add-on (required for persistent volumes)
 resource "aws_eks_addon" "ebs_csi_driver" {
-  cluster_name             = aws_eks_cluster.main.name
-  addon_name               = "aws-ebs-csi-driver"
-  addon_version            = "v1.24.0-eksbuild.1" # Latest stable version
-  resolve_conflicts        = "OVERWRITE"
-  service_account_role_arn = aws_iam_role.ebs_csi_driver.arn
+  cluster_name                = aws_eks_cluster.main.name
+  addon_name                  = "aws-ebs-csi-driver"
+  addon_version               = "v1.24.0-eksbuild.1" # Latest stable version
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+  service_account_role_arn    = aws_iam_role.ebs_csi_driver.arn
 
   depends_on = [
     aws_eks_node_group.main,
