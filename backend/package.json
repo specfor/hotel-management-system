@@ -8,10 +8,11 @@
     "clean-install": "rm -rf node_modules package-lock.json && npm i",
     "dev": "cross-env NODE_ENV=development ts-node ./src/index.ts",
     "dev:hot": "nodemon --exec \"npm run dev\" --watch ./src --ext .ts",
-    "lint": "eslint .",
-    "start": "node ./dist/src/index.js",
-    "type-check": "tsc --noEmit",
-    "test": "cross-env NODE_ENV=development vitest"
+    "build:docker": "tsc --build tsconfig.prod.json",
+    "lint": "eslint . --config eslint.config.ts",
+    "start": "cross-env NODE_ENV=production node -r ./dist/config.js ./dist",
+    "test": "cross-env NODE_ENV=development vitest",
+    "type-check": "tsc --noEmit"
   },
   "engines": {
     "node": ">=16.0.0"
