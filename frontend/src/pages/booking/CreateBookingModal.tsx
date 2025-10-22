@@ -3,14 +3,7 @@ import Modal from "../../components/Modal";
 import Button from "../../components/primary/Button";
 import Input from "../../components/primary/Input";
 import { useAlert } from "../../hooks/useAlert";
-import {
-  BookingStatusEnum,
-  formatBookingStatus,
-  type CreateBookingRequest,
-  type Guest,
-  type Room,
-  type User as StaffUser,
-} from "../../types";
+import { type CreateBookingRequest, type Guest, type Room } from "../../types";
 
 interface CreateBookingModalProps {
   isOpen: boolean;
@@ -18,36 +11,25 @@ interface CreateBookingModalProps {
   onSubmit: (bookingData: CreateBookingRequest) => Promise<void>;
   guests: Guest[];
   rooms: Room[];
-  staff: StaffUser[];
 }
 
-const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose, onSubmit, guests, rooms, staff }) => {
+const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose, onSubmit, guests, rooms }) => {
   const { showError } = useAlert();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<{
     guest_id: string;
     room_id: string;
-    user_id: string;
-    booking_status: string;
-    booking_date: string;
-    booking_time: string;
     check_in_date: string;
     check_in_time: string;
     check_out_date: string;
     check_out_time: string;
-    special_requests: string;
   }>({
     guest_id: "",
     room_id: "",
-    user_id: "",
-    booking_status: BookingStatusEnum.PENDING,
-    booking_date: new Date().toISOString().split("T")[0],
-    booking_time: new Date().toTimeString().split(" ")[0].substring(0, 5),
     check_in_date: "",
     check_in_time: "15:00",
     check_out_date: "",
     check_out_time: "11:00",
-    special_requests: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,8 +38,8 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
 
     try {
       // Validation
-      if (!formData.guest_id || !formData.room_id || !formData.user_id) {
-        showError("Please select guest, room, and staff member");
+      if (!formData.guest_id || !formData.room_id) {
+        showError("Please select guest and room");
         return;
       }
 
@@ -68,30 +50,19 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
 
       const checkInDateTime = new Date(`${formData.check_in_date}T${formData.check_in_time}`);
       const checkOutDateTime = new Date(`${formData.check_out_date}T${formData.check_out_time}`);
-      const bookingDateTime = new Date(`${formData.booking_date}T${formData.booking_time}`);
 
       if (checkInDateTime >= checkOutDateTime) {
         showError("Check-out date and time must be after check-in date and time");
         return;
       }
 
-      if (bookingDateTime > checkInDateTime) {
-        showError("Booking date and time cannot be after check-in date and time");
-        return;
-      }
-
       const bookingData: CreateBookingRequest = {
         guest_id: parseInt(formData.guest_id),
         room_id: parseInt(formData.room_id),
-        user_id: parseInt(formData.user_id),
-        booking_status: formData.booking_status as BookingStatusEnum,
-        booking_date: formData.booking_date,
-        booking_time: formData.booking_time,
         check_in_date: formData.check_in_date,
         check_in_time: formData.check_in_time,
         check_out_date: formData.check_out_date,
         check_out_time: formData.check_out_time,
-        special_requests: formData.special_requests || undefined,
       };
 
       await onSubmit(bookingData);
@@ -109,15 +80,10 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
     setFormData({
       guest_id: "",
       room_id: "",
-      user_id: "",
-      booking_status: BookingStatusEnum.PENDING,
-      booking_date: new Date().toISOString().split("T")[0],
-      booking_time: new Date().toTimeString().split(" ")[0].substring(0, 5),
       check_in_date: "",
       check_in_time: "15:00",
       check_out_date: "",
       check_out_time: "11:00",
-      special_requests: "",
     });
   };
 
@@ -170,64 +136,6 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Staff Member *</label>
-            <select
-              value={formData.user_id}
-              onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select Staff Member</option>
-              {staff.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.name} ({member.role})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Booking Status *</label>
-            <select
-              value={formData.booking_status}
-              onChange={(e) => setFormData({ ...formData, booking_status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              {Object.values(BookingStatusEnum).map((status) => (
-                <option key={status} value={status}>
-                  {formatBookingStatus(status)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Booking Date *</label>
-            <Input
-              type="date"
-              value={formData.booking_date}
-              onChange={(e) => setFormData({ ...formData, booking_date: e.target.value })}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Booking Time *</label>
-            <input
-              type="time"
-              value={formData.booking_time}
-              onChange={(e) => setFormData({ ...formData, booking_time: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Check-in Date *</label>
             <Input
               type="date"
@@ -270,17 +178,6 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
               required
             />
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Special Requests</label>
-          <textarea
-            value={formData.special_requests}
-            onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            rows={3}
-            placeholder="Any special requests or notes..."
-          />
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">
