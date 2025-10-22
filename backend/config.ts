@@ -1,8 +1,29 @@
-/* eslint-disable n/no-process-env */
+// /* eslint-disable n/no-process-env */
+//
+// import path from "path";
+// import dotenv from "dotenv";
+// import moduleAlias from "module-alias";
+//
+//
+// // Check the env
+// const NODE_ENV = (process.env.NODE_ENV ?? "development");
+//
+// // Configure "dotenv"
+// const result2 = dotenv.config({
+//   path: path.join(__dirname, `./config/.env.${NODE_ENV}`),
+// });
+// if (result2.error) {
+//   throw result2.error;
+// }
+//
+// // Configure moduleAlias
+// if (__filename.endsWith("js")) {
+//   moduleAlias.addAlias("@src", __dirname + "/dist");
+// }
 
 import fs from "fs";
-import path from "path";
 import dotenv from "dotenv";
+import path from "path";
 import moduleAlias from "module-alias";
 
 // Check the environment
@@ -30,9 +51,9 @@ if (fs.existsSync(envPath)) {
 
 // Configure module aliases
 if (__filename.endsWith("js")) {
-  // In production/compiled mode, @src maps to the dist directory root
-  // because TypeScript doesn't resolve path aliases during compilation
-  moduleAlias.addAlias("@src", __dirname);
+  // In production/compiled mode, @src maps to the dist/src directory
+  // because TypeScript preserves the source directory structure in output
+  moduleAlias.addAlias("@src", path.join(__dirname, "src"));
 } else {
   // In development with ts-node, @src points to src directory
   moduleAlias.addAlias("@src", path.join(__dirname, "src"));
