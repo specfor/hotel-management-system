@@ -1,16 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Search, Edit, Trash2, Tag, Calendar } from "lucide-react";
 import Button from "../../components/primary/Button";
 import Input from "../../components/primary/Input";
 import Badge from "../../components/primary/Badge";
 import Modal from "../../components/Modal";
 import Card from "../../components/primary/Card";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import { useAlert } from "../../hooks/useAlert";
+import { useModal } from "../../hooks/useModal";
 import { ServiceDiscountConditionType, formatConditionType } from "../../types";
 import type { Discount, Branch } from "../../types";
+import { getDiscounts, createDiscount, updateDiscount, deleteDiscount } from "../../api_connection/discounts";
+import { getBranches } from "../../api_connection/branches";
 
 const DiscountManagement: React.FC = () => {
   const { showSuccess, showError } = useAlert();
+  const { openModal, closeModal } = useModal();
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,81 +41,51 @@ const DiscountManagement: React.FC = () => {
     valid_to: "",
   });
 
-  // Mock data for testing - replace with actual API calls
+  const loadDiscounts = useCallback(async () => {
+    try {
+      const response = await getDiscounts();
+      if (response.success) {
+        setDiscounts(response.data);
+      } else {
+        showError(response.message || "Failed to load discounts");
+      }
+    } catch (error) {
+      console.error("Error loading discounts:", error);
+      showError("Failed to load discounts");
+    }
+  }, [showError]);
+
+  const loadBranches = useCallback(async () => {
+    try {
+      const response = await getBranches();
+      if (response.success) {
+        // Transform branch data to match expected format
+        const transformedBranches = response.data.map(
+          (branch: { branchid: number; branchname: string; city: string; address: string }) => ({
+            branch_id: branch.branchid,
+            branch_name: branch.branchname,
+            city: branch.city,
+            address: branch.address,
+          })
+        );
+        setBranches(transformedBranches);
+      } else {
+        showError(response.message || "Failed to load branches");
+      }
+    } catch (error) {
+      console.error("Error loading branches:", error);
+      showError("Failed to load branches");
+    }
+  }, [showError]);
+
+  // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
       await loadDiscounts();
       await loadBranches();
     };
     loadData();
-  }, []);
-
-  const loadDiscounts = async () => {
-    try {
-      // TODO: Replace with actual API call
-      const mockDiscounts: Discount[] = [
-        {
-          discount_id: 1,
-          discount_name: "Early Bird Special",
-          branch_id: 1,
-          discount_rate: 15.0,
-          condition_type: ServiceDiscountConditionType.EARLY_BOOKING,
-          condition_value: 30,
-          valid_from: "2024-01-01",
-          valid_to: "2024-12-31",
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          discount_id: 2,
-          discount_name: "Summer Season",
-          branch_id: 1,
-          discount_rate: 20.0,
-          condition_type: ServiceDiscountConditionType.SEASONAL,
-          condition_value: undefined,
-          valid_from: "2024-06-01",
-          valid_to: "2024-08-31",
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          discount_id: 3,
-          discount_name: "Big Spender",
-          branch_id: 1,
-          discount_rate: 10.0,
-          condition_type: ServiceDiscountConditionType.AMOUNT_GREATER_THAN,
-          condition_value: 500,
-          valid_from: "2024-01-01",
-          valid_to: "2024-12-31",
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ];
-      setDiscounts(mockDiscounts);
-    } catch {
-      showError("Failed to load discounts");
-    }
-  };
-
-  const loadBranches = async () => {
-    try {
-      // TODO: Replace with actual API call
-      const mockBranches: Branch[] = [
-        {
-          branch_id: 1,
-          branch_name: "Main Branch",
-          city: "New York",
-          address: "123 Main St",
-        },
-      ];
-      setBranches(mockBranches);
-    } catch {
-      showError("Failed to load branches");
-    }
-  };
+  }, [loadDiscounts, loadBranches]);
 
   const filteredDiscounts = discounts.filter((discount) => {
     const branchName = branches.find((b) => b.branch_id === discount.branch_id)?.branch_name || "";
@@ -161,39 +136,37 @@ const DiscountManagement: React.FC = () => {
 
     try {
       const discountData = {
-        discount_name: formData.discount_name,
-        branch_id: parseInt(formData.branch_id),
-        discount_rate: discountRate,
-        condition_type: formData.condition_type as ServiceDiscountConditionType,
-        condition_value: conditionValue,
-        valid_from: formData.valid_from,
-        valid_to: formData.valid_to,
+        branchId: parseInt(formData.branch_id),
+        discountName: formData.discount_name,
+        discountType: "percentage" as const, // Assuming percentage type based on backend
+        discountValue: discountRate,
+        minBillAmount: conditionValue,
+        discountCondition: formData.condition_type,
+        validFrom: formData.valid_from,
+        validTo: formData.valid_to,
       };
 
       if (editingDiscount) {
-        // TODO: Replace with actual API call
-        const updatedDiscount = {
-          ...editingDiscount,
-          ...discountData,
-          updated_at: new Date().toISOString(),
-        };
-        setDiscounts(discounts.map((d) => (d.discount_id === editingDiscount.discount_id ? updatedDiscount : d)));
-        showSuccess("Discount updated successfully");
+        const response = await updateDiscount(editingDiscount.discount_id, discountData);
+        if (response.success) {
+          showSuccess("Discount updated successfully");
+          await loadDiscounts(); // Reload to get updated data
+        } else {
+          showError(response.message || "Failed to update discount");
+        }
       } else {
-        // TODO: Replace with actual API call
-        const newDiscount = {
-          discount_id: Math.max(...discounts.map((d) => d.discount_id)) + 1,
-          ...discountData,
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setDiscounts([...discounts, newDiscount]);
-        showSuccess("Discount created successfully");
+        const response = await createDiscount(discountData);
+        if (response.success) {
+          showSuccess("Discount created successfully");
+          await loadDiscounts(); // Reload to get new data
+        } else {
+          showError(response.message || "Failed to create discount");
+        }
       }
 
       resetForm();
-    } catch {
+    } catch (error) {
+      console.error("Error submitting discount:", error);
       showError(editingDiscount ? "Failed to update discount" : "Failed to create discount");
     }
   };
@@ -213,13 +186,40 @@ const DiscountManagement: React.FC = () => {
   };
 
   const handleDelete = async (discountId: number) => {
-    if (!confirm("Are you sure you want to delete this discount?")) return;
+    const discount = discounts.find((d) => d.discount_id === discountId);
+    const discountName = discount?.discount_name || "this discount";
 
+    const modalId = openModal({
+      component: (
+        <ConfirmationModal
+          title="Delete Discount"
+          message={`Are you sure you want to delete "${discountName}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={() => {
+            closeModal(modalId);
+            performDeleteDiscount(discountId);
+          }}
+          onCancel={() => closeModal(modalId)}
+        />
+      ),
+      size: "sm",
+      showCloseButton: false,
+    });
+  };
+
+  const performDeleteDiscount = async (discountId: number) => {
     try {
-      // TODO: Replace with actual API call
-      setDiscounts(discounts.filter((d) => d.discount_id !== discountId));
-      showSuccess("Discount deleted successfully");
-    } catch {
+      const response = await deleteDiscount(discountId);
+      if (response.success) {
+        showSuccess("Discount deleted successfully");
+        await loadDiscounts(); // Reload to update the list
+      } else {
+        showError(response.message || "Failed to delete discount");
+      }
+    } catch (error) {
+      console.error("Error deleting discount:", error);
       showError("Failed to delete discount");
     }
   };

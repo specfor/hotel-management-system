@@ -1,77 +1,61 @@
-# -------------------------------
-# 1️⃣ Build Stage
-# -------------------------------
-FROM node:20-alpine AS builder
+# Use Node.js 24 Alpine as base image
+FROM node:24-alpine AS builder
 
+# Set working directory
 WORKDIR /app
 
-# Install dependencies first
+# Copy package files and configs
 COPY package*.json ./
-RUN npm ci
+COPY tsconfig*.json ./
+COPY *.config.* ./
+COPY config.* ./
 
-# Copy source and build
-COPY . .
-RUN npm run type-check && npm run build || echo "Skipping build step (handled by ts-node runtime)"
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci && npm cache clean --force
 
-# -------------------------------
-# 2️⃣ Runtime Stage
-# -------------------------------
-FROM node:20-alpine
+# Copy configuration and source code
+COPY config/ ./config/
+COPY src/ ./src/
+COPY scripts/ ./scripts/
 
+# Debug: List files to verify copying
+RUN ls -la *.config.* || echo "No config files found"
+
+# Build the application
+RUN npm run build
+
+# Production stage
+FROM node:24-alpine AS production
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+
+# Set working directory
 WORKDIR /app
 
-ENV NODE_ENV=production
-
-# Copy only necessary files from builder
-COPY --from=builder /app ./
+# Copy package files
+COPY package*.json ./
 
 # Install only production dependencies
-RUN npm ci --omit=dev
+RUN npm ci --only=production && npm cache clean --force
 
-# Expose app port
+# Copy built application from builder stage
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+# COPY --from=builder --chown=nodejs:nodejs /app/config.js ./config.js
+
+# Create necessary directories
+RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app
+
+# Switch to non-root user
+USER nodejs
+
+# Expose port
 EXPOSE 3000
 
-# Health check (checks Express + DB)
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
-  CMD node -e "import('./dist/healthcheck.js').catch(()=>process.exit(1))" || exit 1
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
 
-# Start the server
+# Start the application
 CMD ["npm", "start"]
-
-
-## -------------------------------
-## 1️⃣ Build Stage
-## -------------------------------
-#FROM node:20-alpine AS builder
-#
-#WORKDIR /app
-#
-## Install dependencies first (cached)
-#COPY package*.json ./
-#RUN npm ci
-#
-## Copy project and build it
-#COPY . .
-#RUN npm run type-check && npm run build || echo "Skipping build step (handled by ts-node runtime)"
-#
-## -------------------------------
-## 2️⃣ Runtime Stage
-## -------------------------------
-#FROM node:20-alpine
-#WORKDIR /app
-#
-#ENV NODE_ENV=production
-#
-## Copy only built app + necessary files
-#COPY --from=builder /app ./
-#RUN npm ci --omit=dev
-#
-#EXPOSE 3000
-#
-## Optional health check
-#HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
-#  CMD node -e "import('./dist/healthcheck.js').catch(()=>process.exit(1))" || exit 1
-#
-## ✅ Run migrations automatically before starting server
-#CMD ["npm", "run", "start:prod"]
-#

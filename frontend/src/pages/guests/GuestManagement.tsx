@@ -1,20 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Search, Edit, Trash2, Eye, User, CreditCard } from "lucide-react";
 import Table from "../../components/primary/Table";
 import Button from "../../components/primary/Button";
 import Input from "../../components/primary/Input";
 import Badge from "../../components/primary/Badge";
 import Modal from "../../components/Modal";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import { useAlert } from "../../hooks/useAlert";
+import { useModal } from "../../hooks/useModal";
 import GuestDetailsModal from "./GuestDetailsModal";
 import type { Guest, GuestFilters, GuestFormData } from "../../types/guest";
 import type { TableColumn } from "../../types/table";
 
 // API integration ready - import and use:
-// import { getGuests, createGuest, updateGuest, deleteGuest, sendPasswordReset } from "../../api_connection/guests";
+import { getGuests, createGuest, updateGuest, deleteGuest, sendPasswordReset } from "../../api_connection/guests";
+import type { CreateGuestRequest, UpdateGuestRequest, SendPasswordResetRequest } from "../../api_connection/guests";
 
 const GuestManagement: React.FC = () => {
   const { showSuccess, showError } = useAlert();
+  const { openModal, closeModal } = useModal();
   const [guests, setGuests] = useState<Guest[]>([]);
   const [filters, setFilters] = useState<GuestFilters & { search: string }>({
     search: "",
@@ -39,91 +43,34 @@ const GuestManagement: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [sendPasswordLoading, setSendPasswordLoading] = useState(false);
 
-  // Mock data - Replace with API calls
+  // Load guests from API
+  const loadGuests = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getGuests({
+        page: 1,
+        pageSize: 50, // Get more records for demo
+      });
+
+      if (response.success && response.data) {
+        setGuests(response.data);
+      } else {
+        showError(response.message || "Failed to load guests");
+      }
+    } catch (error: unknown) {
+      console.error("Error loading guests:", error);
+      console.log(error);
+
+      const errorMessage = error instanceof Error ? error.message : "Failed to connect to server";
+      showError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [showError]);
+
   useEffect(() => {
-    // Mock guests data
-    setGuests([
-      {
-        guest_id: 1,
-        nic: "199012345678",
-        name: "Alice Johnson",
-        age: 34,
-        contact_number: "+1-555-0201",
-        email: "alice.johnson@email.com",
-        created_at: "2024-01-10T08:00:00Z",
-        updated_at: "2024-01-10T08:00:00Z",
-        current_booking: {
-          booking_id: 1001,
-          room_number: "205",
-          check_in_date: "2024-10-15T14:00:00Z",
-          check_out_date: "2024-10-20T11:00:00Z",
-          status: "checked_in",
-        },
-      },
-      {
-        guest_id: 2,
-        nic: "198567891234",
-        name: "Robert Chen",
-        age: 39,
-        contact_number: "+1-555-0202",
-        email: "robert.chen@email.com",
-        created_at: "2024-02-05T09:00:00Z",
-        updated_at: "2024-02-05T09:00:00Z",
-        current_booking: {
-          booking_id: 1002,
-          room_number: "304",
-          check_in_date: "2024-10-18T14:00:00Z",
-          check_out_date: "2024-10-22T11:00:00Z",
-          status: "confirmed",
-        },
-      },
-      {
-        guest_id: 3,
-        nic: "199298765432",
-        name: "Emma Davis",
-        age: 32,
-        contact_number: "+1-555-0203",
-        email: "emma.davis@email.com",
-        created_at: "2024-01-25T10:00:00Z",
-        updated_at: "2024-01-25T10:00:00Z",
-        // No current booking
-      },
-      {
-        guest_id: 4,
-        nic: "198876543210",
-        name: "Michael Brown",
-        age: 36,
-        contact_number: "+1-555-0204",
-        email: "michael.brown@email.com",
-        created_at: "2024-03-01T11:00:00Z",
-        updated_at: "2024-03-01T11:00:00Z",
-        current_booking: {
-          booking_id: 1003,
-          room_number: "101",
-          check_in_date: "2024-10-10T14:00:00Z",
-          check_out_date: "2024-10-17T11:00:00Z",
-          status: "checked_out",
-        },
-      },
-      {
-        guest_id: 5,
-        nic: "199545678901",
-        name: "Sophie Wilson",
-        age: 29,
-        contact_number: "+1-555-0205",
-        email: "sophie.wilson@email.com",
-        created_at: "2024-02-20T12:00:00Z",
-        updated_at: "2024-02-20T12:00:00Z",
-        current_booking: {
-          booking_id: 1004,
-          room_number: "408",
-          check_in_date: "2024-10-19T14:00:00Z",
-          check_out_date: "2024-10-25T11:00:00Z",
-          status: "confirmed",
-        },
-      },
-    ]);
-  }, []);
+    loadGuests();
+  }, [loadGuests]);
 
   const filteredGuests = guests.filter((guest) => {
     return (
@@ -227,38 +174,46 @@ const GuestManagement: React.FC = () => {
 
       if (editingGuest) {
         // Update existing guest
-        const updatedGuest: Guest = {
-          ...editingGuest,
-          nic: formData.nic.toUpperCase(),
-          name: formData.name.trim(),
+        const updateData: UpdateGuestRequest = {
+          guest_id: editingGuest.guest_id,
+          nic: formData.nic,
+          name: formData.name,
           age: parseInt(formData.age),
-          contact_number: formData.contact_number.trim(),
-          email: formData.email.trim().toLowerCase(),
-          updated_at: new Date().toISOString(),
+          contact_no: formData.contact_number,
+          email: formData.email,
         };
 
-        setGuests(guests.map((g) => (g.guest_id === editingGuest.guest_id ? updatedGuest : g)));
-        showSuccess("Guest updated successfully!");
+        const response = await updateGuest(updateData);
+        if (response.success) {
+          showSuccess("Guest updated successfully!");
+          await loadGuests(); // Reload the list
+        } else {
+          showError(response.message || "Failed to update guest");
+        }
       } else {
         // Create new guest
-        const newGuest: Guest = {
-          guest_id: Math.max(...guests.map((g) => g.guest_id), 0) + 1,
-          nic: formData.nic.toUpperCase(),
-          name: formData.name.trim(),
+        const createData: CreateGuestRequest = {
+          nic: formData.nic,
+          name: formData.name,
           age: parseInt(formData.age),
-          contact_number: formData.contact_number.trim(),
-          email: formData.email.trim().toLowerCase(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          contact_no: formData.contact_number,
+          email: formData.email,
         };
 
-        setGuests([...guests, newGuest]);
-        showSuccess("Guest created successfully!");
+        const response = await createGuest(createData);
+        if (response.success) {
+          showSuccess("Guest created successfully!");
+          await loadGuests(); // Reload the list
+        } else {
+          showError(response.message || "Failed to create guest");
+        }
       }
 
       resetForm();
-    } catch {
-      showError("An error occurred while saving guest");
+    } catch (error: unknown) {
+      console.error("Error saving guest:", error);
+      const errorMessage = error instanceof Error ? error.message : "An error occurred while saving guest";
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -277,13 +232,42 @@ const GuestManagement: React.FC = () => {
   };
 
   const handleDelete = async (guestId: number) => {
-    if (!window.confirm("Are you sure you want to delete this guest?")) return;
+    const guest = guests.find((g) => g.guest_id === guestId);
+    const guestName = guest ? guest.name : "this guest";
 
+    const modalId = openModal({
+      component: (
+        <ConfirmationModal
+          title="Delete Guest"
+          message={`Are you sure you want to delete "${guestName}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={() => {
+            closeModal(modalId);
+            performDeleteGuest(guestId);
+          }}
+          onCancel={() => closeModal(modalId)}
+        />
+      ),
+      size: "sm",
+      showCloseButton: false,
+    });
+  };
+
+  const performDeleteGuest = async (guestId: number) => {
     try {
-      setGuests(guests.filter((g) => g.guest_id !== guestId));
-      showSuccess("Guest deleted successfully!");
-    } catch {
-      showError("Failed to delete guest");
+      const response = await deleteGuest(guestId);
+      if (response.success) {
+        showSuccess("Guest deleted successfully!");
+        await loadGuests(); // Reload the list
+      } else {
+        showError(response.message || "Failed to delete guest");
+      }
+    } catch (error: unknown) {
+      console.error("Error deleting guest:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete guest";
+      showError(errorMessage);
     }
   };
 
@@ -295,13 +279,27 @@ const GuestManagement: React.FC = () => {
   const handleSendPassword = async (guestId: number) => {
     setSendPasswordLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
       const guest = guests.find((g) => g.guest_id === guestId);
-      showSuccess(`New password sent to ${guest?.email}`);
-    } catch {
-      showError("Failed to send password reset email");
+      if (!guest) {
+        showError("Guest not found");
+        return;
+      }
+
+      const request: SendPasswordResetRequest = {
+        guest_id: guestId,
+        email: guest.email,
+      };
+
+      const response = await sendPasswordReset(request);
+      if (response.success) {
+        showSuccess(`New password sent to ${guest.email}`);
+      } else {
+        showError(response.message || "Failed to send password reset email");
+      }
+    } catch (error: unknown) {
+      console.error("Error sending password reset:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to send password reset email";
+      showError(errorMessage);
     } finally {
       setSendPasswordLoading(false);
     }
@@ -496,19 +494,44 @@ const GuestManagement: React.FC = () => {
       </div>
 
       {/* Guests Table */}
-      <Table
-        data={filteredGuests as unknown as Record<string, unknown>[]}
-        columns={columns as unknown as TableColumn<Record<string, unknown>>[]}
-        pagination={{
-          current: 1,
-          pageSize: 10,
-          total: filteredGuests.length,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: true,
-          pageSizeOptions: [5, 10, 20, 50],
-        }}
-      />
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-gray-600">Loading guests...</p>
+          </div>
+        </div>
+      ) : filteredGuests.length === 0 && guests.length === 0 ? (
+        <div className="text-center py-12">
+          <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No guests found</h3>
+          <p className="text-gray-600 mb-4">Get started by adding your first guest.</p>
+          <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Guest
+          </Button>
+        </div>
+      ) : filteredGuests.length === 0 ? (
+        <div className="text-center py-12">
+          <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No matching guests</h3>
+          <p className="text-gray-600">Try adjusting your search criteria.</p>
+        </div>
+      ) : (
+        <Table
+          data={filteredGuests as unknown as Record<string, unknown>[]}
+          columns={columns as unknown as TableColumn<Record<string, unknown>>[]}
+          pagination={{
+            current: 1,
+            pageSize: 10,
+            total: filteredGuests.length,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: true,
+            pageSizeOptions: [5, 10, 20, 50],
+          }}
+        />
+      )}
 
       {/* Guest Form Modal */}
       <Modal isOpen={isModalOpen} onClose={resetForm} title={editingGuest ? "Edit Guest" : "Add New Guest"}>

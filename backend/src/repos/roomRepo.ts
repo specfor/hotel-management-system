@@ -1,8 +1,7 @@
-import {RoomPublic} from "@src/types/room";
+import { RoomPublic } from "@src/types/room";
 import db from "@src/common/util/db";
 
-export async function getAllRoomsDB():Promise<RoomPublic[] | null>{
-
+export async function getAllRoomsDB(): Promise<RoomPublic[] | null> {
   const sql = `
         SELECT
             room_id AS "roomID",
@@ -13,21 +12,14 @@ export async function getAllRoomsDB():Promise<RoomPublic[] | null>{
     `;
   const results = await db.query(sql);
 
-  if(results.rows.length == 0){
-    return null;
-  }
-
   return results.rows as RoomPublic[];
-  
 }
 
 export async function getRoomsByBranchDB(
   branchID: number,
   type?: string,
-  status?: string,
+  status?: string
 ): Promise<RoomPublic[] | null> {
-
-
   let sql = `
       SELECT 
         r.room_id AS "roomID",
@@ -55,17 +47,14 @@ export async function getRoomsByBranchDB(
 
   const result = await db.query(sql, values);
 
-  if(result.rows.length == 0){
+  if (result.rows.length == 0) {
     return null;
   }
 
   return result.rows as RoomPublic[];
-
 }
 
-export async function createRoomDB(
-  branchIdInt: number, roomTypeId: number):Promise<RoomPublic | null>{
-
+export async function createRoomDB(branchIdInt: number, roomTypeId: number): Promise<RoomPublic | null> {
   const sql = `
       INSERT INTO room (branch_id, type_id, room_status)
       VALUES ($1, $2, 'Available')
@@ -78,20 +67,14 @@ export async function createRoomDB(
 
   const result = await db.query(sql, [branchIdInt, roomTypeId]);
 
-  if(result.rows.length == 0){
+  if (result.rows.length == 0) {
     return null;
   }
 
   return result.rows[0] as RoomPublic;
-    
 }
 
-export async function updateRoomDB(
-  roomID: number,
-  typeID?: number,
-  status?: string,
-): Promise<RoomPublic | null> {
-
+export async function updateRoomDB(roomID: number, typeID?: number, status?: string): Promise<RoomPublic | null> {
   const updates: string[] = [];
   const values: (string | number)[] = [];
   let paramIndex = 1;
@@ -122,15 +105,13 @@ export async function updateRoomDB(
     `;
 
   const result = await db.query(sql, values);
-  if (result.rows.length === 0){
+  if (result.rows.length === 0) {
     return null;
   }
   return result.rows[0] as RoomPublic;
-
 }
 
 export async function deleteRoomDB(roomID: number): Promise<boolean> {
-
   const sql = `
       DELETE FROM room
       WHERE room_id = $1
@@ -140,12 +121,9 @@ export async function deleteRoomDB(roomID: number): Promise<boolean> {
   const result = await db.query(sql, [roomID]);
 
   return (result.rows.length ?? 0) > 0;
-
 }
 
-export async function getBranchIdOfRoom(
-  roomID: number,
-): Promise<{ branchId: number } | null> {
+export async function getBranchIdOfRoom(roomID: number): Promise<{ branchId: number } | null> {
   const sql = `
             SELECT branch_id AS "branchId"
             FROM room
@@ -153,14 +131,13 @@ export async function getBranchIdOfRoom(
         `;
 
   const result = await db.query(sql, [roomID]);
-  if(result.rows.length == 0){
+  if (result.rows.length == 0) {
     return null;
   }
-  return result.rows[0] as {branchId: number};
-  
+  return result.rows[0] as { branchId: number };
 }
 
-export async function getRoomByIdDB(roomId: number):Promise<RoomPublic | null>{
+export async function getRoomByIdDB(roomId: number): Promise<RoomPublic | null> {
   const sql = `
     SELECT *
     FROM room
@@ -169,7 +146,7 @@ export async function getRoomByIdDB(roomId: number):Promise<RoomPublic | null>{
 
   const result = await db.query(sql, [roomId]);
 
-  if(result.rows.length == 0){
+  if (result.rows.length == 0) {
     return null;
   }
 

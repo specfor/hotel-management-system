@@ -6,7 +6,10 @@ export async function findUserByUsername(
   username: string,
 ): Promise<User | null> {
   const result = await db.query(
-    "SELECT staff_id, username, password_hash FROM \"user\" WHERE username = $1",
+    "SELECT u.staff_id, u.username, u.password_hash, s.job_title " +
+      "FROM \"user\" u " +
+      "LEFT JOIN staff s ON u.staff_id = s.staff_id " +
+      "WHERE u.username = $1",
     [username],
   );
   return (result.rows[0] as User) || null;
@@ -20,7 +23,10 @@ export async function findUserByStaffId(
     "SELECT staff_id, username, password_hash FROM \"user\" WHERE staff_id = $1",
     [staffId],
   );
-  return (result.rows[0] as User) || null;
+  if (result.rowCount === 0) {
+    return null;
+  }
+  return (result.rows[0] as User);
 }
 
 //Create a new user

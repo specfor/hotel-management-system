@@ -13,17 +13,17 @@ export interface Room {
 }
 
 export interface RoomType {
-  room_type_id: number;
-  branch_id: number;
-  room_type_name: string;
-  daily_rate: number;
-  late_checkout_rate: number;
+  roomtypeid: number;
+  branchid: number;
+  roomtypename: string;
+  dailyrate: number;
+  latecheckoutrate: number;
   capacity: number;
-  amenities: string[];
+  amenities: string[] | string;
   created_at: string;
   updated_at: string;
   // Populated fields for display
-  branch_name?: string;
+  // branch_name?: string;
 }
 
 export const RoomStatus = {
