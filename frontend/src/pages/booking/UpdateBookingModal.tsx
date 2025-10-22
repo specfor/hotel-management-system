@@ -10,7 +10,6 @@ import {
   type Booking,
   type Guest,
   type Room,
-  type User as StaffUser,
 } from "../../types";
 
 interface UpdateBookingModalProps {
@@ -20,7 +19,6 @@ interface UpdateBookingModalProps {
   booking: Booking | null;
   guests: Guest[];
   rooms: Room[];
-  staff: StaffUser[];
 }
 
 const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
@@ -30,14 +28,12 @@ const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
   booking,
   guests,
   rooms,
-  staff,
 }) => {
   const { showError } = useAlert();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<{
     guest_id: string;
     room_id: string;
-    user_id: string;
     booking_status: string;
     booking_date: string;
     booking_time: string;
@@ -49,7 +45,6 @@ const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
   }>({
     guest_id: "",
     room_id: "",
-    user_id: "",
     booking_status: BookingStatusEnum.PENDING,
     booking_date: "",
     booking_time: "",
@@ -66,7 +61,6 @@ const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
       setFormData({
         guest_id: booking.guest_id.toString(),
         room_id: booking.room_id.toString(),
-        user_id: booking.user_id.toString(),
         booking_status: booking.booking_status,
         booking_date: booking.booking_date,
         booking_time: booking.booking_time,
@@ -88,8 +82,8 @@ const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
 
     try {
       // Validation
-      if (!formData.guest_id || !formData.room_id || !formData.user_id) {
-        showError("Please select guest, room, and staff member");
+      if (!formData.guest_id || !formData.room_id) {
+        showError("Please select guest and room");
         return;
       }
 
@@ -116,7 +110,6 @@ const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
         booking_id: booking.booking_id,
         guest_id: parseInt(formData.guest_id),
         room_id: parseInt(formData.room_id),
-        user_id: parseInt(formData.user_id),
         booking_status: formData.booking_status as BookingStatusEnum,
         booking_date: formData.booking_date,
         booking_time: formData.booking_time,
@@ -187,23 +180,6 @@ const UpdateBookingModal: React.FC<UpdateBookingModalProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Staff Member *</label>
-            <select
-              value={formData.user_id}
-              onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select Staff Member</option>
-              {staff.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.name} ({member.role})
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Booking Status *</label>
             <select

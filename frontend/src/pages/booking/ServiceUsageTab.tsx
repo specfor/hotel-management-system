@@ -7,6 +7,9 @@ import Modal from "../../components/Modal";
 import Card from "../../components/primary/Card";
 import { useAlert } from "../../hooks/useAlert";
 import { ServiceUnitType, formatUnitType, type ServiceUsage, type ChargeableService } from "../../types";
+import { serviceUsageApi } from "../../api_connection/serviceUsage";
+import { chargeableServiceApi } from "../../api_connection/services";
+import { apiUtils } from "../../api_connection/base";
 
 interface ServiceUsageTabProps {
   bookingId: number;
@@ -36,103 +39,29 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
 
   const loadServiceUsages = useCallback(async () => {
     try {
-      // TODO: Replace with actual API call
-      const mockUsages: ServiceUsage[] = [
-        {
-          usage_id: 1,
-          booking_id: bookingId,
-          service_id: 1,
-          usage_date: "2024-01-21",
-          usage_time: "10:30",
-          quantity: 2,
-          unit_price: 15.0,
-          total_price: 30.0,
-          notes: "Extra towels requested",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          service_name: "Room Service",
-          unit_type: ServiceUnitType.PER_ITEM,
-        },
-        {
-          usage_id: 2,
-          booking_id: bookingId,
-          service_id: 2,
-          usage_date: "2024-01-22",
-          usage_time: "14:00",
-          quantity: 1,
-          unit_price: 120.0,
-          total_price: 120.0,
-          notes: "Relaxing massage",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          service_name: "Spa Treatment",
-          unit_type: ServiceUnitType.PER_HOUR,
-        },
-        {
-          usage_id: 3,
-          booking_id: bookingId,
-          service_id: 3,
-          usage_date: "2024-01-23",
-          usage_time: "19:30",
-          quantity: 2,
-          unit_price: 45.0,
-          total_price: 90.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          service_name: "Dinner Service",
-          unit_type: ServiceUnitType.PER_PERSON,
-        },
-      ];
-      setServiceUsages(mockUsages);
-    } catch {
-      showError("Failed to load service usage records");
+      const response = await serviceUsageApi.getServiceUsageByBookingId(bookingId);
+      if (response.success && response.data.usageRecords) {
+        setServiceUsages(response.data.usageRecords);
+      } else {
+        showError(response.message || "Failed to load service usage records");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   }, [bookingId, showError]);
 
   const loadServices = useCallback(async () => {
     try {
-      // TODO: Replace with actual API call
-      const mockServices: ChargeableService[] = [
-        {
-          service_id: 1,
-          service_name: "Room Service",
-          branch_id: 1,
-          unit_type: ServiceUnitType.PER_ITEM,
-          unit_price: 15.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          service_id: 2,
-          service_name: "Spa Treatment",
-          branch_id: 1,
-          unit_type: ServiceUnitType.PER_HOUR,
-          unit_price: 120.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          service_id: 3,
-          service_name: "Dinner Service",
-          branch_id: 1,
-          unit_type: ServiceUnitType.PER_PERSON,
-          unit_price: 45.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          service_id: 4,
-          service_name: "Laundry Service",
-          branch_id: 1,
-          unit_type: ServiceUnitType.PER_ITEM,
-          unit_price: 8.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ];
-      setServices(mockServices);
-    } catch {
-      showError("Failed to load available services");
+      const response = await chargeableServiceApi.getServices();
+      if (response.success && response.data) {
+        setServices(response.data);
+      } else {
+        showError(response.message || "Failed to load available services");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   }, [showError]);
 
@@ -171,37 +100,47 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
         return;
       }
 
-      const totalPrice = selectedService.unit_price * quantity;
-
-      const usageData = {
-        usage_id: editingUsage ? editingUsage.usage_id : Math.max(...serviceUsages.map((u) => u.usage_id), 0) + 1,
-        booking_id: bookingId,
-        service_id: parseInt(formData.service_id),
-        usage_date: formData.usage_date,
-        usage_time: formData.usage_time,
-        quantity: quantity,
-        unit_price: selectedService.unit_price,
-        total_price: totalPrice,
-        notes: formData.notes || undefined,
-        created_at: editingUsage?.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        service_name: selectedService.service_name,
-        unit_type: selectedService.unit_type,
-      };
-
       if (editingUsage) {
         // Update existing usage
-        setServiceUsages(serviceUsages.map((u) => (u.usage_id === editingUsage.usage_id ? usageData : u)));
-        showSuccess("Service usage updated successfully");
+        const updateData = {
+          service_id: parseInt(formData.service_id),
+          usage_date: formData.usage_date,
+          usage_time: formData.usage_time,
+          quantity: quantity,
+          notes: formData.notes || undefined,
+        };
+
+        const response = await serviceUsageApi.updateServiceUsage(editingUsage.usage_id, updateData);
+        if (response.success && response.data.updatedRecord) {
+          showSuccess("Service usage updated successfully");
+          await loadServiceUsages(); // Reload to get fresh data
+        } else {
+          showError(response.message || "Failed to update service usage");
+        }
       } else {
-        // Add new usage
-        setServiceUsages([...serviceUsages, usageData]);
-        showSuccess("Service usage added successfully");
+        // Create new usage
+        const createData = {
+          booking_id: bookingId,
+          service_id: parseInt(formData.service_id),
+          usage_date: formData.usage_date,
+          usage_time: formData.usage_time,
+          quantity: quantity,
+          notes: formData.notes || undefined,
+        };
+
+        const response = await serviceUsageApi.createServiceUsage(createData);
+        if (response.success && response.data.createdRecord) {
+          showSuccess("Service usage added successfully");
+          await loadServiceUsages(); // Reload to get fresh data
+        } else {
+          showError(response.message || "Failed to add service usage");
+        }
       }
 
       resetForm();
-    } catch {
-      showError(editingUsage ? "Failed to update service usage" : "Failed to add service usage");
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   };
 
@@ -221,10 +160,16 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
     if (!confirm("Are you sure you want to delete this service usage record?")) return;
 
     try {
-      setServiceUsages(serviceUsages.filter((u) => u.usage_id !== usageId));
-      showSuccess("Service usage deleted successfully");
-    } catch {
-      showError("Failed to delete service usage");
+      const response = await serviceUsageApi.deleteServiceUsage(usageId);
+      if (response.success) {
+        await loadServiceUsages(); // Reload to get fresh data
+        showSuccess("Service usage deleted successfully");
+      } else {
+        showError(response.message || "Failed to delete service usage");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   };
 

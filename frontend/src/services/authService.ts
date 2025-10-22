@@ -11,64 +11,15 @@ export class AuthService {
   // Login user
   static async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      // For demo purposes, simulate different user roles
-      const demoUsers = {
-        "admin@hotel.com": {
-          id: "1",
-          username: "admin@hotel.com",
-          email: "admin@hotel.com",
-          name: "Hotel Administrator",
-          role: "admin" as const,
-        },
-        "manager@hotel.com": {
-          id: "2",
-          username: "manager@hotel.com",
-          email: "manager@hotel.com",
-          name: "Hotel Manager",
-          role: "manager" as const,
-        },
-        "staff@hotel.com": {
-          id: "3",
-          username: "staff@hotel.com",
-          email: "staff@hotel.com",
-          name: "Hotel Staff",
-          role: "staff" as const,
-        },
-        "receptionist@hotel.com": {
-          id: "4",
-          username: "receptionist@hotel.com",
-          email: "receptionist@hotel.com",
-          name: "Hotel Receptionist",
-          role: "receptionist" as const,
-        },
-      };
+      const response = await apiClient.post<{ data: AuthResponse }>("/auth/login", credentials);
 
-      const demoUser = demoUsers[credentials.username as keyof typeof demoUsers];
+      const { token, user } = response.data.data;
 
-      if (demoUser && credentials.password === "password123") {
-        // Create a mock JWT token (for demo - in real app, this comes from backend)
-        const mockToken = `demo_token_for_development_${demoUser.role}`;
+      // Store token and user data
+      this.setToken(token);
+      this.setUser(user);
 
-        // Store token and user data
-        this.setToken(mockToken);
-        this.setUser(demoUser);
-
-        return { token: mockToken, user: demoUser };
-      } else {
-        throw new Error("Invalid email or password");
-      }
-
-      // Uncomment this when backend is ready:
-
-      // const response = await apiClient.post<{ data: AuthResponse }>("/auth/login", credentials);
-
-      // const { token, user } = response.data.data;
-
-      // // Store token and user data
-      // this.setToken(token);
-      // this.setUser(user);
-
-      // return response.data.data;
+      return response.data.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(error.response?.data?.data.message || "Login failed");
@@ -125,51 +76,10 @@ export class AuthService {
   // Get user from token
   static getUserFromToken(token: string): User | null {
     try {
-      // For demo token, extract role from token and return appropriate user data
-      if (token.includes("demo_token_for_development")) {
-        const roleMatch = token.match(/demo_token_for_development_(\w+)/);
-        const role = roleMatch ? roleMatch[1] : "admin";
-
-        const demoUsers = {
-          admin: {
-            id: "1",
-            email: "admin@hotel.com",
-            username: "admin@hotel.com",
-            name: "Hotel Administrator",
-            role: "admin" as const,
-          },
-          manager: {
-            id: "2",
-            email: "manager@hotel.com",
-            username: "manager@hotel.com",
-            name: "Hotel Manager",
-            role: "manager" as const,
-          },
-          staff: {
-            id: "3",
-            email: "staff@hotel.com",
-            username: "staff@hotel.com",
-            name: "Hotel Staff",
-            role: "staff" as const,
-          },
-          receptionist: {
-            id: "4",
-            email: "receptionist@hotel.com",
-            username: "receptionist@hotel.com",
-            name: "Hotel Receptionist",
-            role: "receptionist" as const,
-          },
-        };
-
-        return demoUsers[role as keyof typeof demoUsers] || demoUsers.admin;
-      }
-
       const decoded: JwtPayload = jwtDecode(token);
       return {
-        id: decoded.sub,
-        username: decoded.email,
-        email: decoded.email,
-        name: decoded.name,
+        staff_id: decoded.staff_id,
+        username: decoded.username,
         role: decoded.role,
       };
     } catch {

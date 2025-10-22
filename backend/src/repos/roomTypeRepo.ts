@@ -19,12 +19,12 @@ export async function getAllRoomTypesDB(): Promise<RoomTypePublic[]> {
   return result.rows as RoomTypePublic[];
 }
 
-export async function getRoomTypesByBranchDB(branchId: number): Promise<RoomTypePublic[] | null> {
+export async function getRoomTypesByBranchDB(branchId: number): Promise<RoomTypePublic[]> {
   const sql = `
         SELECT
             type_id as roomTypeId,
             branch_id as branchId,
-            type_name as "roomTypeName",
+            type_name as "roomtypename",
             daily_rate as dailyRate,
             late_checkout_rate as lateCheckoutRate,
             capacity as capacity,
@@ -34,10 +34,6 @@ export async function getRoomTypesByBranchDB(branchId: number): Promise<RoomType
     `;
 
   const result = await db.query(sql, [branchId]);
-
-  if (result.rows.length == 0) {
-    return null;
-  }
 
   return result.rows as RoomTypePublic[];
 }

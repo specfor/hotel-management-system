@@ -106,15 +106,10 @@ export interface FinalBill {
 export interface CreateBookingRequest {
   guest_id: number;
   room_id: number;
-  user_id: number;
-  booking_status: BookingStatus;
-  booking_date: string;
-  booking_time: string;
   check_in_date: string;
   check_in_time: string;
   check_out_date: string;
   check_out_time: string;
-  special_requests?: string;
 }
 
 export interface UpdateBookingRequest extends Partial<CreateBookingRequest> {

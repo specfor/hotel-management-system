@@ -4,6 +4,9 @@ import Card from "../../components/primary/Card";
 import Badge from "../../components/primary/Badge";
 import { useAlert } from "../../hooks/useAlert";
 import { type FinalBill, BookingStatusEnum, type Booking } from "../../types";
+import { finalBillApi } from "../../api_connection/finalBill";
+import { bookingApi } from "../../api_connection/bookings";
+import { apiUtils } from "../../api_connection/base";
 
 interface FinalBillTabProps {
   bookingId: number;
@@ -19,48 +22,28 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
     try {
       setIsLoading(true);
 
-      // TODO: Replace with actual API call
-      // First check if booking is checked out
-      const mockBooking: Booking = {
-        booking_id: bookingId,
-        guest_id: 1,
-        room_id: 101,
-        user_id: 1,
-        booking_status: BookingStatusEnum.CHECKED_OUT,
-        booking_date: "2024-01-20",
-        booking_time: "14:30",
-        check_in_date: "2024-01-21",
-        check_in_time: "15:00",
-        check_out_date: "2024-01-24",
-        check_out_time: "11:00",
-        total_amount: 850.5,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      setBooking(mockBooking);
-
-      if (mockBooking.booking_status === BookingStatusEnum.CHECKED_OUT) {
-        // Load final bill only for checked-out bookings
-        const mockBill: FinalBill = {
-          bill_id: 1,
-          booking_id: bookingId,
-          room_charges: 600.0,
-          service_charges: 240.0,
-          tax_amount: 67.2,
-          discount_amount: 45.0,
-          late_checkout_charges: 0.0,
-          total_amount: 862.2,
-          total_paid_amount: 700.0,
-          outstanding_amount: 162.2,
-          bill_date: "2024-01-24",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setFinalBill(mockBill);
+      // First get the booking details to check if it's checked out
+      const bookingResponse = await bookingApi.getBookingById(bookingId);
+      if (!bookingResponse.success || !bookingResponse.data.booking) {
+        throw new Error(bookingResponse.message || "Failed to load booking details");
       }
-    } catch {
-      showError("Failed to load final bill information");
+
+      const bookingData = bookingResponse.data.booking;
+      setBooking(bookingData);
+
+      // Only load final bill if booking is checked out
+      if (bookingData.booking_status === BookingStatusEnum.CHECKED_OUT) {
+        const billResponse = await finalBillApi.getFinalBillByBookingId(bookingId);
+        if (billResponse.success && billResponse.data.finalBill) {
+          setFinalBill(billResponse.data.finalBill);
+        } else {
+          // Final bill might not exist yet, this is not necessarily an error
+          console.log("Final bill not found, might be processing:", billResponse.message);
+        }
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     } finally {
       setIsLoading(false);
     }
