@@ -8,7 +8,7 @@
 
 -- Add your SQL statements here
 -- Example:
-CREATE TYPE room_status_enum AS ENUM ('Available', 'Occupied');
+CREATE TYPE room_status_enum AS ENUM ('Available', 'Occupied', 'Maintenance', 'Cleaning');
 
 CREATE TABLE room (
   room_id SERIAL PRIMARY KEY,
