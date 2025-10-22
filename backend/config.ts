@@ -30,9 +30,9 @@ if (fs.existsSync(envPath)) {
 
 // Configure module aliases
 if (__filename.endsWith("js")) {
-  // In production/compiled mode, @src maps to the dist directory root
-  // because TypeScript doesn't resolve path aliases during compilation
-  moduleAlias.addAlias("@src", __dirname);
+  // In production/compiled mode, @src maps to the dist/src directory
+  // because TypeScript preserves the source directory structure in output
+  moduleAlias.addAlias("@src", path.join(__dirname, "src"));
 } else {
   // In development with ts-node, @src points to src directory
   moduleAlias.addAlias("@src", path.join(__dirname, "src"));

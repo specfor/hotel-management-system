@@ -10,7 +10,7 @@
     "dev:hot": "nodemon --exec \"npm run dev\" --watch ./src --ext .ts",
     "build:docker": "tsc --build tsconfig.prod.json",
     "lint": "eslint . --config eslint.config.ts",
-    "start": "cross-env NODE_ENV=production node -r ./dist/config.js ./dist",
+    "start": "node -r ./dist/config.js ./dist/src/index.js",
     "test": "cross-env NODE_ENV=development vitest",
     "type-check": "tsc --noEmit"
   },
