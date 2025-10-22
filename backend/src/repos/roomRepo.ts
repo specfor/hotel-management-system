@@ -4,10 +4,10 @@ import db from "@src/common/util/db";
 export async function getAllRoomsDB(): Promise<RoomPublic[] | null> {
   const sql = `
         SELECT
-            room_id AS "roomID",
-            branch_id AS "branchID",
-            type_id AS "typeID",
-            room_status AS "roomStatus"
+            room_id,
+            branch_id,
+            type_id,
+            room_status as "status"
         FROM room;
     `;
   const results = await db.query(sql);

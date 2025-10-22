@@ -47,13 +47,7 @@ export async function getRoomTypesByBranch(req: Request, res: Response) {
 
     const roomTypeArr = await getRoomTypesByBranchDB(roomTypeId);
 
-    if (!roomTypeArr) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-        message: "No room types stored",
-      });
-    } else {
-      return jsonResponse(res, true, HttpStatusCodes.OK, { roomTypeArr });
-    }
+    return jsonResponse(res, true, HttpStatusCodes.OK, { roomTypeArr });
   } catch (err) {
     console.log(err);
     return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
