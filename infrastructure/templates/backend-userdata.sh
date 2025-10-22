@@ -43,7 +43,7 @@ services:
       - DB_NAME=${db_name}
       - DB_USER=${db_user}
       - DB_PASSWORD=${db_password}
-      - JWT_SECRET=campus-project-jwt-secret-${random()}
+      - JWT_SECRET=campus-project-jwt-secret-$(date +%s)
       - JWT_EXP=7d
       - CLIENT_ORIGIN=*
     volumes:
@@ -134,7 +134,7 @@ app.get('/api/hello', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Hotel Management Backend running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🗄️  Database: ${process.env.DB_HOST || 'Not configured'}`);
+  console.log(`🗄️  Database: ${process.env.DB_HOST || "Not configured"}`);
 });
 EOF
 
