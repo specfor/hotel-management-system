@@ -171,6 +171,67 @@ resource "aws_eks_node_group" "main" {
   tags = local.common_tags
 }
 
+# EBS CSI Driver Add-on (required for persistent volumes)
+resource "aws_eks_addon" "ebs_csi_driver" {
+  cluster_name             = aws_eks_cluster.main.name
+  addon_name               = "aws-ebs-csi-driver"
+  addon_version            = "v1.24.0-eksbuild.1" # Latest stable version
+  resolve_conflicts        = "OVERWRITE"
+  service_account_role_arn = aws_iam_role.ebs_csi_driver.arn
+
+  depends_on = [
+    aws_eks_node_group.main,
+    aws_iam_role_policy_attachment.ebs_csi_driver
+  ]
+
+  tags = local.common_tags
+}
+
+# IAM role for EBS CSI Driver
+resource "aws_iam_role" "ebs_csi_driver" {
+  name = "${var.project_name}-${var.environment}-ebs-csi-driver-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Effect = "Allow"
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.eks.arn
+        }
+        Condition = {
+          StringEquals = {
+            "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub" : "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+            "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:aud" : "sts.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+
+  tags = local.common_tags
+}
+
+# Attach EBS CSI Driver policy
+resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/Amazon_EBS_CSI_DriverPolicy"
+  role       = aws_iam_role.ebs_csi_driver.name
+}
+
+# OIDC provider for the cluster (required for IAM roles for service accounts)
+data "tls_certificate" "cluster" {
+  url = aws_eks_cluster.main.identity[0].oidc[0].issuer
+}
+
+resource "aws_iam_openid_connect_provider" "eks" {
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.cluster.certificates[0].sha1_fingerprint]
+  url             = aws_eks_cluster.main.identity[0].oidc[0].issuer
+
+  tags = local.common_tags
+}
+
 # Configure kubectl
 data "aws_eks_cluster" "cluster" {
   name = aws_eks_cluster.main.id

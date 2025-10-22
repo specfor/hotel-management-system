@@ -264,6 +264,8 @@ resource "helm_release" "aws_load_balancer_controller" {
   namespace  = "kube-system"
   version    = "1.6.2"
 
+  timeout = 600 # 10 minutes timeout
+
   set {
     name  = "clusterName"
     value = aws_eks_cluster.main.name
@@ -284,9 +286,21 @@ resource "helm_release" "aws_load_balancer_controller" {
     value = aws_iam_role.aws_load_balancer_controller.arn
   }
 
+  set {
+    name  = "region"
+    value = var.aws_region
+  }
+
+  set {
+    name  = "vpcId"
+    value = aws_vpc.main.id
+  }
+
   depends_on = [
     aws_eks_cluster.main,
-    aws_iam_role_policy_attachment.aws_load_balancer_controller
+    aws_eks_node_group.main,
+    aws_iam_role_policy_attachment.aws_load_balancer_controller,
+    aws_iam_openid_connect_provider.eks
   ]
 }
 
@@ -300,24 +314,25 @@ resource "aws_iam_role" "aws_load_balancer_controller" {
       {
         Effect = "Allow"
         Principal = {
-          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}"
+          Federated = aws_iam_openid_connect_provider.eks.arn
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "${replace(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}:sub" : "system:serviceaccount:kube-system:aws-load-balancer-controller"
-            "${replace(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}:aud" : "sts.amazonaws.com"
+            "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub" : "system:serviceaccount:kube-system:aws-load-balancer-controller"
+            "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:aud" : "sts.amazonaws.com"
           }
         }
       }
     ]
   })
 
-  tags = local.common_tags
+  depends_on = [aws_iam_openid_connect_provider.eks]
+  tags       = local.common_tags
 }
 
 resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
-  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/AWSLoadBalancerControllerIAMPolicy"
+  policy_arn = aws_iam_policy.aws_load_balancer_controller.arn
   role       = aws_iam_role.aws_load_balancer_controller.name
 }
 

@@ -51,7 +51,10 @@ resource "kubernetes_persistent_volume_claim" "postgres" {
     storage_class_name = "gp2"
   }
 
-  depends_on = [kubernetes_namespace.database]
+  depends_on = [
+    kubernetes_namespace.database,
+    aws_eks_addon.ebs_csi_driver # Wait for EBS CSI driver
+  ]
 }
 
 # PostgreSQL ConfigMap
