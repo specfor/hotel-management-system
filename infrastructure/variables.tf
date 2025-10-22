@@ -108,6 +108,12 @@ variable "node_capacity_type" {
   default     = "ON_DEMAND"
 }
 
+variable "kubernetes_version" {
+  description = "Kubernetes version for the EKS cluster"
+  type        = string
+  default     = "1.30"
+}
+
 variable "tags" {
   description = "Common tags for all resources"
   type        = map(string)

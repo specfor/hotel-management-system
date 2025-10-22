@@ -122,7 +122,7 @@ resource "aws_security_group" "eks_nodes" {
 resource "aws_eks_cluster" "main" {
   name     = local.cluster_name
   role_arn = aws_iam_role.eks_cluster_role.arn
-  version  = "1.27"
+  version  = var.kubernetes_version
 
   vpc_config {
     subnet_ids              = concat(aws_subnet.private[*].id, aws_subnet.public[*].id)
