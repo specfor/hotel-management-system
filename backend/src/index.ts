@@ -1,5 +1,5 @@
 import logger from "jet-logger";
-
+// import "./config";
 import ENV from "@src/common/constants/ENV";
 import server from "./server";
 import db from "@src/common/util/db";
@@ -65,7 +65,7 @@ process.on("SIGINT", async () => {
 });
 
 // Start the application
-startServer().catch((error:unknown) => {
+startServer().catch((error: unknown) => {
   logger.err("Unhandled error during startup:");
   logger.err(error);
   throw new Error("Failed to start server");

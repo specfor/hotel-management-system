@@ -12,7 +12,7 @@ CREATE TABLE log (
     record_id SERIAL PRIMARY KEY,
     user_id INT,
     action VARCHAR(256),
-    date_time TIMESTAMP,
+    date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     action_rec_id INT,
     CONSTRAINT fk_log_user FOREIGN KEY (user_id) REFERENCES "user"(staff_id)
 );

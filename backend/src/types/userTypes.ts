@@ -3,6 +3,7 @@ export interface User {
   staff_id: number;
   username: string;
   password_hash: string;
+  job_title?: string; // From staff table join
 }
 
 //Login credentials

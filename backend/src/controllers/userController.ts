@@ -54,10 +54,7 @@ export async function getUsers(req: Request, res: Response): Promise<void> {
 
 //Get user by staff ID
 //GET /api/users/staff/:staffId
-export async function getUserByStaffId(
-  req: Request,
-  res: Response,
-): Promise<unknown> {
+export async function getUserByStaffId(req: Request, res: Response): Promise<unknown> {
   try {
     const staffId = parseInt(req.params.staffId);
 
@@ -92,10 +89,7 @@ export async function getUserByStaffId(
 
 //Get user by username
 //GET /api/users/username/:username
-export async function getUserByUsername(
-  req: Request,
-  res: Response,
-): Promise<unknown> {
+export async function getUserByUsername(req: Request, res: Response): Promise<unknown> {
   try {
     const { username } = req.params;
 
@@ -130,10 +124,7 @@ export async function getUserByUsername(
 
 //Delete user by staff ID
 //DELETE /api/users/:staffId
-export async function deleteUserByStaffId(
-  req: Request,
-  res: Response,
-): Promise<unknown> {
+export async function deleteUserByStaffId(req: Request, res: Response): Promise<unknown> {
   try {
     const staffId = parseInt(req.params.staffId);
 

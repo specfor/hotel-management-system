@@ -6,7 +6,10 @@ export async function findUserByUsername(
   username: string,
 ): Promise<User | null> {
   const result = await db.query(
-    "SELECT staff_id, username, password_hash FROM \"user\" WHERE username = $1",
+    "SELECT u.staff_id, u.username, u.password_hash, s.job_title " +
+      "FROM \"user\" u " +
+      "LEFT JOIN staff s ON u.staff_id = s.staff_id " +
+      "WHERE u.username = $1",
     [username],
   );
   return (result.rows[0] as User) || null;
@@ -20,7 +23,10 @@ export async function findUserByStaffId(
     "SELECT staff_id, username, password_hash FROM \"user\" WHERE staff_id = $1",
     [staffId],
   );
-  return (result.rows[0] as User) || null;
+  if (result.rowCount === 0) {
+    return null;
+  }
+  return (result.rows[0] as User);
 }
 
 //Create a new user
@@ -41,11 +47,7 @@ export async function getAllUsers(params: UserQueryParams = {}): Promise<{
   users: UserPublic[],
   totalCount: number,
 }> {
-  const {
-    page = 1,
-    limit = 30,
-    username,
-  } = params;
+  const { page = 1, limit = 30, username } = params;
 
   // Calculate offset for pagination
   const offset = (page - 1) * limit;
@@ -86,7 +88,7 @@ export async function getAllUsers(params: UserQueryParams = {}): Promise<{
 export async function deleteUser(staffId: number): Promise<void> {
   // First delete all log records associated with this user
   await db.query("DELETE FROM log WHERE user_id = $1", [staffId]);
-  
+
   // Then delete the user record
   await db.query("DELETE FROM \"user\" WHERE staff_id = $1", [staffId]);
 }

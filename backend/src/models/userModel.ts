@@ -1,4 +1,3 @@
-
 export function validateUsername(username: string): boolean {
   // Username must be 3-20 characters, alphanumeric and underscores only
   const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;

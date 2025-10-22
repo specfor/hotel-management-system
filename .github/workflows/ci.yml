@@ -1,0 +1,270 @@
+# Pull Request CI Pipeline
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [main, production]
+  push:
+    branches: [feature/*, develop]
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  # Security and Code Quality Checks
+  security-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run Security Audit - Backend
+        run: |
+          cd backend
+          npm audit --audit-level moderate || true
+
+      - name: Run Security Audit - Frontend
+        run: |
+          cd frontend
+          npm audit --audit-level moderate || true
+
+      - name: Check for secrets in code
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+
+  # Code Quality and Testing
+  code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Backend Code Quality
+        run: |
+          cd backend
+
+          # Type checking
+          npm run type-check || npx tsc --noEmit
+
+          # Linting
+          npm run lint || npx eslint . --ext .ts,.js
+
+      - name: Frontend Code Quality
+        run: |
+          cd frontend
+
+          # Build check
+          npm run build
+
+          # Type checking
+          npx tsc --noEmit || true
+
+          # Linting (if available)
+          npm run lint || npx eslint . --ext .ts,.tsx,.js,.jsx || true
+
+      - name: Check Bundle Size
+        run: |
+          cd frontend
+
+          # Build and check bundle size
+          npm run build
+
+          # Check if dist folder exists and show size
+          if [ -d "dist" ]; then
+            echo "Frontend build size:"
+            du -sh dist/
+            find dist/ -name "*.js" -exec ls -lh {} \; | head -10
+          fi
+
+  # Infrastructure Validation
+  infrastructure-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Format Check
+        run: |
+          cd infrastructure
+          terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: |
+          cd infrastructure
+          terraform init -backend=false
+          terraform validate
+
+      - name: Terraform Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "config"
+          scan-ref: "./infrastructure"
+          format: "sarif"
+          output: "trivy-results.sarif"
+        continue-on-error: true
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        with:
+          sarif_file: "trivy-results.sarif"
+        continue-on-error: true
+
+  # Docker Build Test
+  docker-build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          load: true
+          tags: hotel-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify Docker Image
+        run: |
+          echo "Checking if Docker image was built successfully..."
+          docker images | grep hotel-backend || {
+            echo "❌ Docker image not found"
+            exit 1
+          }
+          echo "✅ Docker image built successfully"
+
+  # Generate PR Summary
+  pr-summary:
+    runs-on: ubuntu-latest
+    needs: [security-scan, code-quality, infrastructure-check, docker-build-test]
+    if: always()
+
+    steps:
+      - name: Create PR Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            const jobs = [
+              { name: 'Security Scan', result: '${{ needs.security-scan.result }}' },
+              { name: 'Code Quality', result: '${{ needs.code-quality.result }}' },
+              { name: 'Infrastructure Check', result: '${{ needs.infrastructure-check.result }}' },
+              { name: 'Docker Build Test', result: '${{ needs.docker-build-test.result }}' }
+            ];
+
+            const getEmoji = (result) => {
+              switch(result) {
+                case 'success': return '✅';
+                case 'failure': return '❌';
+                case 'cancelled': return '⏹️';
+                case 'skipped': return '⏭️';
+                default: return '⏳';
+              }
+            };
+
+            const summary = jobs.map(job => 
+              `${getEmoji(job.result)} **${job.name}**: ${job.result}`
+            ).join('\n');
+
+            const body = `## 🔍 CI Pipeline Results
+
+            ${summary}
+
+            **Branch**: \`${context.payload.pull_request.head.ref}\`
+            **Commit**: \`${context.payload.pull_request.head.sha.substring(0, 7)}\`
+
+            ${jobs.every(job => job.result === 'success') ? 
+              '🎉 All checks passed! This PR is ready for review.' : 
+              '⚠️ Some checks failed. Please review the failed jobs above.'
+            }`;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🔍 CI Pipeline Results')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
