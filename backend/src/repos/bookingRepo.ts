@@ -32,19 +32,18 @@ const mapToPublic = (row: BookingRow): BookingPublic => ({
 /**
  * Get all booking records. (READ All)
  */
-export async function getAllBookingsDB(filters: { guestId?: number,
-   roomId?: number,
-  branchId?: number, } = {}): Promise<BookingPublic[] | null> {
-
+export async function getAllBookingsDB(
+  filters: { guestId?: number; roomId?: number; branchId?: number } = {}
+): Promise<BookingPublic[] | null> {
   let sql = `
             SELECT 
                 booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out
             FROM 
                 booking
         `;
-    
+
   const conditions: string[] = [];
-  const values: (number)[] = [];
+  const values: number[] = [];
   let paramIndex = 1;
 
   // 1. Check for guestId filter
@@ -82,15 +81,12 @@ export async function getAllBookingsDB(filters: { guestId?: number,
     return [];
   }
   return (result.rows as BookingRow[]).map(mapToPublic);
-
 }
-
 
 /**
  * Get a single booking record by ID. (READ One)
  */
 export async function getBookingByIDDB(bookingId: number): Promise<BookingPublic | null> {
-  
   const sql = `
             SELECT 
                 booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out
@@ -107,13 +103,15 @@ export async function getBookingByIDDB(bookingId: number): Promise<BookingPublic
   return mapToPublic(result.rows[0] as BookingRow);
 }
 
-
-
 /**
  * Check if a room is booked (conflicts) during a specific date range. (NEW FUNCTION)
  * Returns conflicting bookings, or null if available.
  */
-export async function getConflictingBookings(roomId: number, checkIn: Date, checkOut: Date): Promise<BookingPublic[] | null> {
+export async function getConflictingBookings(
+  roomId: number,
+  checkIn: Date,
+  checkOut: Date
+): Promise<BookingPublic[] | null> {
   const sql = `
             SELECT 
                 booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out
@@ -127,7 +125,7 @@ export async function getConflictingBookings(roomId: number, checkIn: Date, chec
         `;
   const values = [roomId, checkIn, checkOut];
   const result = await db.query(sql, values);
-        
+
   if (result.rows.length === 0) {
     return null; // Room is available
   }
@@ -143,7 +141,7 @@ export async function createBookingDB(bookingData: BookingCreate): Promise<Booki
 
   const sql = `
             INSERT INTO booking (user_id, guest_id, room_id, check_in, check_out, booking_status, date_time)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            VALUES ($1, $2, $3, $4, $5, $6, NOW())
             RETURNING *;
         `;
   const values = [
@@ -157,16 +155,14 @@ export async function createBookingDB(bookingData: BookingCreate): Promise<Booki
 
   const createdBooking = await db.query(sql, values);
   return mapToPublic(createdBooking.rows[0] as BookingRow);
-
 }
 
 /**
  * Update an existing booking record. (UPDATE)
  */
 export async function updateBookingDB(bookingData: BookingUpdate): Promise<BookingPublic | null> {
-
   const updates: string[] = [];
-  const values: (number | Date | BookingStatus )[] = [];
+  const values: (number | Date | BookingStatus)[] = [];
   let paramIndex = 1;
 
   if (bookingData.userId !== undefined) {
@@ -180,7 +176,7 @@ export async function updateBookingDB(bookingData: BookingUpdate): Promise<Booki
     values.push(bookingData.guestId);
     paramIndex++;
   }
-        
+
   if (bookingData.roomId !== undefined) {
     updates.push("room_id = $" + paramIndex);
     values.push(bookingData.roomId);
@@ -192,14 +188,13 @@ export async function updateBookingDB(bookingData: BookingUpdate): Promise<Booki
     values.push(bookingData.bookingStatus);
     paramIndex++;
   }
-        
 
   if (bookingData.checkIn) {
     updates.push("check_in = $" + paramIndex);
     values.push(bookingData.checkIn);
     paramIndex++;
   }
-        
+
   if (bookingData.checkOut) {
     updates.push("check_out = $" + paramIndex);
     values.push(bookingData.checkOut);
@@ -207,7 +202,7 @@ export async function updateBookingDB(bookingData: BookingUpdate): Promise<Booki
   }
 
   if (updates.length === 0) {
-    return null; 
+    return null;
   }
 
   const sql = `
@@ -225,7 +220,6 @@ export async function updateBookingDB(bookingData: BookingUpdate): Promise<Booki
   }
 
   return mapToPublic(result.rows[0] as BookingRow);
-
 }
 
 /**
@@ -241,5 +235,4 @@ export async function deleteBookingDB(bookingId: number): Promise<boolean> {
   const result = await db.query(sql, [bookingId]);
 
   return result.rowCount !== null && result.rowCount > 0;
-
 }

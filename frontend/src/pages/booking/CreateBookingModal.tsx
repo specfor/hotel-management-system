@@ -32,6 +32,7 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
     check_out_time: "11:00",
   });
 
+  console.log(rooms);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -93,7 +94,7 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
   };
 
   // Filter available rooms (not occupied)
-  const availableRooms = rooms.filter((room) => room.status === "available");
+  const availableRooms = rooms.filter((room) => room.status.toLowerCase() === "available");
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Create New Booking" size="lg">
@@ -127,7 +128,7 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
               <option value="">Select Room</option>
               {availableRooms.map((room) => (
                 <option key={room.room_id} value={room.room_id.toString()}>
-                  {room.room_number} - {room.room_type_name} ({room.branch_name})
+                  Room - {room.room_id}
                 </option>
               ))}
             </select>

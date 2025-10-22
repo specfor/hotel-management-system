@@ -62,6 +62,8 @@ const BookingManagement: React.FC = () => {
     try {
       const response = await roomApi.getAllRooms();
       if (response.success && response.data) {
+        console.log(response.data);
+
         setRooms(response.data);
       } else {
         showError(response.message || "Failed to load rooms");
