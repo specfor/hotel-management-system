@@ -78,10 +78,8 @@ export class AuthService {
     try {
       const decoded: JwtPayload = jwtDecode(token);
       return {
-        id: decoded.sub,
-        username: decoded.email,
-        email: decoded.email,
-        name: decoded.name,
+        staff_id: decoded.staff_id,
+        username: decoded.username,
         role: decoded.role,
       };
     } catch {

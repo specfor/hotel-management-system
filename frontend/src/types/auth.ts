@@ -1,10 +1,7 @@
 export interface User {
-  id: string;
+  staff_id: number;
   username: string;
-  email: string;
-  name: string;
   role: UserRole;
-  avatar?: string;
 }
 
 export type UserRole = "admin" | "manager" | "staff" | "receptionist";
@@ -47,9 +44,8 @@ export interface AuthContextType {
 }
 
 export interface JwtPayload {
-  sub: string;
-  email: string;
-  name: string;
+  staff_id: number;
+  username: string;
   role: UserRole;
   iat: number;
   exp: number;
