@@ -1,58 +1,48 @@
 // backend/src/models/guestBillingModel.ts
 
-import { 
-  GuestBillingPublic, 
+import type {
   GuestBillingFilters,
+  GuestBillingPublic,
+  GuestBillingSummary,
 } from "@src/types/guestBillingTypes";
-import { getGuestBillingDB } from "@src/repos/guestBillingRepo";
+import guestBillingRepo from "@src/repos/guestBillingRepo";
 
 /**
- * Business logic layer for guest billing data
- * Retrieves billing information with payment status
- * 
- * @param filters - Optional filters for guest, booking, status, or dates
- * @returns Promise resolving to array of guest billing records
+ * Model for guest billing business logic
  */
-export async function getGuestBillingModel(
-  filters: GuestBillingFilters = {},
-): Promise<GuestBillingPublic[]> {
-  // Validate date formats if provided
-  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-
-  if (filters.startDate && !datePattern.test(filters.startDate)) {
-    throw new Error("Invalid startDate format. Expected format: YYYY-MM-DD");
+class GuestBillingModel {
+  /**
+   * Get guest billing data with optional filters
+   * @param filters - Optional filters for the query
+   * @returns Array of guest billing records
+   */
+  public async getGuestBilling(
+    filters?: GuestBillingFilters,
+  ): Promise<GuestBillingPublic[]> {
+    return await guestBillingRepo.getGuestBilling(filters);
   }
 
-  if (filters.endDate && !datePattern.test(filters.endDate)) {
-    throw new Error("Invalid endDate format. Expected format: YYYY-MM-DD");
+  /**
+   * Get billing summary statistics
+   * @param filters - Optional filters for the query
+   * @returns Summary statistics object
+   */
+  public async getBillingSummary(
+    filters?: GuestBillingFilters,
+  ): Promise<GuestBillingSummary> {
+    const summary = await guestBillingRepo.getBillingSummary(filters);
+    
+    return {
+      totalGuests: Number(summary.total_guests) || 0,
+      totalBills: Number(summary.total_bills) || 0,
+      totalBilled: Number(summary.total_billed) || 0,
+      totalPaid: Number(summary.total_paid) || 0,
+      totalOutstanding: Number(summary.total_outstanding) || 0,
+      guestsWithUnpaid: Number(summary.guests_with_unpaid) || 0,
+      averageBillAmount: Number(summary.average_bill_amount) || 0,
+      averageOutstanding: Number(summary.average_outstanding) || 0,
+    };
   }
-
-  // Validate that startDate is before endDate if both are provided
-  if (filters.startDate && filters.endDate) {
-    const start = new Date(filters.startDate);
-    const end = new Date(filters.endDate);
-    if (start > end) {
-      throw new Error("startDate must be before or equal to endDate");
-    }
-  }
-
-  // Validate payment status if provided
-  const validPaymentStatuses = ["Paid", "Unpaid", "Pending"];
-  if (
-    filters.paymentStatus 
-    && !validPaymentStatuses.includes(filters.paymentStatus)
-  ) {
-    throw new Error(
-      `Invalid paymentStatus. Must be one of: ${validPaymentStatuses.join(", ")}`,
-    );
-  }
-
-  // Validate minOutstanding if provided
-  if (filters.minOutstanding !== undefined && filters.minOutstanding < 0) {
-    throw new Error("minOutstanding must be a non-negative number");
-  }
-
-  // Fetch data from repository
-  const billingData = await getGuestBillingDB(filters);
-  return billingData;
 }
+
+export default new GuestBillingModel();

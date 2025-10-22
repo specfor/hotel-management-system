@@ -1,121 +1,118 @@
 // backend/src/controllers/guestBillingController.ts
 
 import { Request, Response } from "express";
+import guestBillingModel from "@src/models/guestBillingModel";
+import type { GuestBillingFilters } from "@src/types/guestBillingTypes";
 import { jsonResponse } from "@src/common/util/response";
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import logger from "jet-logger";
-import { getGuestBillingModel } from "@src/models/guestBillingModel";
-import { GuestBillingFilters } from "@src/types/guestBillingTypes";
 
 /**
- * Get guest billing summary with optional filters
- * 
- * Query Parameters:
- * - guestId: Filter by specific guest ID
- * - bookingId: Filter by specific booking ID
- * - paymentStatus: Filter by payment status (Paid, Unpaid, Pending)
- * - hasOutstanding: Filter for bills with outstanding balance (true/false)
- * - minOutstanding: Filter by minimum outstanding amount
- * - startDate: Filter by bill date range start (format: YYYY-MM-DD)
- * - endDate: Filter by bill date range end (format: YYYY-MM-DD)
- * 
- * @route GET /api/reports/guest-billing
+ * Get guest billing data with optional filters
+ * Query parameters:
+ * - guestId: number (optional)
+ * - guestName: string (optional)
+ * - paymentStatus: string (optional) - 'Paid', 'Unpaid', 'Pending'
+ * - branchId: number (optional)
+ * - bookingStatus: string (optional)
+ * - startDate: string YYYY-MM-DD (optional)
+ * - endDate: string YYYY-MM-DD (optional)
+ * - minOutstanding: number (optional)
+ * - maxOutstanding: number (optional)
+ * - hasOverdue: boolean (optional)
+ * - includeSummary: boolean (optional)
  */
-export async function getGuestBilling(req: Request, res: Response) {
+export async function getGuestBilling(req: Request, res: Response): Promise<void> {
   try {
-    const {
-      guestId,
-      bookingId,
-      paymentStatus,
-      hasOutstanding,
-      minOutstanding,
-      startDate,
-      endDate,
-    } = req.query;
+    const filters: GuestBillingFilters = {
+      guestId: req.query.guestId
+        ? Number(req.query.guestId)
+        : undefined,
+      guestName: req.query.guestName as string | undefined,
+      paymentStatus: req.query.paymentStatus as string | undefined,
+      branchId: req.query.branchId
+        ? Number(req.query.branchId)
+        : undefined,
+      bookingStatus: req.query.bookingStatus as string | undefined,
+      startDate: req.query.startDate as string | undefined,
+      endDate: req.query.endDate as string | undefined,
+      minOutstanding: req.query.minOutstanding
+        ? Number(req.query.minOutstanding)
+        : undefined,
+      maxOutstanding: req.query.maxOutstanding
+        ? Number(req.query.maxOutstanding)
+        : undefined,
+      hasOverdue: req.query.hasOverdue === "true" ? true :
+        req.query.hasOverdue === "false" ? false : undefined,
+    };
 
-    // Build filters object
-    const filters: GuestBillingFilters = {};
+    const includeSummary = req.query.includeSummary === "true";
 
-    if (guestId) {
-      const guestIdNum = Number(guestId);
-      if (isNaN(guestIdNum)) {
-        return jsonResponse(
-          res,
-          false,
-          HttpStatusCodes.BAD_REQUEST,
-          { message: "Invalid guestId. Must be a number." },
-        );
-      }
-      filters.guestId = guestIdNum;
+    // Get billing data
+    const result = await guestBillingModel.getGuestBilling(filters);
+
+    // Optionally get summary statistics
+    let summary;
+    if (includeSummary) {
+      summary = await guestBillingModel.getBillingSummary(filters);
     }
 
-    if (bookingId) {
-      const bookingIdNum = Number(bookingId);
-      if (isNaN(bookingIdNum)) {
-        return jsonResponse(
-          res,
-          false,
-          HttpStatusCodes.BAD_REQUEST,
-          { message: "Invalid bookingId. Must be a number." },
-        );
-      }
-      filters.bookingId = bookingIdNum;
-    }
-
-    if (paymentStatus && typeof paymentStatus === "string") {
-      filters.paymentStatus = paymentStatus;
-    }
-
-    if (hasOutstanding === "true") {
-      filters.hasOutstanding = true;
-    }
-
-    if (minOutstanding) {
-      const minOutstandingNum = Number(minOutstanding);
-      if (isNaN(minOutstandingNum)) {
-        return jsonResponse(
-          res,
-          false,
-          HttpStatusCodes.BAD_REQUEST,
-          { message: "Invalid minOutstanding. Must be a number." },
-        );
-      }
-      filters.minOutstanding = minOutstandingNum;
-    }
-
-    if (startDate && typeof startDate === "string") {
-      filters.startDate = startDate;
-    }
-
-    if (endDate && typeof endDate === "string") {
-      filters.endDate = endDate;
-    }
-
-    // Fetch data
-    const billingData = await getGuestBillingModel(filters);
-
-    return jsonResponse(res, true, HttpStatusCodes.OK, {
-      billingData,
-      count: billingData.length,
-    });
+    jsonResponse(
+      res,
+      true,
+      HttpStatusCodes.OK,
+      {
+        billingData: result,
+        count: result.length,
+        ...(summary && { summary }),
+      },
+    );
   } catch (err) {
     logger.err(err);
-
-    // Handle validation errors
-    if (err instanceof Error && err.message.includes("Invalid")) {
-      return jsonResponse(
-        res,
-        false,
-        HttpStatusCodes.BAD_REQUEST,
-        { message: err.message },
-      );
-    }
-
-    return jsonResponse(
+    jsonResponse(
       res,
       false,
       HttpStatusCodes.INTERNAL_SERVER_ERROR,
-      { message: "Server error retrieving guest billing data" },
+      { error: "Failed to fetch guest billing data" },
+    );
+  }
+}
+
+/**
+ * Get billing summary statistics only
+ * Query parameters: same as getGuestBilling
+ */
+export async function getBillingSummary(req: Request, res: Response): Promise<void> {
+  try {
+    const filters: GuestBillingFilters = {
+      guestId: req.query.guestId
+        ? Number(req.query.guestId)
+        : undefined,
+      paymentStatus: req.query.paymentStatus as string | undefined,
+      branchId: req.query.branchId
+        ? Number(req.query.branchId)
+        : undefined,
+      startDate: req.query.startDate as string | undefined,
+      endDate: req.query.endDate as string | undefined,
+      hasOverdue: req.query.hasOverdue === "true" ? true :
+        req.query.hasOverdue === "false" ? false : undefined,
+    };
+
+    const summary = await guestBillingModel.getBillingSummary(filters);
+
+    jsonResponse(
+      res,
+      true,
+      HttpStatusCodes.OK,
+      summary,
+    );
+  } catch (err) {
+    logger.err(err);
+    jsonResponse(
+      res,
+      false,
+      HttpStatusCodes.INTERNAL_SERVER_ERROR,
+      { error: "Failed to fetch billing summary" },
     );
   }
 }

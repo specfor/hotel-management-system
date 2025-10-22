@@ -85,10 +85,15 @@ SELECT
         WHEN r.room_status = 'Cleaning' THEN 'Cleaning'
         ELSE 'Available'
     END AS occupancy_status,
-    EXTRACT(DAY FROM (b.check_out - b.check_in)) AS nights_booked,
+    CASE 
+        WHEN b.check_in IS NOT NULL AND b.check_out IS NOT NULL 
+        THEN (b.check_out::date - b.check_in::date)
+        ELSE NULL
+    END AS nights_booked,
     CASE 
         WHEN b.booking_status IN ('Checked-In', 'Checked-Out') 
-        THEN EXTRACT(DAY FROM (b.check_out - b.check_in)) * rt.daily_rate 
+            AND b.check_in IS NOT NULL AND b.check_out IS NOT NULL
+        THEN (b.check_out::date - b.check_in::date) * rt.daily_rate 
         ELSE 0 
     END AS room_revenue,
     b.date_time AS booking_created_at
@@ -102,10 +107,67 @@ ORDER BY br.branch_name, r.room_id, b.check_in;
 
 
 -- =====================================================
+-- GUEST BILLING SUMMARY VIEW
+-- =====================================================
+-- View for guest billing information with unpaid balances
+CREATE OR REPLACE VIEW guest_billing_summary_view AS
+SELECT
+    g.guest_id,
+    g.name AS guest_name,
+    g.NIC AS guest_nic,
+    g.contact_no AS guest_contact,
+    g.email AS guest_email,
+    fb.bill_id,
+    b.booking_id,
+    b.check_in AS check_in_date,
+    b.check_out AS check_out_date,
+    b.booking_status,
+    CASE 
+        WHEN b.check_in IS NOT NULL AND b.check_out IS NOT NULL 
+        THEN (b.check_out::date - b.check_in::date)
+        ELSE NULL
+    END AS nights_stayed,
+    fb.room_charges,
+    fb.total_service_charges,
+    fb.total_tax,
+    fb.late_checkout_charge,
+    fb.total_discount,
+    fb.total_amount,
+    fb.paid_amount,
+    fb.outstanding_amount,
+    CASE 
+        WHEN fb.outstanding_amount > 0 THEN 'Unpaid'
+        WHEN fb.outstanding_amount = 0 AND fb.paid_amount > 0 THEN 'Paid'
+        ELSE 'Pending'
+    END AS payment_status,
+    fb.created_at AS bill_date,
+    CASE 
+        WHEN fb.outstanding_amount > 0 AND fb.created_at IS NOT NULL
+        THEN (CURRENT_DATE - fb.created_at::date)
+        ELSE 0
+    END AS days_overdue,
+    (SELECT MAX(p.date_time) 
+     FROM payment p 
+     WHERE p.bill_id = fb.bill_id) AS last_payment_date,
+    r.room_id,
+    rt.type_name AS room_type,
+    br.branch_id,
+    br.branch_name
+FROM guest g
+LEFT JOIN booking b ON g.guest_id = b.guest_id
+LEFT JOIN final_bill fb ON b.booking_id = fb.booking_id
+LEFT JOIN room r ON b.room_id = r.room_id
+LEFT JOIN room_type rt ON r.type_id = rt.type_id
+LEFT JOIN branch br ON r.branch_id = br.branch_id
+ORDER BY g.guest_id, fb.created_at DESC;
+
+
+-- =====================================================
 -- DOWN MIGRATION (Rollback)
 -- =====================================================
 -- To rollback, uncomment the lines below:
 /*
+DROP VIEW IF EXISTS guest_billing_summary_view;
 DROP VIEW IF EXISTS room_occupancy_report_view;
 DROP VIEW IF EXISTS monthly_revenue_per_branch_view;
 DROP VIEW IF EXISTS guest_main_view;
