@@ -22,9 +22,9 @@
 // }
 
 import fs from "fs";
-import path from "path";
 import dotenv from "dotenv";
 import path from "path";
+import moduleAlias from "module-alias";
 
 // Check the environment
 const NODE_ENV = process.env.NODE_ENV ?? "development";
