@@ -24,14 +24,30 @@ import { GuestRepo, GuestPassword } from "@src/types/guestTypes";
 export async function getAllGuests(req: Request, res: Response): Promise<void> {
   try {
     // Extract query params
-    const name = typeof req.query.name === "string" ? req.query.name : undefined;
+    const name =
+      typeof req.query.name === "string" ? req.query.name : undefined;
     const nic = typeof req.query.nic === "string" ? req.query.nic : undefined;
-    const minAge = typeof req.query.minAge === "string" ? Number(req.query.minAge) : undefined;
-    const maxAge = typeof req.query.maxAge === "string" ? Number(req.query.maxAge) : undefined;
-    const page = typeof req.query.page === "string" ? Number(req.query.page) : 1;
-    const limit = typeof req.query.limit === "string" ? Number(req.query.limit) : 5;
+    const minAge =
+      typeof req.query.minAge === "string"
+        ? Number(req.query.minAge)
+        : undefined;
+    const maxAge =
+      typeof req.query.maxAge === "string"
+        ? Number(req.query.maxAge)
+        : undefined;
+    const page =
+      typeof req.query.page === "string" ? Number(req.query.page) : 1;
+    const limit =
+      typeof req.query.limit === "string" ? Number(req.query.limit) : 5;
 
-    const guests = await getAllGuests_repo(name, nic, minAge, maxAge, page, limit);
+    const guests = await getAllGuests_repo(
+      name,
+      nic,
+      minAge,
+      maxAge,
+      page,
+      limit,
+    );
 
     jsonResponse(res, true, HttpStatusCodes.OK, { guests });
   } catch {
@@ -94,7 +110,10 @@ export async function addNewGuest(req: Request, res: Response): Promise<void> {
   }
 }
 
-export async function updateGuestInfo(req: Request, res: Response): Promise<void> {
+export async function updateGuestInfo(
+  req: Request,
+  res: Response,
+): Promise<void> {
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
@@ -121,8 +140,8 @@ export async function updateGuestInfo(req: Request, res: Response): Promise<void
   }
 
   try {
-    const guest = await updateGuestInfo_repo(req.body as GuestRepo, id);
-    jsonResponse(res, true, HttpStatusCodes.OK, { guest });
+    await updateGuestInfo_repo(req.body as GuestRepo, id);
+    jsonResponse(res, true, HttpStatusCodes.OK, {});
   } catch {
     jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
       error: "Failed to update guest information",
@@ -130,7 +149,10 @@ export async function updateGuestInfo(req: Request, res: Response): Promise<void
   }
 }
 
-export async function changeGuestPassword(req: Request, res: Response): Promise<void> {
+export async function changeGuestPassword(
+  req: Request,
+  res: Response,
+): Promise<void> {
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {

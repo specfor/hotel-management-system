@@ -5,7 +5,7 @@ export interface GuestRepo {
   age: number | null;
   contact_no: string | null;
   email: string | null;
-  password: string | null;              
+  password?: string | null;              
 }
 
 export interface GuestPublic {
@@ -23,5 +23,6 @@ export interface GuestPassword {
   guest_id: number;
   password: string;
 }
+
 
 

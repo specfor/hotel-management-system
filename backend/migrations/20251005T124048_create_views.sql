@@ -11,7 +11,7 @@ select g.guest_id, g.NIC, g.name, g.age,  g.contact_no, g.email, b.room_id, b.bo
 from guest g
 left join booking b
 on g.guest_id = b.guest_id
-order by b.date_time desc
+order by g.guest_id asc;
 
 
 
