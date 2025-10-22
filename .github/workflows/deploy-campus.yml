@@ -1,0 +1,137 @@
+# Free Tier Campus Deployment Pipeline
+name: Deploy to AWS Free Tier
+
+on:
+  push:
+    branches: [campus, student] # Trigger for campus/student branches
+  workflow_dispatch:
+    inputs:
+      deployment_type:
+        description: "Deployment type"
+        required: true
+        default: "free-tier"
+        type: choice
+        options:
+          - free-tier
+          - eks
+
+env:
+  AWS_REGION: us-east-1
+  PROJECT_NAME: hotel-management-system
+
+permissions:
+  contents: read
+  id-token: write
+  actions: read
+
+jobs:
+  # Deploy Free Tier Version
+  deploy-free-tier:
+    runs-on: ubuntu-latest
+    environment: campus
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy FREE TIER Infrastructure
+        id: deploy-free-tier
+        run: |
+          cd infrastructure
+
+          # Create FREE TIER terraform.tfvars
+          cat > terraform.tfvars << EOF
+          project_name = "${{ env.PROJECT_NAME }}"
+          environment  = "campus"  # 🎓 FREE TIER MODE
+          aws_region   = "${{ env.AWS_REGION }}"
+
+          # 🆓 FREE TIER SETTINGS (Monthly Cost: $0)
+          node_instance_types   = ["t3.micro"]    # FREE: 750 hours/month
+          node_desired_capacity = 1               # Single instance
+          node_max_capacity     = 1               # No auto-scaling
+          node_min_capacity     = 1
+          db_instance_class     = "db.t3.micro"   # FREE: 750 hours/month
+          db_allocated_storage  = 20              # FREE: 20GB max
+
+          tags = {
+            Environment = "campus"
+            Project     = "${{ env.PROJECT_NAME }}"
+            ManagedBy   = "github-actions-free-tier"
+            CostMode    = "free-tier"
+            Branch      = "${{ github.ref_name }}"
+            CommitSha   = "${{ github.sha }}"
+          }
+          EOF
+
+          terraform init
+          terraform plan -out=tfplan.out
+          terraform apply tfplan.out
+
+          # Export outputs
+          echo "backend_ip=$(terraform output -raw free_tier_backend_ip)" >> $GITHUB_OUTPUT || echo "backend_ip=not_deployed" >> $GITHUB_OUTPUT
+          echo "frontend_url=$(terraform output -raw frontend_url)" >> $GITHUB_OUTPUT || echo "frontend_url=not_deployed" >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Deploy Frontend to S3 (FREE)
+        run: |
+          cd frontend
+
+          # Install dependencies and build
+          npm ci
+          npm run build
+
+          # Deploy to S3 (FREE: 5GB storage)
+          aws s3 sync dist/ s3://$(terraform -chdir=infrastructure output -raw s3_bucket_name)/ --delete \
+            --cache-control "public, max-age=31536000" --exclude "*.html"
+
+          aws s3 sync dist/ s3://$(terraform -chdir=infrastructure output -raw s3_bucket_name)/ --delete \
+            --cache-control "public, max-age=0, must-revalidate" --include "*.html"
+
+          # Invalidate CloudFront cache (FREE: 50GB/month)
+          aws cloudfront create-invalidation \
+            --distribution-id $(terraform -chdir=infrastructure output -raw cloudfront_distribution_id) \
+            --paths "/*"
+
+      - name: Deployment Summary
+        run: |
+          echo "## 🎓 FREE TIER Campus Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: campus (FREE TIER)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Monthly Cost**: \$0 (within AWS Free Tier)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.deploy-free-tier.outputs.backend_ip }}" != "not_deployed" ]; then
+            echo "- **Backend IP**: ${{ steps.deploy-free-tier.outputs.backend_ip }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Backend URL**: http://${{ steps.deploy-free-tier.outputs.backend_ip }}:3000" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ steps.deploy-free-tier.outputs.frontend_url }}" != "not_deployed" ]; then
+            echo "- **Frontend URL**: ${{ steps.deploy-free-tier.outputs.frontend_url }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🆓 Free Tier Resources Used:" >> $GITHUB_STEP_SUMMARY
+          echo "- **EC2 t3.micro**: 1 instance (750 hours/month FREE)" >> $GITHUB_STEP_SUMMARY
+          echo "- **RDS db.t3.micro**: 1 instance (750 hours/month FREE)" >> $GITHUB_STEP_SUMMARY
+          echo "- **S3 Storage**: <5GB (FREE)" >> $GITHUB_STEP_SUMMARY
+          echo "- **CloudFront**: <50GB/month (FREE)" >> $GITHUB_STEP_SUMMARY
+          echo "- **VPC, Subnets, IGW**: All FREE" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎯 Campus Project Perfect!" >> $GITHUB_STEP_SUMMARY
+          echo "This deployment is completely FREE under AWS Free Tier!" >> $GITHUB_STEP_SUMMARY

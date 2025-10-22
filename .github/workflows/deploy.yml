@@ -178,10 +178,13 @@ jobs:
           # Kubernetes version
           kubernetes_version = "1.30"
 
-          # Production optimized settings
+          # 🎓 CAMPUS PROJECT: Use "campus" for FREE TIER deployment
+          # environment = "campus"  # Uncomment for FREE EC2 deployment
+
+          # Production optimized settings (EKS - costs ~$118/month)
           node_instance_types   = ["t3.micro"]
           node_desired_capacity = 1
-          node_max_capacity     = 3
+          node_max_capacity     = 1
           node_min_capacity     = 1
 
           # Use on-demand instances for production reliability
