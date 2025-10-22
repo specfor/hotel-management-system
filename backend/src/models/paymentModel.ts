@@ -6,6 +6,8 @@ import {
 import {
   getFinalBillByID_repo,
   updateFinalBillPaidAmount_repo,
+  lockFinalBill,
+  releaseFinalBill,
 } from "@src/repos/finalBillRepo";
 import {
   getPaymentByID_repo,
@@ -61,16 +63,16 @@ export async function getAllPaymentsByBillID_model(
 }
 
 export async function addNewPayment_model(newPay: PaymentPrivate) {
+  await lockFinalBill(newPay.bill_id);
   const finalBill = await getFinalBillByID_repo(newPay.bill_id);
   if (finalBill) {
     const timestamp = getCurrentTimestamp();
     newPay.date_time = timestamp;
     const { paid_amount } = newPay;
-    const { outstanding_amount } = finalBill;
-    const outstanding = outstanding_amount;
-    const paid = paid_amount;
+    const {outstanding_amount} = finalBill;
 
-    if (outstanding < paid) {
+    if (outstanding_amount < paid_amount) {
+      releaseFinalBill();
       return {
         success: false,
         error: "Paid amount is larger than Outstanding amount",
@@ -79,6 +81,7 @@ export async function addNewPayment_model(newPay: PaymentPrivate) {
 
     const x = await addNewPayment_repo(newPay);
     updateFinalBillPaidAmount(newPay.bill_id);
+    releaseFinalBill();
     return { success: true, payment_id: x };
   } else {
     return { success: false, error: "Bill Id not found" };
@@ -93,6 +96,10 @@ export async function updatePaymentInfo_model(
   if (!payment) {
     return { success: false, error: "Payment not found" };
   }
+  await lockFinalBill(record.bill_id);
+  if (payment.bill_id !== record.bill_id) {
+    await lockFinalBill(payment.bill_id);
+  }
   const finalBill = await getFinalBillByID_repo(record.bill_id);
   if (finalBill) {
     const { paid_amount } = record;
@@ -100,6 +107,7 @@ export async function updatePaymentInfo_model(
     const outstanding = outstanding_amount;
     const paid = paid_amount;
     if (outstanding < paid) {
+      releaseFinalBill();
       return {
         success: false,
         error: `Paid amount is larger than Outstanding amount for bill ${record.bill_id}`,
@@ -109,9 +117,11 @@ export async function updatePaymentInfo_model(
     if (payment.bill_id != record.bill_id) {
       updateFinalBillPaidAmount(payment.bill_id); // for the previous bill
       updateFinalBillPaidAmount(record.bill_id); // for the new bill
+      releaseFinalBill();
       return { success: true, payment_id: payment.payment_id };
     }
     updateFinalBillPaidAmount(record.bill_id);
+    releaseFinalBill();
     return { success: true, payment_id: payment.payment_id };
   } else {
     return { success: false, error: "Bill Id not found" };
