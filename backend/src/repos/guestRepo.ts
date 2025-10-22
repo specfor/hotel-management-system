@@ -50,7 +50,7 @@ export async function getAllGuests_repo(
   }
 
   // Paging
-  query += ` LIMIT $${idx} OFFSET $${idx + 1}`;
+  query += ` ORDER BY guest_id LIMIT $${idx} OFFSET $${idx + 1}`;
   values.push(limit, (page - 1) * limit);
 
   const { rows } = await db.query(query, values);
@@ -95,8 +95,8 @@ export async function addNewGuest_repo(
   if (!db.isReady()) {
     await db.connect();
   }
-  const query = `insert into guest (nic, name, age, contact_no, email, password) values
-                  ($1, $2, $3, $4, $5, $6)
+  const query = `insert into guest (nic, name, age, contact_no, email) values
+                  ($1, $2, $3, $4, $5)
                   RETURNING "guest_id";`;
 
   const values = [
