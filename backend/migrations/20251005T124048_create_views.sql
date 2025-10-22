@@ -163,10 +163,84 @@ ORDER BY g.guest_id, fb.created_at DESC;
 
 
 -- =====================================================
+-- SERVICE USAGE BREAKDOWN VIEW
+-- =====================================================
+-- View for analyzing service usage per room and service type
+CREATE OR REPLACE VIEW service_usage_breakdown_view AS
+SELECT
+    su.record_id,
+    su.booking_id,
+    b.room_id,
+    b.guest_id,
+    g.name AS guest_name,
+    g.contact_no AS guest_contact,
+    b.check_in,
+    b.check_out,
+    b.booking_status,
+    CASE 
+        WHEN b.check_in IS NOT NULL AND b.check_out IS NOT NULL 
+        THEN (b.check_out::date - b.check_in::date)
+        ELSE NULL
+    END AS stay_duration,
+    cs.service_id,
+    cs.service_name,
+    cs.unit_type,
+    cs.unit_price,
+    su.quantity,
+    su.total_price,
+    su.date_time AS usage_date,
+    cs.branch_id,
+    br.branch_name,
+    br.city,
+    rt.type_name AS room_type
+FROM service_usage su
+JOIN chargeable_services cs ON su.service_id = cs.service_id
+JOIN booking b ON su.booking_id = b.booking_id
+JOIN guest g ON b.guest_id = g.guest_id
+JOIN room r ON b.room_id = r.room_id
+JOIN room_type rt ON r.type_id = rt.type_id
+JOIN branch br ON cs.branch_id = br.branch_id
+ORDER BY su.date_time DESC, su.record_id;
+
+
+-- =====================================================
+-- TOP SERVICES AND CUSTOMER TRENDS VIEW
+-- =====================================================
+-- View for identifying top services and customer preferences
+CREATE OR REPLACE VIEW top_services_trends_view AS
+SELECT
+    cs.service_id,
+    cs.service_name,
+    cs.unit_type,
+    cs.unit_price,
+    cs.branch_id,
+    br.branch_name,
+    br.city,
+    COUNT(DISTINCT su.booking_id) AS bookings_using_service,
+    COUNT(DISTINCT b.guest_id) AS unique_customers,
+    SUM(su.quantity) AS total_quantity_used,
+    SUM(su.total_price) AS total_revenue_from_service,
+    ROUND(AVG(su.quantity)::numeric, 2) AS avg_quantity_per_usage,
+    ROUND(AVG(su.total_price)::numeric, 2) AS avg_price_per_usage,
+    MIN(su.date_time) AS first_usage_date,
+    MAX(su.date_time) AS last_usage_date
+FROM chargeable_services cs
+LEFT JOIN service_usage su ON cs.service_id = su.service_id
+LEFT JOIN booking b ON su.booking_id = b.booking_id
+JOIN branch br ON cs.branch_id = br.branch_id
+GROUP BY 
+    cs.service_id, cs.service_name, cs.unit_type, cs.unit_price,
+    cs.branch_id, br.branch_name, br.city
+ORDER BY total_revenue_from_service DESC NULLS LAST, bookings_using_service DESC NULLS LAST;
+
+
+-- =====================================================
 -- DOWN MIGRATION (Rollback)
 -- =====================================================
 -- To rollback, uncomment the lines below:
 /*
+DROP VIEW IF EXISTS top_services_trends_view;
+DROP VIEW IF EXISTS service_usage_breakdown_view;
 DROP VIEW IF EXISTS guest_billing_summary_view;
 DROP VIEW IF EXISTS room_occupancy_report_view;
 DROP VIEW IF EXISTS monthly_revenue_per_branch_view;

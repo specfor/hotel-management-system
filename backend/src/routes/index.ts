@@ -32,6 +32,7 @@ import * as guestController from "@src/controllers/guestController";
 import * as monthlyRevenueController from "@src/controllers/monthlyRevenueController";
 import * as roomOccupancyController from "@src/controllers/roomOccupancyController";
 import * as guestBillingController from "@src/controllers/guestBillingController";
+import * as serviceReportController from "@src/controllers/serviceReportController";
 
 /******************************************************************************
                                 Setup
@@ -154,6 +155,11 @@ apiRouter.get("/room-occupancy/summary", roomOccupancyController.getOccupancySum
 // endpoints for guest billing reports
 apiRouter.get("/guest-billing", guestBillingController.getGuestBilling);
 apiRouter.get("/guest-billing/summary", guestBillingController.getBillingSummary);
+
+// endpoints for service reports
+apiRouter.get("/service-usage-breakdown", serviceReportController.getServiceUsageBreakdown);
+apiRouter.get("/top-services-trends", serviceReportController.getTopServicesTrends);
+apiRouter.get("/service-usage-summary", serviceReportController.getServiceUsageSummary);
 
 /******************************************************************************
  Export default
