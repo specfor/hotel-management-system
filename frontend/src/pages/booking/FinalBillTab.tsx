@@ -34,7 +34,7 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
       setBooking(bookingData);
 
       // Only load final bill if booking is checked out
-      if (bookingData.bookingStatus === "checked_out") {
+      if (bookingData.bookingStatus.toLowerCase() === "checked-out") {
         const billResponse = await finalBillApi.getFinalBillByBookingId(bookingId);
         if (billResponse.success && billResponse.data.finalBill) {
           setFinalBill(billResponse.data.finalBill);
@@ -83,14 +83,20 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
+  const formatCurrency = (amount: string | number) => {
+    const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+    return `$${numAmount.toFixed(2)}`;
   };
 
   const getBillStatusBadge = () => {
     if (!finalBill) return null;
 
-    if (finalBill.outstanding_amount > 0) {
+    const outstandingAmount =
+      typeof finalBill.outstanding_amount === "string"
+        ? parseFloat(finalBill.outstanding_amount)
+        : finalBill.outstanding_amount;
+
+    if (outstandingAmount > 0) {
       return (
         <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
           <AlertCircle className="h-3 w-3" />
@@ -118,7 +124,7 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
     );
   }
 
-  if (!booking || booking.bookingStatus !== "checked_out") {
+  if (!booking || booking.bookingStatus.toLowerCase() !== "checked-out") {
     return (
       <div className="text-center py-12">
         <Receipt className="mx-auto h-12 w-12 text-gray-400" />
@@ -158,7 +164,7 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
             <Receipt className="h-5 w-5" />
             Final Bill
           </h3>
-          <p className="text-sm text-gray-600">Generated on {new Date(finalBill.bill_date).toLocaleDateString()}</p>
+          <p className="text-sm text-gray-600">Generated on {new Date(finalBill.created_at).toLocaleDateString()}</p>
         </div>
         {getBillStatusBadge()}
       </div>
@@ -183,20 +189,20 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
               {/* Service Charges */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-sm text-gray-600">Service Charges</span>
-                <span className="font-medium">{formatCurrency(finalBill.service_charges)}</span>
+                <span className="font-medium">{formatCurrency(finalBill.total_service_charges)}</span>
               </div>
 
               {/* Tax */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-sm text-gray-600">Total Tax</span>
-                <span className="font-medium">{formatCurrency(finalBill.tax_amount)}</span>
+                <span className="font-medium">{formatCurrency(finalBill.total_tax)}</span>
               </div>
 
               {/* Late Checkout Charges */}
-              {finalBill.late_checkout_charges > 0 && (
+              {parseFloat(finalBill.late_checkout_charge) > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-sm text-gray-600">Late Checkout Charges</span>
-                  <span className="font-medium text-orange-600">{formatCurrency(finalBill.late_checkout_charges)}</span>
+                  <span className="font-medium text-orange-600">{formatCurrency(finalBill.late_checkout_charge)}</span>
                 </div>
               )}
 
@@ -205,19 +211,19 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
                 <span className="text-sm font-medium text-gray-700">Subtotal</span>
                 <span className="font-semibold">
                   {formatCurrency(
-                    finalBill.room_charges +
-                      finalBill.service_charges +
-                      finalBill.tax_amount +
-                      finalBill.late_checkout_charges
+                    parseFloat(finalBill.room_charges) +
+                      parseFloat(finalBill.total_service_charges) +
+                      parseFloat(finalBill.total_tax) +
+                      parseFloat(finalBill.late_checkout_charge)
                   )}
                 </span>
               </div>
 
               {/* Discount */}
-              {finalBill.discount_amount > 0 && (
+              {parseFloat(finalBill.total_discount) > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-sm text-gray-600">Total Discount</span>
-                  <span className="font-medium text-green-600">-{formatCurrency(finalBill.discount_amount)}</span>
+                  <span className="font-medium text-green-600">-{formatCurrency(finalBill.total_discount)}</span>
                 </div>
               )}
 
@@ -245,7 +251,7 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
               {/* Total Paid */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-sm text-gray-600">Total Paid</span>
-                <span className="font-medium text-green-600">{formatCurrency(finalBill.total_paid_amount)}</span>
+                <span className="font-medium text-green-600">{formatCurrency(finalBill.paid_amount)}</span>
               </div>
 
               {/* Outstanding Amount */}
@@ -253,7 +259,7 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
                 <span className="text-lg font-bold text-gray-900">Outstanding Amount</span>
                 <span
                   className={`text-lg font-bold ${
-                    finalBill.outstanding_amount > 0 ? "text-red-600" : "text-green-600"
+                    parseFloat(finalBill.outstanding_amount) > 0 ? "text-red-600" : "text-green-600"
                   }`}
                 >
                   {formatCurrency(finalBill.outstanding_amount)}
@@ -266,12 +272,12 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
                   <div>
                     <h5 className="font-medium text-gray-900">Payment Status</h5>
                     <p className="text-sm text-gray-600 mt-1">
-                      {finalBill.outstanding_amount > 0
+                      {parseFloat(finalBill.outstanding_amount) > 0
                         ? `${formatCurrency(finalBill.outstanding_amount)} remaining`
                         : "Payment completed"}
                     </p>
                   </div>
-                  {finalBill.outstanding_amount > 0 ? (
+                  {parseFloat(finalBill.outstanding_amount) > 0 ? (
                     <AlertCircle className="h-8 w-8 text-yellow-500" />
                   ) : (
                     <CheckCircle className="h-8 w-8 text-green-500" />
@@ -301,10 +307,10 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
             <p>• Room charges calculated based on nightly rate and duration of stay</p>
             <p>• Service charges include all additional services used during the stay</p>
             <p>• Tax calculated as applicable percentage on room and service charges</p>
-            {finalBill.discount_amount > 0 && (
+            {parseFloat(finalBill.total_discount) > 0 && (
               <p>• Discounts applied as per promotional offers or guest loyalty program</p>
             )}
-            {finalBill.late_checkout_charges > 0 && (
+            {parseFloat(finalBill.late_checkout_charge) > 0 && (
               <p>• Late checkout charges applied for checkout after standard time</p>
             )}
             <p className="mt-3 font-medium text-gray-700">

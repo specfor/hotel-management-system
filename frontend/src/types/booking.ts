@@ -78,18 +78,17 @@ export interface Payment {
 // Final bill interface
 export interface FinalBill {
   bill_id: number;
+  user_id: number;
   booking_id: number;
-  room_charges: number;
-  service_charges: number;
-  tax_amount: number;
-  discount_amount: number;
-  late_checkout_charges: number;
-  total_amount: number;
-  total_paid_amount: number;
-  outstanding_amount: number;
-  bill_date: string;
+  room_charges: string;
+  total_service_charges: string;
+  total_tax: string;
+  total_discount: string;
+  late_checkout_charge: string;
+  total_amount: string;
+  paid_amount: string;
+  outstanding_amount: string;
   created_at: string;
-  updated_at: string;
   // Populated fields for display
   guest_name?: string;
   room_number?: string;

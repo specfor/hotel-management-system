@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, User, MapPin, CreditCard, FileText, DollarSign, LogIn, LogOut, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  User,
+  MapPin,
+  CreditCard,
+  FileText,
+  DollarSign,
+  LogIn,
+  LogOut,
+  X,
+  Receipt,
+} from "lucide-react";
 import Card from "../../components/primary/Card";
 import Button from "../../components/primary/Button";
 import Badge from "../../components/primary/Badge";
@@ -11,6 +23,7 @@ import PaymentsTab from "./PaymentsTab";
 import FinalBillTab from "./FinalBillTab";
 import { formatBookingStatus, getBookingStatusColor, type Booking } from "../../types";
 import { bookingApi } from "../../api_connection/bookings";
+import { finalBillApi } from "../../api_connection/finalBill";
 import { apiUtils } from "../../api_connection/base";
 
 type TabType = "services" | "payments" | "bill";
@@ -23,6 +36,18 @@ const BookingDetails: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("services");
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [hasFinalBill, setHasFinalBill] = useState(false);
+  const [isCreatingBill, setIsCreatingBill] = useState(false);
+
+  const checkFinalBillExists = useCallback(async (bookingIdNum: number) => {
+    try {
+      const response = await finalBillApi.getFinalBillByBookingId(bookingIdNum);
+      setHasFinalBill(response.success && !!response.data.finalBill);
+    } catch (error) {
+      console.log("Final bill not found:", error);
+      setHasFinalBill(false);
+    }
+  }, []);
 
   const loadBookingDetails = useCallback(async () => {
     try {
@@ -34,6 +59,11 @@ const BookingDetails: React.FC = () => {
       const response = await bookingApi.getBookingById(parseInt(bookingId));
       if (response.success && response.data.booking) {
         setBooking(response.data.booking);
+
+        // Check if booking is checked out and if final bill exists
+        if (response.data.booking.bookingStatus.toLowerCase() === "checked-out") {
+          await checkFinalBillExists(parseInt(bookingId));
+        }
       } else {
         throw new Error(response.message || "Failed to load booking details");
       }
@@ -45,7 +75,33 @@ const BookingDetails: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [bookingId, navigate, showError]);
+  }, [bookingId, navigate, showError, checkFinalBillExists]);
+
+  const handleCreateFinalBill = async () => {
+    if (!booking || !bookingId) return;
+
+    try {
+      setIsCreatingBill(true);
+      const response = await finalBillApi.createFinalBill({
+        user_id: booking.userId,
+        booking_id: parseInt(bookingId),
+      });
+
+      if (response.success) {
+        showSuccess("Final bill created successfully");
+        setHasFinalBill(true);
+        // Switch to bill tab after creation
+        setActiveTab("bill");
+      } else {
+        showError(response.message || "Failed to create final bill");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
+    } finally {
+      setIsCreatingBill(false);
+    }
+  };
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!booking || !bookingId) return;
@@ -101,8 +157,11 @@ const BookingDetails: React.FC = () => {
       console.log(booking);
 
       if (booking.bookingStatus.toLowerCase() === "checked-out") {
-        // For checked out bookings, default to services if currently on an unavailable tab
-        if (activeTab !== "services" && activeTab !== "payments" && activeTab !== "bill") {
+        // For checked out bookings, default to bill tab if no final bill exists
+        // or if currently on payments tab but no final bill exists
+        if (!hasFinalBill && (activeTab === "payments" || activeTab === "services")) {
+          setActiveTab("bill");
+        } else if (hasFinalBill && activeTab !== "services" && activeTab !== "payments" && activeTab !== "bill") {
           setActiveTab("services");
         }
       } else if (booking.bookingStatus.toLowerCase() === "checked-in") {
@@ -114,7 +173,7 @@ const BookingDetails: React.FC = () => {
         setActiveTab("services");
       }
     }
-  }, [booking?.bookingStatus, activeTab, booking]); // Include all dependencies
+  }, [booking?.bookingStatus, activeTab, booking, hasFinalBill]); // Include hasFinalBill dependency
 
   const formatDateTime = (date: string, time: string) => {
     return `${new Date(date).toLocaleDateString()} ${time}`;
@@ -206,6 +265,17 @@ const BookingDetails: React.FC = () => {
             >
               <LogOut className="h-4 w-4" />
               {isUpdating ? "Processing..." : "Check Out"}
+            </Button>
+          )}
+
+          {booking.bookingStatus.toLowerCase() === "checked-out" && !hasFinalBill && (
+            <Button
+              onClick={handleCreateFinalBill}
+              disabled={isCreatingBill}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+            >
+              <Receipt className="h-4 w-4" />
+              {isCreatingBill ? "Creating Bill..." : "Generate Final Bill"}
             </Button>
           )}
 
@@ -312,20 +382,23 @@ const BookingDetails: React.FC = () => {
             {/* Only show payments and bill tabs after checkout */}
             {booking.bookingStatus.toLowerCase() === "checked-out" && (
               <>
-                <Button
-                  variant={activeTab === "payments" ? "primary" : "ghost"}
-                  onClick={() => setActiveTab("payments")}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === "payments"
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <CreditCard className="h-4 w-4" />
-                    <span>Payments</span>
-                  </div>
-                </Button>
+                {/* Only show payments tab after final bill is created */}
+                {hasFinalBill && (
+                  <Button
+                    variant={activeTab === "payments" ? "primary" : "ghost"}
+                    onClick={() => setActiveTab("payments")}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === "payments"
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <CreditCard className="h-4 w-4" />
+                      <span>Payments</span>
+                    </div>
+                  </Button>
+                )}
                 <Button
                   variant={activeTab === "bill" ? "primary" : "ghost"}
                   onClick={() => setActiveTab("bill")}
@@ -374,8 +447,24 @@ const BookingDetails: React.FC = () => {
                     </p>
                   </div>
                 )}
-              {activeTab === "payments" && booking.bookingStatus.toLowerCase() === "checked-out" ? (
+              {activeTab === "payments" && booking.bookingStatus.toLowerCase() === "checked-out" && hasFinalBill ? (
                 <PaymentsTab bookingId={parseInt(bookingId || "0")} />
+              ) : activeTab === "payments" && booking.bookingStatus.toLowerCase() === "checked-out" && !hasFinalBill ? (
+                <div className="text-center py-12">
+                  <CreditCard className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Payments Not Available</h3>
+                  <p className="mt-1 text-sm text-gray-500">Please generate the final bill first to manage payments.</p>
+                  <div className="mt-4">
+                    <Button
+                      onClick={handleCreateFinalBill}
+                      disabled={isCreatingBill}
+                      className="flex items-center gap-2"
+                    >
+                      <Receipt className="h-4 w-4" />
+                      {isCreatingBill ? "Creating Bill..." : "Generate Final Bill"}
+                    </Button>
+                  </div>
+                </div>
               ) : activeTab === "payments" ? (
                 <div className="text-center py-12">
                   <CreditCard className="mx-auto h-12 w-12 text-gray-400" />
