@@ -5,7 +5,7 @@ export interface Payment {
   payment_id: number | null;
   bill_id: number;
   paid_method: "Cash" | "Card" | "Online" | "BankTransfer";
-  paid_amount: number;
+  paid_amount: string;
   notes: string | null;
   date_time: string | null;
 }
