@@ -83,7 +83,6 @@ export async function updateBookingModel(data: IncomingBookingUpdateData): Promi
   if (error) {
     throw new RouteError(HttpStatusCodes.BAD_REQUEST, error.details[0].message);
   }
-
   const updateData: BookingUpdate = { bookingId: data.bookingId };
 
   // 2. Data Transformation and Assignment
