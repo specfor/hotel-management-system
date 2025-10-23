@@ -3,28 +3,21 @@ import type { ApiResponse } from "./base";
 import type { FinalBill } from "../types";
 
 export interface FinalBillCreateRequest {
+  user_id: number;
   booking_id: number;
-  room_charges: number;
-  service_charges: number;
-  tax_amount: number;
-  discount_amount: number;
-  late_checkout_charges: number;
-  total_amount: number;
-  total_paid_amount: number;
-  outstanding_amount: number;
-  bill_date: string;
 }
 
 export interface FinalBillUpdateRequest {
+  user_id?: number;
+  booking_id?: number;
   room_charges?: number;
-  service_charges?: number;
-  tax_amount?: number;
-  discount_amount?: number;
-  late_checkout_charges?: number;
+  total_service_charges?: number;
+  total_tax?: number;
+  total_discount?: number;
+  late_checkout_charge?: number;
   total_amount?: number;
-  total_paid_amount?: number;
+  paid_amount?: number;
   outstanding_amount?: number;
-  bill_date?: string;
 }
 
 class FinalBillApiService extends BaseApiService {
@@ -43,8 +36,8 @@ class FinalBillApiService extends BaseApiService {
   }
 
   // Create new final bill
-  async createFinalBill(billData: FinalBillCreateRequest): Promise<ApiResponse<{ bill_id: number }>> {
-    return this.post<{ bill_id: number }>(this.endpoint, billData);
+  async createFinalBill(billData: FinalBillCreateRequest): Promise<ApiResponse<{ billId: number }>> {
+    return this.post<{ billId: number }>(this.endpoint, billData);
   }
 
   // Update final bill

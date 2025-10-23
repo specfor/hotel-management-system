@@ -37,12 +37,12 @@ class BookingApiService extends BaseApiService {
 
   // Create new booking
   async createBooking(bookingData: CreateBookingRequest): Promise<ApiResponse<{ booking: Booking }>> {
-    // Transform frontend data to backend format
+    // Use the new simplified format that matches the backend
     const backendData = {
-      guestId: bookingData.guest_id,
-      roomId: bookingData.room_id,
-      checkIn: `${bookingData.check_in_date}T${bookingData.check_in_time}`,
-      checkOut: `${bookingData.check_out_date}T${bookingData.check_out_time}`,
+      guestId: bookingData.guestId,
+      roomId: bookingData.roomId,
+      checkIn: bookingData.checkIn,
+      checkOut: bookingData.checkOut,
     };
 
     return this.post<{ booking: Booking }>(this.endpoint, backendData);
@@ -53,18 +53,13 @@ class BookingApiService extends BaseApiService {
     bookingId: number,
     bookingData: UpdateBookingRequest
   ): Promise<ApiResponse<{ booking: Booking }>> {
-    // Transform frontend data to backend format
+    // Use the new simplified format that matches the backend
     const backendData: Record<string, unknown> = {};
 
-    if (bookingData.guest_id !== undefined) backendData.guestId = bookingData.guest_id;
-    if (bookingData.room_id !== undefined) backendData.roomId = bookingData.room_id;
-    if (bookingData.booking_status !== undefined) backendData.bookingStatus = bookingData.booking_status;
-    if (bookingData.check_in_date && bookingData.check_in_time) {
-      backendData.checkIn = `${bookingData.check_in_date}T${bookingData.check_in_time}`;
-    }
-    if (bookingData.check_out_date && bookingData.check_out_time) {
-      backendData.checkOut = `${bookingData.check_out_date}T${bookingData.check_out_time}`;
-    }
+    if (bookingData.guestId !== undefined) backendData.guestId = bookingData.guestId;
+    if (bookingData.roomId !== undefined) backendData.roomId = bookingData.roomId;
+    if (bookingData.checkIn !== undefined) backendData.checkIn = bookingData.checkIn;
+    if (bookingData.checkOut !== undefined) backendData.checkOut = bookingData.checkOut;
 
     return this.put<{ booking: Booking }>(`${this.endpoint}/${bookingId}`, backendData);
   }

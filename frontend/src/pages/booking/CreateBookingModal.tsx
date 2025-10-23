@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import Modal from "../../components/Modal";
 import Button from "../../components/primary/Button";
-import Input from "../../components/primary/Input";
 import { useAlert } from "../../hooks/useAlert";
 import { type CreateBookingRequest, type Guest, type Room } from "../../types";
 
@@ -17,19 +16,15 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
   const { showError } = useAlert();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<{
-    guest_id: string;
-    room_id: string;
-    check_in_date: string;
-    check_in_time: string;
-    check_out_date: string;
-    check_out_time: string;
+    guestId: string;
+    roomId: string;
+    checkIn: string;
+    checkOut: string;
   }>({
-    guest_id: "",
-    room_id: "",
-    check_in_date: "",
-    check_in_time: "15:00",
-    check_out_date: "",
-    check_out_time: "11:00",
+    guestId: "",
+    roomId: "",
+    checkIn: "",
+    checkOut: "",
   });
 
   console.log(rooms);
@@ -39,18 +34,18 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
 
     try {
       // Validation
-      if (!formData.guest_id || !formData.room_id) {
+      if (!formData.guestId || !formData.roomId) {
         showError("Please select guest and room");
         return;
       }
 
-      if (!formData.check_in_date || !formData.check_out_date) {
-        showError("Please select check-in and check-out dates");
+      if (!formData.checkIn || !formData.checkOut) {
+        showError("Please select check-in and check-out dates and times");
         return;
       }
 
-      const checkInDateTime = new Date(`${formData.check_in_date}T${formData.check_in_time}`);
-      const checkOutDateTime = new Date(`${formData.check_out_date}T${formData.check_out_time}`);
+      const checkInDateTime = new Date(formData.checkIn);
+      const checkOutDateTime = new Date(formData.checkOut);
 
       if (checkInDateTime >= checkOutDateTime) {
         showError("Check-out date and time must be after check-in date and time");
@@ -58,12 +53,10 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
       }
 
       const bookingData: CreateBookingRequest = {
-        guest_id: parseInt(formData.guest_id),
-        room_id: parseInt(formData.room_id),
-        check_in_date: formData.check_in_date,
-        check_in_time: formData.check_in_time,
-        check_out_date: formData.check_out_date,
-        check_out_time: formData.check_out_time,
+        guestId: parseInt(formData.guestId),
+        roomId: parseInt(formData.roomId),
+        checkIn: formData.checkIn,
+        checkOut: formData.checkOut,
       };
 
       await onSubmit(bookingData);
@@ -79,12 +72,10 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
 
   const resetForm = () => {
     setFormData({
-      guest_id: "",
-      room_id: "",
-      check_in_date: "",
-      check_in_time: "15:00",
-      check_out_date: "",
-      check_out_time: "11:00",
+      guestId: "",
+      roomId: "",
+      checkIn: "",
+      checkOut: "",
     });
   };
 
@@ -103,8 +94,8 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Guest *</label>
             <select
-              value={formData.guest_id}
-              onChange={(e) => setFormData({ ...formData, guest_id: e.target.value })}
+              value={formData.guestId}
+              onChange={(e) => setFormData({ ...formData, guestId: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
@@ -120,8 +111,8 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Room *</label>
             <select
-              value={formData.room_id}
-              onChange={(e) => setFormData({ ...formData, room_id: e.target.value })}
+              value={formData.roomId}
+              onChange={(e) => setFormData({ ...formData, roomId: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
@@ -137,44 +128,22 @@ const CreateBookingModal: React.FC<CreateBookingModalProps> = ({ isOpen, onClose
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Check-in Date *</label>
-            <Input
-              type="date"
-              value={formData.check_in_date}
-              onChange={(e) => setFormData({ ...formData, check_in_date: e.target.value })}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Check-in Time *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Check-in Date & Time *</label>
             <input
-              type="time"
-              value={formData.check_in_time}
-              onChange={(e) => setFormData({ ...formData, check_in_time: e.target.value })}
+              type="datetime-local"
+              value={formData.checkIn}
+              onChange={(e) => setFormData({ ...formData, checkIn: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Check-out Date *</label>
-            <Input
-              type="date"
-              value={formData.check_out_date}
-              onChange={(e) => setFormData({ ...formData, check_out_date: e.target.value })}
-              required
-            />
-          </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Check-out Time *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Check-out Date & Time *</label>
             <input
-              type="time"
-              value={formData.check_out_time}
-              onChange={(e) => setFormData({ ...formData, check_out_time: e.target.value })}
+              type="datetime-local"
+              value={formData.checkOut}
+              onChange={(e) => setFormData({ ...formData, checkOut: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />

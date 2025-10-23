@@ -9,7 +9,7 @@ import { useAlert } from "../../hooks/useAlert";
 import { useNavigate } from "react-router-dom";
 import CreateBookingModal from "./CreateBookingModal";
 import UpdateBookingModal from "./UpdateBookingModal";
-import { BookingStatusEnum, formatBookingStatus, getBookingStatusColor } from "../../types";
+import { BookingStatus, formatBookingStatus, getBookingStatusColor } from "../../types/booking";
 import type { Booking, Guest, Room, CreateBookingRequest, UpdateBookingRequest } from "../../types";
 import { bookingApi } from "../../api_connection/bookings";
 import { guestService } from "../../api_connection/guests";
@@ -34,6 +34,8 @@ const BookingManagement: React.FC = () => {
     try {
       const response = await bookingApi.getAllBookings();
       if (response.success && response.data.bookings) {
+        console.log("bookings ", response.data);
+
         setBookings(response.data.bookings);
       } else {
         showError(response.message || "Failed to load bookings");
@@ -49,6 +51,7 @@ const BookingManagement: React.FC = () => {
       const response = await guestService.getGuests();
       if (response.success && response.data) {
         setGuests(response.data);
+        console.log("guests ", response.data);
       } else {
         showError(response.message || "Failed to load guests");
       }
@@ -84,12 +87,17 @@ const BookingManagement: React.FC = () => {
   }, [loadBookings, loadGuests, loadRooms]);
 
   const filteredBookings = bookings.filter((booking) => {
+    const guest = guests.find((g) => g.guest_id === booking.guestId);
+    const room = rooms.find((r) => r.room_id === booking.roomId);
+
     const matchesSearch =
-      booking.guest_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.guest_nic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.room_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.user_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || booking.booking_status === statusFilter;
+      guest?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      guest?.nic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      room?.room_id?.toString().includes(searchTerm.toLowerCase()) ||
+      booking.bookingId?.toString().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = !statusFilter || booking.bookingStatus === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
 
@@ -116,10 +124,10 @@ const BookingManagement: React.FC = () => {
     if (!editingBooking) return;
 
     try {
-      const response = await bookingApi.updateBooking(editingBooking.booking_id, bookingData);
+      const response = await bookingApi.updateBooking(editingBooking.bookingId, bookingData);
       if (response.success && response.data.booking) {
         // Update the booking in the list
-        setBookings(bookings.map((b) => (b.booking_id === editingBooking.booking_id ? response.data.booking : b)));
+        setBookings(bookings.map((b) => (b.bookingId === editingBooking.bookingId ? response.data.booking : b)));
         showSuccess("Booking updated successfully");
         setIsUpdateModalOpen(false);
         setEditingBooking(null);
@@ -140,7 +148,7 @@ const BookingManagement: React.FC = () => {
     try {
       const response = await bookingApi.deleteBooking(bookingId);
       if (response.success) {
-        setBookings(bookings.filter((b) => b.booking_id !== bookingId));
+        setBookings(bookings.filter((b) => b.bookingId !== bookingId));
         showSuccess("Booking deleted successfully");
       } else {
         showError(response.message || "Failed to delete booking");
@@ -155,8 +163,9 @@ const BookingManagement: React.FC = () => {
     navigate(`/bookings/${bookingId}`);
   };
 
-  const formatDateTime = (date: string, time: string) => {
-    return `${new Date(date).toLocaleDateString()} ${time}`;
+  const formatDateTime = (isoString: string) => {
+    const date = new Date(isoString);
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   const getDaysCount = (checkIn: string, checkOut: string) => {
@@ -191,7 +200,7 @@ const BookingManagement: React.FC = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   type="text"
-                  placeholder="Search by guest name, NIC, room number, or staff..."
+                  placeholder="Search by guest name, NIC, or booking ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -205,7 +214,7 @@ const BookingManagement: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Statuses</option>
-                {Object.values(BookingStatusEnum).map((status) => (
+                {Object.values(BookingStatus).map((status) => (
                   <option key={status} value={status}>
                     {formatBookingStatus(status)}
                   </option>
@@ -233,9 +242,6 @@ const BookingManagement: React.FC = () => {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Staff
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Total
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -245,15 +251,13 @@ const BookingManagement: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredBookings.map((booking) => (
-                <tr key={booking.booking_id} className="hover:bg-gray-50">
+                <tr key={booking.bookingId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <Calendar className="h-5 w-5 text-gray-400 mr-3" />
                       <div>
-                        <div className="text-sm font-medium text-gray-900">#{booking.booking_id}</div>
-                        <div className="text-sm text-gray-500">
-                          {formatDateTime(booking.booking_date, booking.booking_time)}
-                        </div>
+                        <div className="text-sm font-medium text-gray-900">#{booking.bookingId}</div>
+                        <div className="text-sm text-gray-500">{formatDateTime(booking.dateTime)}</div>
                       </div>
                     </div>
                   </td>
@@ -261,8 +265,12 @@ const BookingManagement: React.FC = () => {
                     <div className="flex items-center">
                       <User className="h-5 w-5 text-gray-400 mr-3" />
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{booking.guest_name}</div>
-                        <div className="text-sm text-gray-500">{booking.guest_nic}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {guests.find((g) => g.guest_id === booking.guestId)?.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {guests.find((g) => g.guest_id === booking.guestId)?.nic}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -270,26 +278,26 @@ const BookingManagement: React.FC = () => {
                     <div className="flex items-center">
                       <MapPin className="h-5 w-5 text-gray-400 mr-3" />
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{booking.room_number}</div>
-                        <div className="text-sm text-gray-500">{booking.room_type_name}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {rooms.find((r) => r.room_id === booking.roomId)?.room_id}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      <div>In: {formatDateTime(booking.check_in_date, booking.check_in_time)}</div>
-                      <div>Out: {formatDateTime(booking.check_out_date, booking.check_out_time)}</div>
+                      <div>In: {formatDateTime(booking.checkIn)}</div>
+                      <div>Out: {formatDateTime(booking.checkOut)}</div>
                       <div className="text-xs text-gray-500">
-                        {getDaysCount(booking.check_in_date, booking.check_out_date)} nights
+                        {getDaysCount(booking.checkIn, booking.checkOut)} nights
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge className={getBookingStatusColor(booking.booking_status)}>
-                      {formatBookingStatus(booking.booking_status)}
+                    <Badge className={getBookingStatusColor(booking.bookingStatus)}>
+                      {formatBookingStatus(booking.bookingStatus)}
                     </Badge>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{booking.user_name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     ${booking.total_amount?.toFixed(2) || "0.00"}
                   </td>
@@ -298,7 +306,7 @@ const BookingManagement: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleViewDetails(booking.booking_id)}
+                        onClick={() => handleViewDetails(booking.bookingId)}
                         className="text-indigo-600 hover:text-indigo-900"
                       >
                         <Eye className="h-4 w-4" />
@@ -306,7 +314,7 @@ const BookingManagement: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(booking.booking_id)}
+                        onClick={() => handleDelete(booking.bookingId)}
                         className="text-red-600 hover:text-red-900"
                       >
                         <Trash2 className="h-4 w-4" />
