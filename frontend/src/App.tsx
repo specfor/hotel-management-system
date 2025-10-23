@@ -90,7 +90,7 @@ function AppContent() {
           {/* Main Content */}
           <div className="flex-1 flex flex-col">
             <Header
-              hotelName="Grand Plaza Hotel"
+              hotelName="SKY NEST HOTELS"
               user={userProfile}
               notifications={mockNotifications}
               onNotificationClick={handleNotificationClick}
