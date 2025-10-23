@@ -2,27 +2,28 @@ import { BaseApiService } from "./base";
 import type { ApiResponse } from "./base";
 
 export interface Payment {
-  payment_id: number;
+  payment_id: number | null;
   bill_id: number;
   paid_method: "Cash" | "Card" | "Online" | "BankTransfer";
   paid_amount: number;
-  date_time: string;
-  created_at: string;
-  updated_at: string;
+  notes: string | null;
+  date_time: string | null;
 }
 
 export interface PaymentCreateRequest {
   bill_id: number;
   paid_method: "Cash" | "Card" | "Online" | "BankTransfer";
   paid_amount: number;
-  date_time?: string;
+  date_time?: string | null;
+  notes?: string | null;
 }
 
 export interface PaymentUpdateRequest {
   bill_id?: number;
   paid_method?: "Cash" | "Card" | "Online" | "BankTransfer";
   paid_amount?: number;
-  date_time?: string;
+  date_time?: string | null;
+  notes?: string | null;
 }
 
 export interface PaymentFilters extends Record<string, unknown> {
@@ -45,7 +46,7 @@ class PaymentApiService extends BaseApiService {
   // Get payments by bill ID
   async getPaymentsByBillId(billId: number, filters?: PaymentFilters): Promise<ApiResponse<{ Payments: Payment[] }>> {
     const queryParams = this.buildQueryParams(filters || {});
-    return this.get<{ Payments: Payment[] }>(`${this.endpoint}/${billId}`, { params: queryParams });
+    return this.get<{ Payments: Payment[] }>(`${this.endpoint}/bill/${billId}`, { params: queryParams });
   }
 
   // Get single payment by ID
@@ -55,7 +56,14 @@ class PaymentApiService extends BaseApiService {
 
   // Create new payment
   async createPayment(paymentData: PaymentCreateRequest): Promise<ApiResponse<{ payment_id: number }>> {
-    return this.post<{ payment_id: number }>(this.endpoint, paymentData);
+    const backendData = {
+      bill_id: paymentData.bill_id,
+      paid_method: paymentData.paid_method,
+      paid_amount: paymentData.paid_amount,
+      date_time: paymentData.date_time || new Date().toISOString(),
+      notes: paymentData.notes || null,
+    };
+    return this.post<{ payment_id: number }>(this.endpoint, backendData);
   }
 
   // Update payment
@@ -63,7 +71,15 @@ class PaymentApiService extends BaseApiService {
     paymentId: number,
     paymentData: PaymentUpdateRequest
   ): Promise<ApiResponse<{ Payment: Payment }>> {
-    return this.put<{ Payment: Payment }>(`${this.endpoint}/${paymentId}`, paymentData);
+    const backendData: Record<string, unknown> = {};
+
+    if (paymentData.bill_id !== undefined) backendData.bill_id = paymentData.bill_id;
+    if (paymentData.paid_method !== undefined) backendData.paid_method = paymentData.paid_method;
+    if (paymentData.paid_amount !== undefined) backendData.paid_amount = paymentData.paid_amount;
+    if (paymentData.date_time !== undefined) backendData.date_time = paymentData.date_time;
+    if (paymentData.notes !== undefined) backendData.notes = paymentData.notes;
+
+    return this.put<{ Payment: Payment }>(`${this.endpoint}/${paymentId}`, backendData);
   }
 
   // Delete payment

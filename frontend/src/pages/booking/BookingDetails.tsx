@@ -97,7 +97,7 @@ const BookingDetails: React.FC = () => {
         items={[
           { label: "Dashboard", path: "/" },
           { label: "Bookings", path: "/bookings" },
-          { label: `Booking #${booking.booking_id}`, isActive: true },
+          { label: `Booking #${booking.bookingId}`, isActive: true },
         ]}
       />
 
@@ -108,10 +108,10 @@ const BookingDetails: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
             Back to Bookings
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">Booking #{booking.booking_id}</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Booking #{booking.bookingId}</h1>
         </div>
-        <Badge className={getBookingStatusColor(booking.booking_status)}>
-          {formatBookingStatus(booking.booking_status)}
+        <Badge className={getBookingStatusColor(booking.bookingStatus)}>
+          {formatBookingStatus(booking.bookingStatus)}
         </Badge>
       </div>
 
@@ -145,12 +145,9 @@ const BookingDetails: React.FC = () => {
               <Calendar className="h-5 w-5 text-gray-400 mt-1" />
               <div>
                 <p className="text-sm font-medium text-gray-900">Stay Duration</p>
-                <p className="text-sm text-gray-600">
-                  {getDaysCount(booking.check_in_date, booking.check_out_date)} nights
-                </p>
+                <p className="text-sm text-gray-600">{getDaysCount(booking.checkIn, booking.checkOut)} nights</p>
                 <p className="text-xs text-gray-500">
-                  {new Date(booking.check_in_date).toLocaleDateString()} -{" "}
-                  {new Date(booking.check_out_date).toLocaleDateString()}
+                  {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
                 </p>
               </div>
             </div>
@@ -171,22 +168,20 @@ const BookingDetails: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <p className="text-sm font-medium text-gray-900">Check-in</p>
-                <p className="text-sm text-gray-600">{formatDateTime(booking.check_in_date, booking.check_in_time)}</p>
+                <p className="text-sm text-gray-600">{formatDateTime(booking.checkIn, booking.checkIn)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900">Check-out</p>
-                <p className="text-sm text-gray-600">
-                  {formatDateTime(booking.check_out_date, booking.check_out_time)}
-                </p>
+                <p className="text-sm text-gray-600">{formatDateTime(booking.checkOut, booking.checkOut)}</p>
               </div>
             </div>
 
-            {booking.special_requests && (
+            {/* {booking. && (
               <div className="mt-4">
                 <p className="text-sm font-medium text-gray-900">Special Requests</p>
                 <p className="text-sm text-gray-600">{booking.special_requests}</p>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </Card>

@@ -1,5 +1,6 @@
-// Booking status enum
+// Booking status enum - updated to match backend
 export const BookingStatus = {
+  BOOKED: "Booked",
   PENDING: "pending",
   CONFIRMED: "confirmed",
   CHECKED_IN: "checked_in",
@@ -22,23 +23,17 @@ export const PaymentMethod = {
 
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
 
-// Main booking interface
+// Main booking interface - updated to match API response
 export interface Booking {
-  booking_id: number;
-  guest_id: number;
-  room_id: number;
-  user_id: number; // Staff member who created the booking
-  booking_status: BookingStatus;
-  booking_date: string;
-  booking_time: string;
-  check_in_date: string;
-  check_in_time: string;
-  check_out_date: string;
-  check_out_time: string;
-  special_requests?: string;
+  bookingId: number;
+  userId: number; // Staff member who created the booking
+  guestId: number;
+  roomId: number;
+  bookingStatus: string; // Backend returns string like "Booked"
+  dateTime: string; // Combined booking date and time
+  checkIn: string; // ISO string format
+  checkOut: string; // ISO string format
   total_amount?: number;
-  created_at: string;
-  updated_at: string;
   // Populated fields for display
   guest_name?: string;
   guest_nic?: string;
@@ -102,18 +97,16 @@ export interface FinalBill {
   check_out_date?: string;
 }
 
-// Request interfaces for API
+// Request interfaces for API - updated to match new format
 export interface CreateBookingRequest {
-  guest_id: number;
-  room_id: number;
-  check_in_date: string;
-  check_in_time: string;
-  check_out_date: string;
-  check_out_time: string;
+  guestId: number;
+  roomId: number;
+  checkIn: string; // ISO string format
+  checkOut: string; // ISO string format
 }
 
 export interface UpdateBookingRequest extends Partial<CreateBookingRequest> {
-  booking_id: number;
+  bookingId: number;
 }
 
 export interface CreateServiceUsageRequest {
@@ -135,22 +128,24 @@ export interface CreatePaymentRequest {
   notes?: string;
 }
 
-// Filter interfaces
+// Filter interfaces - updated for new format
 export interface BookingFilters {
   guest_name?: string;
   guest_nic?: string;
   room_number?: string;
-  booking_status?: BookingStatus;
-  user_id?: number;
-  check_in_date_from?: string;
-  check_in_date_to?: string;
-  check_out_date_from?: string;
-  check_out_date_to?: string;
+  bookingStatus?: string;
+  userId?: number;
+  checkIn_from?: string;
+  checkIn_to?: string;
+  checkOut_from?: string;
+  checkOut_to?: string;
 }
 
-// Helper functions for display
-export const formatBookingStatus = (status: BookingStatus): string => {
+// Helper functions for display - updated to handle new status
+export const formatBookingStatus = (status: string): string => {
   switch (status) {
+    case "Booked":
+      return "Booked";
     case BookingStatus.PENDING:
       return "Pending";
     case BookingStatus.CONFIRMED:
@@ -187,8 +182,10 @@ export const formatPaymentMethod = (method: PaymentMethod): string => {
   }
 };
 
-export const getBookingStatusColor = (status: BookingStatus): string => {
+export const getBookingStatusColor = (status: string): string => {
   switch (status) {
+    case "Booked":
+      return "bg-blue-100 text-blue-800";
     case BookingStatus.PENDING:
       return "bg-yellow-100 text-yellow-800";
     case BookingStatus.CONFIRMED:

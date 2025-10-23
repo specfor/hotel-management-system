@@ -18,13 +18,13 @@ const UserPermissions = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Current User Access</h3>
         <div className="flex items-center gap-4 text-sm">
           <span>
-            <strong>User:</strong> {user.name}
+            <strong>User:</strong> {user.username}
           </span>
           <span>
             <strong>Role:</strong> {roleDisplayName}
           </span>
           <span>
-            <strong>Email:</strong> {user.email}
+            <strong>Email:</strong> {user.username}
           </span>
         </div>
       </div>

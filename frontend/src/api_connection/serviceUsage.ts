@@ -43,8 +43,8 @@ class ServiceUsageApiService extends BaseApiService {
   }
 
   // Get single service usage record by ID
-  async getServiceUsageById(usageId: number): Promise<ApiResponse<{ usageRecord: ServiceUsage }>> {
-    return this.get<{ usageRecord: ServiceUsage }>(`${this.endpoint}/${usageId}`);
+  async getServiceUsageById(recordId: number): Promise<ApiResponse<{ usageRecord: ServiceUsage }>> {
+    return this.get<{ usageRecord: ServiceUsage }>(`${this.endpoint}/${recordId}`);
   }
 
   // Create new service usage record
@@ -55,8 +55,6 @@ class ServiceUsageApiService extends BaseApiService {
     const backendData = {
       bookingId: usageData.booking_id,
       serviceId: usageData.service_id,
-      usageDate: usageData.usage_date,
-      usageTime: usageData.usage_time,
       quantity: usageData.quantity,
       notes: usageData.notes,
     };
@@ -66,7 +64,7 @@ class ServiceUsageApiService extends BaseApiService {
 
   // Update service usage record
   async updateServiceUsage(
-    usageId: number,
+    recordId: number,
     usageData: ServiceUsageUpdateRequest
   ): Promise<ApiResponse<{ updatedRecord: ServiceUsage }>> {
     // Transform frontend data to backend format
@@ -78,12 +76,12 @@ class ServiceUsageApiService extends BaseApiService {
     if (usageData.quantity !== undefined) backendData.quantity = usageData.quantity;
     if (usageData.notes !== undefined) backendData.notes = usageData.notes;
 
-    return this.put<{ updatedRecord: ServiceUsage }>(`${this.endpoint}/${usageId}`, backendData);
+    return this.put<{ updatedRecord: ServiceUsage }>(`${this.endpoint}/${recordId}`, backendData);
   }
 
   // Delete service usage record
-  async deleteServiceUsage(usageId: number): Promise<ApiResponse<void>> {
-    return this.delete<void>(`${this.endpoint}/${usageId}`);
+  async deleteServiceUsage(recordId: number): Promise<ApiResponse<void>> {
+    return this.delete<void>(`${this.endpoint}/${recordId}`);
   }
 }
 

@@ -40,8 +40,37 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
   const loadServiceUsages = useCallback(async () => {
     try {
       const response = await serviceUsageApi.getServiceUsageByBookingId(bookingId);
-      if (response.success && response.data.usageRecords) {
-        setServiceUsages(response.data.usageRecords);
+      if (response.success && response.data) {
+        // Transform backend response to match frontend interface
+        const usageArray = Array.isArray(response.data) ? response.data : response.data.usageRecords || [];
+        interface BackendUsage {
+          recordId: number;
+          serviceId: number;
+          bookingId: number;
+          dateTime: string;
+          quantity: number;
+          totalPrice: number;
+          notes?: string;
+        }
+
+        const transformedUsages: ServiceUsage[] = (usageArray as unknown as BackendUsage[]).map((usage) => ({
+          usage_id: usage.recordId,
+          service_id: usage.serviceId,
+          booking_id: usage.bookingId,
+          usage_date: usage.dateTime.split("T")[0], // Extract date part
+          usage_time: usage.dateTime.split("T")[1]?.split(".")[0] || "00:00:00", // Extract time part
+          quantity: usage.quantity,
+          unit_price: 0, // Will be populated from service data
+          total_price: usage.totalPrice,
+          notes: usage.notes,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }));
+        console.log(response.data);
+
+        console.log(transformedUsages);
+
+        setServiceUsages(transformedUsages);
       } else {
         showError(response.message || "Failed to load service usage records");
       }
@@ -55,7 +84,21 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
     try {
       const response = await chargeableServiceApi.getServices();
       if (response.success && response.data) {
-        setServices(response.data);
+        // Transform backend response to match frontend interface
+        const transformedServices: ChargeableService[] = (response.data as unknown as ChargeableService[]).map(
+          (service) => ({
+            service_id: service.service_id,
+            service_name: service.service_name,
+            unit_price: service.unit_price,
+            unit_type: service.unit_type as ServiceUnitType,
+            branch_id: service.branch_id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+        );
+        console.log(transformedServices);
+
+        setServices(transformedServices);
       } else {
         showError(response.message || "Failed to load available services");
       }
@@ -67,8 +110,8 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
 
   useEffect(() => {
     const loadData = async () => {
-      await loadServiceUsages();
-      await loadServices();
+      await loadServices(); // Load services first
+      await loadServiceUsages(); // Then load usages
     };
     loadData();
   }, [loadServiceUsages, loadServices]);
@@ -78,6 +121,19 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
       usage.service_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       usage.notes?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  interface FilteredUsagesCallback {
+    (newFilteredUsages: ServiceUsage[]): void;
+  }
+
+  const filteredUsagesEffect: FilteredUsagesCallback = (newFilteredUsages) => {
+    // Do something with the new filtered usages
+    console.log(newFilteredUsages);
+  };
+
+  useEffect(() => {
+    filteredUsagesEffect(filteredUsages);
+  }, [filteredUsages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -354,9 +410,8 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
             >
               <option value="">Select Service</option>
               {services.map((service) => (
-                <option key={service.service_id} value={service.service_id.toString()}>
-                  {service.service_name} (${service.unit_price.toFixed(2)} per{" "}
-                  {formatUnitType(service.unit_type).toLowerCase()})
+                <option key={service.service_id} value={service.service_id}>
+                  {service.service_name} (${service.unit_price} per {formatUnitType(service.unit_type).toLowerCase()})
                 </option>
               ))}
             </select>
@@ -430,8 +485,7 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
               <option value="">Select Service</option>
               {services.map((service) => (
                 <option key={service.service_id} value={service.service_id.toString()}>
-                  {service.service_name} (${service.unit_price.toFixed(2)} per{" "}
-                  {formatUnitType(service.unit_type).toLowerCase()})
+                  {service.service_name} (${service.unit_price} per {formatUnitType(service.unit_type).toLowerCase()})
                 </option>
               ))}
             </select>

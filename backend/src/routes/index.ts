@@ -75,7 +75,8 @@ apiRouter.delete("/room-type/:branchId/:roomTypeName", roomTypeController.delete
 
 // endpoints for payment
 apiRouter.get("/payment", paymentController.getAllPayments);
-apiRouter.get("/payment/:id", paymentController.getAllPaymentsByBillID);
+apiRouter.get("/payment/bill/:bill_id", paymentController.getAllPaymentsByBillID);
+apiRouter.get("/payment/:id", paymentController.getPaymentByID);
 apiRouter.post("/payment", paymentController.addNewPayment);
 apiRouter.put("/payment/:id", paymentController.updatePayment);
 apiRouter.delete("/payment/:id", paymentController.deletePayment);
@@ -118,9 +119,9 @@ apiRouter.delete("/booking/:bookingID", bookingController.deleteBooking);
 // endpoints for service-usage
 apiRouter.get("/service-usage", serviceUsageController.getAllServiceUsage);
 apiRouter.post("/service-usage", serviceUsageController.createServiceUsage);
-apiRouter.get("/service-usage/:usageID", serviceUsageController.getServiceUsageByID);
-apiRouter.put("/service-usage/:usageID", serviceUsageController.updateServiceUsage);
-apiRouter.delete("/service-usage/:usageID", serviceUsageController.deleteServiceUsage);
+apiRouter.get("/service-usage/:recordID", serviceUsageController.getServiceUsageByID);
+apiRouter.put("/service-usage/:recordID", serviceUsageController.updateServiceUsage);
+apiRouter.delete("/service-usage/:recordID", serviceUsageController.deleteServiceUsage);
 
 // endpoints for dashboard
 apiRouter.get("/dashboard", dashboardController.getDashboardStats);

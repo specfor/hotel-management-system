@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Receipt, FileText, Calculator, AlertCircle, CheckCircle } from "lucide-react";
+import { Receipt, FileText, Calculator, AlertCircle, CheckCircle, Plus } from "lucide-react";
 import Card from "../../components/primary/Card";
 import Badge from "../../components/primary/Badge";
+import Button from "../../components/primary/Button";
 import { useAlert } from "../../hooks/useAlert";
 import { type FinalBill, BookingStatusEnum, type Booking } from "../../types";
-import { finalBillApi } from "../../api_connection/finalBill";
+import { finalBillApi, type FinalBillCreateRequest } from "../../api_connection/finalBill";
 import { bookingApi } from "../../api_connection/bookings";
 import { apiUtils } from "../../api_connection/base";
 
@@ -13,10 +14,11 @@ interface FinalBillTabProps {
 }
 
 const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
-  const { showError } = useAlert();
+  const { showError, showSuccess } = useAlert();
   const [finalBill, setFinalBill] = useState<FinalBill | null>(null);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
 
   const loadFinalBill = useCallback(async () => {
     try {
@@ -32,7 +34,7 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
       setBooking(bookingData);
 
       // Only load final bill if booking is checked out
-      if (bookingData.booking_status === BookingStatusEnum.CHECKED_OUT) {
+      if (bookingData.bookingStatus === BookingStatusEnum.CHECKED_OUT) {
         const billResponse = await finalBillApi.getFinalBillByBookingId(bookingId);
         if (billResponse.success && billResponse.data.finalBill) {
           setFinalBill(billResponse.data.finalBill);
@@ -52,6 +54,34 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
   useEffect(() => {
     loadFinalBill();
   }, [loadFinalBill]);
+
+  const handleCreateBill = async () => {
+    if (!booking) {
+      showError("Booking information not available");
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      const createData: FinalBillCreateRequest = {
+        user_id: booking.userId,
+        booking_id: booking.bookingId,
+      };
+
+      const response = await finalBillApi.createFinalBill(createData);
+      if (response.success) {
+        showSuccess("Final bill created successfully");
+        await loadFinalBill(); // Reload to get the new bill
+      } else {
+        showError(response.message || "Failed to create final bill");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return `$${amount.toFixed(2)}`;
@@ -88,14 +118,14 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
     );
   }
 
-  if (!booking || booking.booking_status !== BookingStatusEnum.CHECKED_OUT) {
+  if (!booking || booking.bookingStatus !== BookingStatusEnum.CHECKED_OUT) {
     return (
       <div className="text-center py-12">
         <Receipt className="mx-auto h-12 w-12 text-gray-400" />
         <h3 className="mt-2 text-sm font-medium text-gray-900">Final Bill Not Available</h3>
         <p className="mt-1 text-sm text-gray-500">Final bill will be generated after guest checkout.</p>
         <div className="mt-4">
-          <Badge className="bg-blue-100 text-blue-800">Current Status: {booking?.booking_status || "Unknown"}</Badge>
+          <Badge className="bg-blue-100 text-blue-800">Current Status: {booking?.bookingStatus || "Unknown"}</Badge>
         </div>
       </div>
     );
@@ -105,8 +135,16 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
     return (
       <div className="text-center py-12">
         <FileText className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">Bill Processing</h3>
-        <p className="mt-1 text-sm text-gray-500">Final bill is being processed. Please try again in a few moments.</p>
+        <h3 className="mt-2 text-sm font-medium text-gray-900">Final Bill Ready to Generate</h3>
+        <p className="mt-1 text-sm text-gray-500">
+          Booking is checked out. Create the final bill to proceed with billing.
+        </p>
+        <div className="mt-6">
+          <Button onClick={handleCreateBill} disabled={isCreating} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            {isCreating ? "Creating Bill..." : "Create Final Bill"}
+          </Button>
+        </div>
       </div>
     );
   }
