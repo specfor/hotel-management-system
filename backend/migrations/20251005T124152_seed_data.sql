@@ -6,61 +6,54 @@
 -- -- -- UP MIGRATION
 -- -- -- =====================================================
 
--- -- =========================
--- -- 1. Branches
--- -- =========================
--- INSERT INTO branch (branch_name, city, address) VALUES
--- ('Colombo Central', 'Colombo', '123 Main St'),
--- ('Kandy Lakeview', 'Kandy', '45 Lake Rd'),
--- ('Galle Fort', 'Galle', '12 Fort Street');
+INSERT INTO branch (branch_name, city, address) VALUES
+('Colombo Central', 'Colombo', '123 Main St'),
+('Kandy Lakeview', 'Kandy', '45 Lake Rd'),
+('Galle Fort', 'Galle', '12 Fort Street');
 
 -- -- =========================
--- -- 2. Room Types
--- -- =========================
--- INSERT INTO room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES
--- (1, 'Single', 50.00, 10.00, 1, 'WiFi, TV'),
--- (1, 'Double', 80.00, 15.00, 2, 'WiFi, TV, Mini-fridge'),
--- (1, 'Suite', 150.00, 25.00, 4, 'WiFi, TV, Mini-fridge, Jacuzzi'),
--- (2, 'Single', 55.00, 10.00, 1, 'WiFi, TV'),
--- (2, 'Double', 85.00, 15.00, 2, 'WiFi, TV, Mini-fridge'),
--- (3, 'Suite', 160.00, 25.00, 4, 'WiFi, TV, Mini-fridge, Jacuzzi');
+INSERT INTO room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES
+(1, 'Single', 50.00, 10.00, 1, 'WiFi, TV'),
+(1, 'Double', 80.00, 15.00, 2, 'WiFi, TV, Mini-fridge'),
+(1, 'Suite', 150.00, 25.00, 4, 'WiFi, TV, Mini-fridge, Jacuzzi'),
+(2, 'Single', 55.00, 10.00, 1, 'WiFi, TV'),
+(2, 'Double', 85.00, 15.00, 2, 'WiFi, TV, Mini-fridge'),
+(3, 'Suite', 160.00, 25.00, 4, 'WiFi, TV, Mini-fridge, Jacuzzi');
 
 -- -- =========================
--- -- 3. Rooms
--- -- =========================
--- INSERT INTO room (branch_id, type_id, room_status) VALUES
--- (1, 1, 'Available'),
--- (1, 2, 'Available'),
--- (1, 3, 'Available'),
--- (2, 4, 'Available'),
--- (2, 5, 'Available'),
--- (3, 6, 'Available');
+INSERT INTO room (branch_id, type_id, room_status) VALUES
+(1, 1, 'Available'),
+(1, 2, 'Available'),
+(1, 3, 'Available'),
+(2, 4, 'Available'),
+(2, 5, 'Available'),
+(3, 6, 'Available');
 
 -- -- -- =========================
 -- -- -- 4. Guests
 -- -- -- =========================
--- -- INSERT INTO guest (guest_id, nic, name, age, contact_no, email, password) VALUES
--- -- (1, 901234567, 'John Doe', 30, 94771234567, 'john@example.com', 'pass123'),
--- -- (2, 902345678, 'Jane Smith', 28, 94779876543, 'jane@example.com', 'pass456'),
--- -- (3, 903456789, 'Alice Brown', 35, 94775678901, 'alice@example.com', 'pass789'),
--- -- (4, 904567890, 'Bob White', 40, 94772345678, 'bob@example.com', 'pass321'),
--- -- (5, 905678901, 'Charlie Black', 32, 94773456789, 'charlie@example.com', 'pass654');
+INSERT INTO guest (guest_id, nic, name, age, contact_no, email, password) VALUES
+(1, 901234567, 'John Doe', 30, 94771234567, 'john@example.com', 'pass123'),
+(2, 902345678, 'Jane Smith', 28, 94779876543, 'jane@example.com', 'pass456'),
+(3, 903456789, 'Alice Brown', 35, 94775678901, 'alice@example.com', 'pass789'),
+(4, 904567890, 'Bob White', 40, 94772345678, 'bob@example.com', 'pass321'),
+(5, 905678901, 'Charlie Black', 32, 94773456789, 'charlie@example.com', 'pass654');
 
 -- -- -- =========================
 -- -- -- 5. Staff
 -- -- -- =========================
--- -- INSERT INTO staff (staff_id, branch_id, name, contact_no, email, job_title, salary) VALUES
--- -- (1, 1, 'Alice Manager', 94771230001, 'alice.manager@example.com', 'Manager', 1500.00),
--- -- (2, 2, 'Bob Reception', 94771230002, 'bob.reception@example.com', 'Receptionist', 800.00),
--- -- (3, 3, 'Charlie Housekeeping', 94771230003, 'charlie.house@example.com', 'Housekeeping', 700.00);
+INSERT INTO staff (staff_id, branch_id, name, contact_no, email, job_title, salary) VALUES
+(1, 1, 'Alice Manager', 94771230001, 'alice.manager@example.com', 'Manager', 1500.00),
+(2, 2, 'Bob Reception', 94771230002, 'bob.reception@example.com', 'Receptionist', 800.00),
+(3, 3, 'Charlie Housekeeping', 94771230003, 'charlie.house@example.com', 'Housekeeping', 700.00);
 
 -- =========================
 -- 6. Users (staff login)
 -- =========================
--- INSERT INTO "user" (staff_id, username, password_hash) VALUES
--- (1, 'alice', 'hashedpass1'),
--- (2, 'bob', 'hashedpass2'),
--- (3, 'charlie', 'hashedpass3');
+INSERT INTO "user" (staff_id, username, password_hash) VALUES
+(1, 'alice', 'hashedpass1'),
+(2, 'bob', 'hashedpass2'),
+(3, 'charlie', 'hashedpass3');
 
 -- -- =========================
 -- -- 7. Chargeable Services
@@ -74,12 +67,10 @@
 -- (6, 3, 'Room Service', 12.00, 'Per item');
 
 -- =========================
--- 8. Bookings
--- =========================
 INSERT INTO booking (booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES
-(1, 1, 1, 101, 'Booked', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
-(2, 2, 2, 102, 'Checked-In', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
-(3, 1, 3, 103, 'Cancelled', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
+(1, 1, 1, 1, 'Booked', NOW(), '2025-10-01 14:00', '2025-10-05 12:00'),
+(2, 2, 2, 2, 'Checked-In', NOW(), '2025-09-28 15:00', '2025-10-02 11:00'),
+(3, 1, 3, 3, 'Cancelled', NOW(), '2025-09-30 16:00', '2025-10-03 12:00');
 
 -- =========================
 -- 9. Service Usage
