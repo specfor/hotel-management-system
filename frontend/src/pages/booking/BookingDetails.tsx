@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, User, MapPin, CreditCard, FileText, DollarSign } from "lucide-react";
+import { ArrowLeft, Calendar, User, MapPin, CreditCard, FileText, DollarSign, LogIn, LogOut, X } from "lucide-react";
 import Card from "../../components/primary/Card";
 import Button from "../../components/primary/Button";
 import Badge from "../../components/primary/Badge";
@@ -18,10 +18,11 @@ type TabType = "services" | "payments" | "bill";
 const BookingDetails: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
-  const { showError } = useAlert();
+  const { showError, showSuccess } = useAlert();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("services");
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const loadBookingDetails = useCallback(async () => {
     try {
@@ -46,11 +47,74 @@ const BookingDetails: React.FC = () => {
     }
   }, [bookingId, navigate, showError]);
 
+  const handleStatusUpdate = async (newStatus: string) => {
+    if (!booking || !bookingId) return;
+
+    try {
+      setIsUpdating(true);
+      const response = await bookingApi.updateBookingStatus(parseInt(bookingId), newStatus);
+
+      if (response.success && response.data.booking) {
+        setBooking(response.data.booking);
+        showSuccess(`Booking ${newStatus.toLowerCase()} successfully`);
+        // Reload to get updated data
+        await loadBookingDetails();
+      } else {
+        showError(response.message || `Failed to update booking status to ${newStatus}`);
+      }
+    } catch (error) {
+      console.error("Error updating booking status:", error);
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleCheckIn = () => {
+    if (confirm("Are you sure you want to check in this guest?")) {
+      handleStatusUpdate("Checked-In");
+    }
+  };
+
+  const handleCheckOut = () => {
+    if (confirm("Are you sure you want to check out this guest?")) {
+      handleStatusUpdate("Checked-Out");
+    }
+  };
+
+  const handleCancel = () => {
+    if (confirm("Are you sure you want to cancel this booking? This action cannot be undone.")) {
+      handleStatusUpdate("Cancelled");
+    }
+  };
+
   useEffect(() => {
     if (bookingId) {
       loadBookingDetails();
     }
   }, [bookingId, loadBookingDetails]);
+
+  // Set appropriate default tab based on booking status
+  useEffect(() => {
+    if (booking) {
+      console.log(booking);
+
+      if (booking.bookingStatus.toLowerCase() === "checked-out") {
+        // For checked out bookings, default to services if currently on an unavailable tab
+        if (activeTab !== "services" && activeTab !== "payments" && activeTab !== "bill") {
+          setActiveTab("services");
+        }
+      } else if (booking.bookingStatus.toLowerCase() === "checked-in") {
+        // For checked in bookings, only services tab is available
+        setActiveTab("services");
+      } else {
+        // For booked or cancelled bookings, no tabs are available
+        // Reset to services tab for display purposes, but it won't be shown
+        setActiveTab("services");
+      }
+    }
+  }, [booking?.bookingStatus, activeTab, booking]); // Include all dependencies
 
   const formatDateTime = (date: string, time: string) => {
     return `${new Date(date).toLocaleDateString()} ${time}`;
@@ -110,9 +174,45 @@ const BookingDetails: React.FC = () => {
           </Button>
           <h1 className="text-2xl font-bold text-gray-900">Booking #{booking.bookingId}</h1>
         </div>
-        <Badge className={getBookingStatusColor(booking.bookingStatus)}>
-          {formatBookingStatus(booking.bookingStatus)}
-        </Badge>
+        <div className="flex items-center space-x-3">
+          {/* Action buttons based on booking status */}
+          {booking.bookingStatus.toLowerCase() === "booked" && (
+            <>
+              <Button
+                onClick={handleCheckIn}
+                disabled={isUpdating}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <LogIn className="h-4 w-4" />
+                {isUpdating ? "Processing..." : "Check In"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isUpdating}
+                className="flex items-center gap-2 text-red-600 border-red-300 hover:bg-red-50"
+              >
+                <X className="h-4 w-4" />
+                Cancel Booking
+              </Button>
+            </>
+          )}
+
+          {booking.bookingStatus.toLowerCase() === "checked-in" && (
+            <Button
+              onClick={handleCheckOut}
+              disabled={isUpdating}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              <LogOut className="h-4 w-4" />
+              {isUpdating ? "Processing..." : "Check Out"}
+            </Button>
+          )}
+
+          <Badge className={getBookingStatusColor(booking.bookingStatus)}>
+            {formatBookingStatus(booking.bookingStatus)}
+          </Badge>
+        </div>
       </div>
 
       {/* Booking Overview */}
@@ -190,55 +290,112 @@ const BookingDetails: React.FC = () => {
       <Card>
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8 px-6">
-            <Button
-              variant={activeTab === "services" ? "primary" : "ghost"}
-              onClick={() => setActiveTab("services")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "services"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <DollarSign className="h-4 w-4" />
-                <span>Services Used</span>
-              </div>
-            </Button>
-            <Button
-              variant={activeTab === "payments" ? "primary" : "ghost"}
-              onClick={() => setActiveTab("payments")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "payments"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <CreditCard className="h-4 w-4" />
-                <span>Payments</span>
-              </div>
-            </Button>
-            <Button
-              variant={activeTab === "bill" ? "primary" : "ghost"}
-              onClick={() => setActiveTab("bill")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "bill"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <FileText className="h-4 w-4" />
-                <span>Final Bill</span>
-              </div>
-            </Button>
-          </nav>
-        </div>
+            {/* Only show services tab after check-in */}
+            {(booking.bookingStatus.toLowerCase() === "checked-in" ||
+              booking.bookingStatus.toLowerCase() === "checked-out") && (
+              <Button
+                variant={activeTab === "services" ? "primary" : "ghost"}
+                onClick={() => setActiveTab("services")}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === "services"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="h-4 w-4" />
+                  <span>Services Used</span>
+                </div>
+              </Button>
+            )}
 
+            {/* Only show payments and bill tabs after checkout */}
+            {booking.bookingStatus.toLowerCase() === "checked-out" && (
+              <>
+                <Button
+                  variant={activeTab === "payments" ? "primary" : "ghost"}
+                  onClick={() => setActiveTab("payments")}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === "payments"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <CreditCard className="h-4 w-4" />
+                    <span>Payments</span>
+                  </div>
+                </Button>
+                <Button
+                  variant={activeTab === "bill" ? "primary" : "ghost"}
+                  onClick={() => setActiveTab("bill")}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === "bill"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <FileText className="h-4 w-4" />
+                    <span>Final Bill</span>
+                  </div>
+                </Button>
+              </>
+            )}
+          </nav>
+        </div>{" "}
         <div className="p-6">
-          {activeTab === "services" && <ServiceUsageTab bookingId={parseInt(bookingId || "0")} />}
-          {activeTab === "payments" && <PaymentsTab bookingId={parseInt(bookingId || "0")} />}
-          {activeTab === "bill" && <FinalBillTab bookingId={parseInt(bookingId || "0")} />}
+          {/* Show content based on booking status and active tab */}
+          {booking.bookingStatus.toLowerCase() === "booked" || booking.bookingStatus.toLowerCase() === "cancelled" ? (
+            <div className="text-center py-12">
+              <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Service Management Not Available</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                {booking.bookingStatus.toLowerCase() === "booked"
+                  ? "Service management will be available after guest check-in."
+                  : "This booking has been cancelled."}
+              </p>
+            </div>
+          ) : (
+            <>
+              {activeTab === "services" &&
+                (booking.bookingStatus.toLowerCase() === "checked-in" ||
+                  booking.bookingStatus.toLowerCase() === "checked-out") && (
+                  <ServiceUsageTab bookingId={parseInt(bookingId || "0")} />
+                )}
+              {activeTab === "services" &&
+                booking.bookingStatus.toLowerCase() !== "checked-in" &&
+                booking.bookingStatus.toLowerCase() !== "checked-out" && (
+                  <div className="text-center py-12">
+                    <DollarSign className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">Services Not Available</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Service management will be available after guest check-in.
+                    </p>
+                  </div>
+                )}
+              {activeTab === "payments" && booking.bookingStatus.toLowerCase() === "checked-out" ? (
+                <PaymentsTab bookingId={parseInt(bookingId || "0")} />
+              ) : activeTab === "payments" ? (
+                <div className="text-center py-12">
+                  <CreditCard className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Payments Not Available</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Payment management will be available after guest checkout.
+                  </p>
+                </div>
+              ) : null}
+              {activeTab === "bill" && booking.bookingStatus.toLowerCase() === "checked-out" ? (
+                <FinalBillTab bookingId={parseInt(bookingId || "0")} />
+              ) : activeTab === "bill" ? (
+                <div className="text-center py-12">
+                  <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Final Bill Not Available</h3>
+                  <p className="mt-1 text-sm text-gray-500">Final bill will be generated after guest checkout.</p>
+                </div>
+              ) : null}
+            </>
+          )}
         </div>
       </Card>
     </div>
