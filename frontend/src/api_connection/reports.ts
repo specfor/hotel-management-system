@@ -3,17 +3,25 @@ import apiClient from "./base";
 
 // Monthly Revenue Types
 export interface MonthlyRevenueData {
+  monthStart: string;
+  monthEnd: string;
+  monthYear: string;
   branchId: number;
   branchName: string;
   city: string;
-  month: number;
-  year: number;
-  monthYear: string;
+  totalBookings: number;
+  uniqueGuests: number;
   totalRoomCharges: number;
   totalServiceCharges: number;
-  totalRevenue: number;
-  numberOfBookings: number;
-  averageRevenuePerBooking: number;
+  totalTax: number;
+  totalDiscounts: number;
+  lateCheckoutCharges: number;
+  grossRevenue: number;
+  totalPaid: number;
+  outstandingRevenue: number;
+  paymentCollectionRate: number | null;
+  occupiedRoomsCount: number;
+  totalRoomsInBranch: number;
 }
 
 export interface MonthlyRevenueFilters {

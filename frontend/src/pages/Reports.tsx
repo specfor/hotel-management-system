@@ -43,7 +43,7 @@ const Reports: React.FC = () => {
       switch (reportType) {
         case "monthly-revenue": {
           const revenueData = await reportsAPI.getMonthlyRevenue(filters);
-          setMonthlyRevenue(revenueData.data.monthlyRevenue || []);
+          setMonthlyRevenue(revenueData.data.revenueData || []);
           break;
         }
 
@@ -519,29 +519,63 @@ const Reports: React.FC = () => {
                     <h2 className="text-xl font-bold mb-4">Monthly Revenue Report</h2>
                     
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                       <div className="bg-blue-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-600">Total Revenue</p>
+                        <p className="text-sm text-gray-600">Gross Revenue</p>
                         <p className="text-2xl font-bold text-blue-600">
-                          {formatCurrency(monthlyRevenue.reduce((sum, r) => sum + r.totalRevenue, 0))}
+                          {formatCurrency(monthlyRevenue.reduce((sum, r) => sum + (r.grossRevenue || 0), 0))}
                         </p>
                       </div>
                       <div className="bg-green-50 p-4 rounded-lg">
                         <p className="text-sm text-gray-600">Room Charges</p>
                         <p className="text-2xl font-bold text-green-600">
-                          {formatCurrency(monthlyRevenue.reduce((sum, r) => sum + r.totalRoomCharges, 0))}
+                          {formatCurrency(monthlyRevenue.reduce((sum, r) => sum + (r.totalRoomCharges || 0), 0))}
                         </p>
                       </div>
                       <div className="bg-purple-50 p-4 rounded-lg">
                         <p className="text-sm text-gray-600">Service Charges</p>
                         <p className="text-2xl font-bold text-purple-600">
-                          {formatCurrency(monthlyRevenue.reduce((sum, r) => sum + r.totalServiceCharges, 0))}
+                          {formatCurrency(monthlyRevenue.reduce((sum, r) => sum + (r.totalServiceCharges || 0), 0))}
                         </p>
                       </div>
                       <div className="bg-orange-50 p-4 rounded-lg">
                         <p className="text-sm text-gray-600">Total Bookings</p>
                         <p className="text-2xl font-bold text-orange-600">
-                          {monthlyRevenue.reduce((sum, r) => sum + r.numberOfBookings, 0)}
+                          {monthlyRevenue.reduce((sum, r) => sum + (r.totalBookings || 0), 0)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Additional Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">Total Tax</p>
+                        <p className="text-xl font-bold text-gray-700">
+                          {formatCurrency(monthlyRevenue.reduce((sum, r) => sum + (r.totalTax || 0), 0))}
+                        </p>
+                      </div>
+                      <div className="bg-red-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">Total Discounts</p>
+                        <p className="text-xl font-bold text-red-600">
+                          {formatCurrency(monthlyRevenue.reduce((sum, r) => sum + (r.totalDiscounts || 0), 0))}
+                        </p>
+                      </div>
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">Total Paid</p>
+                        <p className="text-xl font-bold text-green-600">
+                          {formatCurrency(monthlyRevenue.reduce((sum, r) => sum + (r.totalPaid || 0), 0))}
+                        </p>
+                      </div>
+                      <div className="bg-yellow-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">Outstanding</p>
+                        <p className="text-xl font-bold text-yellow-600">
+                          {formatCurrency(monthlyRevenue.reduce((sum, r) => sum + (r.outstandingRevenue || 0), 0))}
+                        </p>
+                      </div>
+                      <div className="bg-indigo-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">Unique Guests</p>
+                        <p className="text-xl font-bold text-indigo-600">
+                          {monthlyRevenue.reduce((sum, r) => sum + (r.uniqueGuests || 0), 0)}
                         </p>
                       </div>
                     </div>
@@ -554,10 +588,14 @@ const Reports: React.FC = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Branch</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">City</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Month</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Bookings</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Room Charges</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Service Charges</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Revenue</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Bookings</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tax</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Discounts</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Gross Revenue</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Paid</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Outstanding</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -566,10 +604,14 @@ const Reports: React.FC = () => {
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{row.branchName}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.city}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.monthYear}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">{row.totalBookings}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">{formatCurrency(row.totalRoomCharges)}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">{formatCurrency(row.totalServiceCharges)}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-blue-600">{formatCurrency(row.totalRevenue)}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">{row.numberOfBookings}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">{formatCurrency(row.totalTax)}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-red-600">-{formatCurrency(row.totalDiscounts)}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-blue-600">{formatCurrency(row.grossRevenue)}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-green-600">{formatCurrency(row.totalPaid)}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-orange-600">{formatCurrency(row.outstandingRevenue)}</td>
                             </tr>
                           ))}
                         </tbody>
