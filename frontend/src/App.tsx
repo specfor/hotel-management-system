@@ -67,11 +67,11 @@ function AppContent() {
   // Convert User to UserProfile format for Header component
   const userProfile = user
     ? {
-        id: user.id,
-        name: user.name,
-        email: user.email,
+        id: user.staff_id.toString(),
+        name: user.username, // Use username as display name
+        email: user.username, // Use username as email (could be email-based username)
         role: user.role,
-        avatar: user.avatar,
+        avatar: undefined,
       }
     : null;
 

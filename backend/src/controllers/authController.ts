@@ -1,17 +1,10 @@
 import { Request, Response } from "express";
 import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import { jsonResponse } from "@src/common/util/response";
-import {
-  findUserByUsername,
-  createUser,
-  findUserByStaffId,
-} from "@src/repos/userRepo";
-import {
-  generateToken,
-  hashPassword,
-  comparePassword,
-} from "@src/common/util/auth";
+import { findUserByUsername, createUser, findUserByStaffId } from "@src/repos/userRepo";
+import { generateToken, hashPassword, comparePassword } from "@src/common/util/auth";
 import { UserLogin, UserRegister } from "@src/types/userTypes";
+import ENV from "@src/common/constants/ENV";
 
 //Register a new user (staff member)
 //POST /api/auth/register
@@ -47,10 +40,7 @@ export async function register(req: Request, res: Response) {
     const passwordHash = await hashPassword(password);
 
     // Create user
-    const newUser = await createUser(
-      { staff_id, username, password },
-      passwordHash,
-    );
+    const newUser = await createUser({ staff_id, username, password }, passwordHash);
 
     // Generate token
     const token = generateToken({
@@ -88,37 +78,54 @@ export async function login(req: Request, res: Response) {
       });
     }
 
-    // Find user
-    const user = await findUserByUsername(username);
-    if (!user) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-        message: "Invalid username or password",
+    if (username === ENV.AdminUsername && password === ENV.AdminPassword) {
+      // Admin login
+      const token = generateToken({
+        staffId: 0,
+        username: ENV.AdminUsername,
       });
-    }
-
-    // Compare password
-    const isPasswordValid = await comparePassword(password, user.password_hash);
-    if (!isPasswordValid) {
-      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-        message: "Invalid username or password",
+      return jsonResponse(res, true, HttpStatusCodes.OK, {
+        message: "Login successful",
+        user: {
+          staff_id: 0,
+          username: ENV.AdminUsername,
+          role: "admin",
+        },
+        token,
       });
-    }
+    } else {
+      // Find user
+      const user = await findUserByUsername(username);
+      if (!user) {
+        return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+          message: "Invalid username or password",
+        });
+      }
 
-    // Generate token
-    const token = generateToken({
-      staffId: user.staff_id,
-      username: user.username,
-    });
+      // Compare password
+      const isPasswordValid = await comparePassword(password, user.password_hash);
+      if (!isPasswordValid) {
+        return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+          message: "Invalid username or password",
+        });
+      }
 
-    return jsonResponse(res, true, HttpStatusCodes.OK, {
-      message: "Login successful",
-      user: {
-        staff_id: user.staff_id,
+      // Generate token
+      const token = generateToken({
+        staffId: user.staff_id,
         username: user.username,
-        role: user.job_title,
-      },
-      token,
-    });
+      });
+
+      return jsonResponse(res, true, HttpStatusCodes.OK, {
+        message: "Login successful",
+        user: {
+          staff_id: user.staff_id,
+          username: user.username,
+          role: user.job_title,
+        },
+        token,
+      });
+    }
   } catch (error) {
     return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
       message: "Failed to login",

@@ -1,12 +1,40 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card } from "../components/primary";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { LineChart } from "@mui/x-charts/LineChart";
+import { getDashboardStats, type DashboardStats } from "../api_connection/dashboard";
+import { useAlert } from "../hooks/useAlert";
 
 const Dashboard: React.FC = () => {
-  // Enhanced mock data with advanced styling configurations
-  const [dashboardData] = useState({
+  const { showError } = useAlert();
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Load dashboard data
+  const loadDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await getDashboardStats();
+      if (response.success) {
+        setDashboardStats(response.data.dashboardStats);
+      } else {
+        showError("Failed to load dashboard data");
+      }
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
+      showError("Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  }, [showError]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  // Fallback to mock data if real data is not available or loading
+  const fallbackData = {
     roomAvailability: [
       {
         id: 0,
@@ -52,23 +80,85 @@ const Dashboard: React.FC = () => {
       data: [85, 45, 120, 32, 156, 78],
       colors: ["#ec4899", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"],
     },
-  });
+  };
 
-  const totalRooms = dashboardData.roomAvailability.reduce((sum, item) => sum + item.value, 0);
-  const occupiedRooms = dashboardData.roomAvailability.find((item) => item.label === "Occupied")?.value || 0;
-  const availableRooms = dashboardData.roomAvailability.find((item) => item.label === "Available")?.value || 0;
-  const currentRevenue = dashboardData.revenueData.data[dashboardData.revenueData.data.length - 1];
+  // Transform real data for charts or use fallback
+  const getChartData = () => {
+    if (!dashboardStats) return fallbackData;
 
-  useEffect(() => {
-    // Placeholder for loading dashboard data
-    // loadDashboardData();
-  }, []);
+    // Transform room availability data
+    const roomAvailabilityMap: { [key: string]: { color: string; id: number } } = {
+      Available: { color: "#059669", id: 1 },
+      Occupied: { color: "#dc2626", id: 0 },
+      Maintenance: { color: "#d97706", id: 2 },
+      Cleaning: { color: "#2563eb", id: 3 },
+      "Out of Order": { color: "#6b7280", id: 4 },
+    };
+
+    const roomAvailability = dashboardStats.roomAvailability.map((item, index) => ({
+      id: roomAvailabilityMap[item.status]?.id ?? index,
+      value: item.count,
+      label: item.status,
+      color: roomAvailabilityMap[item.status]?.color ?? "#6b7280",
+      formattedValue: `${item.count} rooms`,
+    }));
+
+    // Transform bookings by branch data
+    const bookingsByBranch = {
+      labels: dashboardStats.bookingsByBranch.map((branch) => branch.branchName),
+      data: dashboardStats.bookingsByBranch.map((branch) => branch.activeBookings),
+      colors: ["#3b82f6", "#06b6d4", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#f97316"],
+    };
+
+    // Transform revenue data or use fallback if empty
+    const revenueData =
+      dashboardStats.monthlyRevenueTrend.length > 0
+        ? {
+            xAxis: dashboardStats.monthlyRevenueTrend.map((item) => item.month),
+            data: dashboardStats.monthlyRevenueTrend.map((item) => item.revenue),
+            gradient: true,
+          }
+        : fallbackData.revenueData;
+
+    // Transform service usage data or use fallback if empty
+    const serviceUsage =
+      dashboardStats.serviceUsageStats.length > 0
+        ? {
+            labels: dashboardStats.serviceUsageStats.map((service) => service.serviceName),
+            data: dashboardStats.serviceUsageStats.map((service) => service.usageCount),
+            colors: ["#ec4899", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"],
+          }
+        : fallbackData.serviceUsage;
+
+    return {
+      roomAvailability,
+      bookingsByBranch,
+      revenueData,
+      serviceUsage,
+    };
+  };
+
+  const chartData = getChartData();
+  const totalRooms =
+    dashboardStats?.totalRooms ?? chartData.roomAvailability.reduce((sum, item) => sum + item.value, 0);
+  const occupiedRooms =
+    dashboardStats?.occupiedRooms ?? chartData.roomAvailability.find((item) => item.label === "Occupied")?.value ?? 0;
+  const availableRooms =
+    dashboardStats?.availableRooms ?? chartData.roomAvailability.find((item) => item.label === "Available")?.value ?? 0;
+  const currentRevenue =
+    dashboardStats?.monthlyRevenue ?? chartData.revenueData.data[chartData.revenueData.data.length - 1];
+  const occupancyPercentage = dashboardStats?.occupancyPercentage ?? (occupiedRooms / totalRooms) * 100;
+  const revenueChangePercentage = dashboardStats?.revenueChangePercentage ?? 12;
 
   return (
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600">Welcome to the Hotel Management System</p>
+        {loading && <p className="text-sm text-blue-600 mt-2">Loading dashboard data...</p>}
+        {!loading && !dashboardStats && (
+          <p className="text-sm text-yellow-600 mt-2">Using sample data - API data unavailable</p>
+        )}
       </div>
 
       {/* Key Metrics Cards */}
@@ -91,7 +181,7 @@ const Dashboard: React.FC = () => {
             <div>
               <p className="text-red-100 text-sm font-medium">Occupied</p>
               <p className="text-3xl font-bold mt-1">{occupiedRooms}</p>
-              <p className="text-red-200 text-xs mt-2">{((occupiedRooms / totalRooms) * 100).toFixed(1)}% occupancy</p>
+              <p className="text-red-200 text-xs mt-2">{occupancyPercentage.toFixed(1)}% occupancy</p>
             </div>
             <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
               <div className="w-8 h-8 bg-white/80 rounded-lg"></div>
@@ -117,7 +207,10 @@ const Dashboard: React.FC = () => {
             <div>
               <p className="text-purple-100 text-sm font-medium">Monthly Revenue</p>
               <p className="text-3xl font-bold mt-1">${(currentRevenue / 1000).toFixed(1)}K</p>
-              <p className="text-purple-200 text-xs mt-2">+12% from last month</p>
+              <p className="text-purple-200 text-xs mt-2">
+                {revenueChangePercentage > 0 ? "+" : ""}
+                {revenueChangePercentage}% from last month
+              </p>
             </div>
             <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
               <div className="w-8 h-8 bg-white/80 rounded-lg"></div>
@@ -136,7 +229,7 @@ const Dashboard: React.FC = () => {
             <PieChart
               series={[
                 {
-                  data: dashboardData.roomAvailability,
+                  data: chartData.roomAvailability,
                   highlightScope: { fade: "global", highlight: "item" },
                   innerRadius: 60,
                   outerRadius: 120,
@@ -168,19 +261,19 @@ const Dashboard: React.FC = () => {
             xAxis={[
               {
                 scaleType: "band",
-                data: dashboardData.bookingsByBranch.labels,
+                data: chartData.bookingsByBranch.labels,
                 categoryGapRatio: 0.3,
                 barGapRatio: 0.1,
               },
             ]}
             series={[
               {
-                data: dashboardData.bookingsByBranch.data,
+                data: chartData.bookingsByBranch.data,
                 color: "#3b82f6",
                 label: "Active Bookings",
               },
             ]}
-            colors={dashboardData.bookingsByBranch.colors}
+            colors={chartData.bookingsByBranch.colors}
             width={400}
             height={300}
             grid={{ horizontal: true }}
@@ -206,7 +299,7 @@ const Dashboard: React.FC = () => {
             xAxis={[
               {
                 scaleType: "point",
-                data: dashboardData.revenueData.xAxis,
+                data: chartData.revenueData.xAxis,
                 tickLabelStyle: {
                   fontSize: 12,
                   fontWeight: 500,
@@ -224,7 +317,7 @@ const Dashboard: React.FC = () => {
             ]}
             series={[
               {
-                data: dashboardData.revenueData.data,
+                data: chartData.revenueData.data,
                 color: "#059669",
                 curve: "catmullRom",
                 area: true,
@@ -256,8 +349,8 @@ const Dashboard: React.FC = () => {
               <span className="font-medium">
                 $
                 {(
-                  dashboardData.revenueData.data.reduce((a, b) => a + b, 0) /
-                  dashboardData.revenueData.data.length /
+                  chartData.revenueData.data.reduce((a: number, b: number) => a + b, 0) /
+                  chartData.revenueData.data.length /
                   1000
                 ).toFixed(1)}
                 K
@@ -274,7 +367,7 @@ const Dashboard: React.FC = () => {
             xAxis={[
               {
                 scaleType: "band",
-                data: dashboardData.serviceUsage.labels,
+                data: chartData.serviceUsage.labels,
                 tickLabelStyle: {
                   angle: -30,
                   textAnchor: "end",
@@ -295,12 +388,12 @@ const Dashboard: React.FC = () => {
             ]}
             series={[
               {
-                data: dashboardData.serviceUsage.data,
+                data: chartData.serviceUsage.data,
                 color: "#8b5cf6",
                 label: "Usage Count",
               },
             ]}
-            colors={dashboardData.serviceUsage.colors}
+            colors={chartData.serviceUsage.colors}
             width={400}
             height={300}
             margin={{ bottom: 100, left: 60, right: 20, top: 20 }}
@@ -324,7 +417,7 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="text-gray-600">
               <span className="font-medium text-purple-600">Total Uses:</span>{" "}
-              {dashboardData.serviceUsage.data.reduce((a, b) => a + b, 0)}
+              {chartData.serviceUsage.data.reduce((a: number, b: number) => a + b, 0)}
             </div>
           </div>
         </Card>

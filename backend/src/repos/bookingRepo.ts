@@ -32,19 +32,18 @@ const mapToPublic = (row: BookingRow): BookingPublic => ({
 /**
  * Get all booking records. (READ All)
  */
-export async function getAllBookingsDB(filters: { guestId?: number,
-   roomId?: number,
-  branchId?: number, } = {}): Promise<BookingPublic[] | null> {
-
+export async function getAllBookingsDB(
+  filters: { guestId?: number; roomId?: number; branchId?: number } = {}
+): Promise<BookingPublic[] | null> {
   let sql = `
             SELECT 
                 booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out
             FROM 
                 booking
         `;
-    
+
   const conditions: string[] = [];
-  const values: (number)[] = [];
+  const values: number[] = [];
   let paramIndex = 1;
 
   // 1. Check for guestId filter
@@ -82,15 +81,12 @@ export async function getAllBookingsDB(filters: { guestId?: number,
     return [];
   }
   return (result.rows as BookingRow[]).map(mapToPublic);
-
 }
-
 
 /**
  * Get a single booking record by ID. (READ One)
  */
 export async function getBookingByIDDB(bookingId: number): Promise<BookingPublic | null> {
-  
   const sql = `
             SELECT 
                 booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out
@@ -107,13 +103,15 @@ export async function getBookingByIDDB(bookingId: number): Promise<BookingPublic
   return mapToPublic(result.rows[0] as BookingRow);
 }
 
-
-
 /**
  * Check if a room is booked (conflicts) during a specific date range. (NEW FUNCTION)
  * Returns conflicting bookings, or null if available.
  */
-export async function getConflictingBookings(roomId: number, checkIn: Date, checkOut: Date): Promise<BookingPublic[] | null> {
+export async function getConflictingBookings(
+  roomId: number,
+  checkIn: Date,
+  checkOut: Date
+): Promise<BookingPublic[] | null> {
   const sql = `
             SELECT 
                 booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out
@@ -127,7 +125,7 @@ export async function getConflictingBookings(roomId: number, checkIn: Date, chec
         `;
   const values = [roomId, checkIn, checkOut];
   const result = await db.query(sql, values);
-        
+
   if (result.rows.length === 0) {
     return null; // Room is available
   }

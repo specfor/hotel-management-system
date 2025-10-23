@@ -10,6 +10,8 @@ import ServiceUsageTab from "./ServiceUsageTab";
 import PaymentsTab from "./PaymentsTab";
 import FinalBillTab from "./FinalBillTab";
 import { formatBookingStatus, getBookingStatusColor, type Booking } from "../../types";
+import { bookingApi } from "../../api_connection/bookings";
+import { apiUtils } from "../../api_connection/base";
 
 type TabType = "services" | "payments" | "bill";
 
@@ -24,34 +26,20 @@ const BookingDetails: React.FC = () => {
   const loadBookingDetails = useCallback(async () => {
     try {
       setIsLoading(true);
-      // TODO: Replace with actual API call
-      const mockBooking: Booking = {
-        booking_id: parseInt(bookingId || "1"),
-        guest_id: 1,
-        room_id: 1,
-        user_id: 1,
-        booking_status: "checked_in",
-        booking_date: "2024-01-15",
-        booking_time: "14:30",
-        check_in_date: "2024-01-20",
-        check_in_time: "15:00",
-        check_out_date: "2024-01-25",
-        check_out_time: "11:00",
-        special_requests: "Late checkout requested, extra towels",
-        total_amount: 750.0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        guest_name: "John Doe",
-        guest_nic: "123456789V",
-        room_number: "101",
-        room_type_name: "Deluxe Room",
-        branch_name: "Main Branch",
-        user_name: "Alice Johnson",
-      };
-      setBooking(mockBooking);
+      if (!bookingId) {
+        throw new Error("Booking ID not provided");
+      }
+
+      const response = await bookingApi.getBookingById(parseInt(bookingId));
+      if (response.success && response.data.booking) {
+        setBooking(response.data.booking);
+      } else {
+        throw new Error(response.message || "Failed to load booking details");
+      }
     } catch (error) {
       console.error("Error loading booking details:", error);
-      showError("Failed to load booking details");
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
       navigate("/bookings");
     } finally {
       setIsLoading(false);
