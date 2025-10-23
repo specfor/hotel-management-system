@@ -25,8 +25,10 @@ const Reports: React.FC = () => {
   const [topServicesTrends, setTopServicesTrends] = useState<TopServicesTrendsData[]>([]);
   const [serviceUsageSummary, setServiceUsageSummary] = useState<ServiceUsageSummary | null>(null);
 
-  // Filters
-  const [filters] = useState<Record<string, string>>({});
+  // Filters and Pagination
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(50);
 
   const loadReport = React.useCallback(async (reportType: ReportType) => {
     if (!reportType) return;
@@ -35,6 +37,9 @@ const Reports: React.FC = () => {
     setError(null);
 
     try {
+      // Add pagination to filters
+      const paginatedFilters = { ...filters, limit: pageSize.toString(), offset: ((currentPage - 1) * pageSize).toString() };
+
       switch (reportType) {
         case "monthly-revenue": {
           const revenueData = await reportsAPI.getMonthlyRevenue(filters);
@@ -44,7 +49,7 @@ const Reports: React.FC = () => {
 
         case "room-occupancy": {
           const [occupancyData, summaryData] = await Promise.all([
-            reportsAPI.getRoomOccupancy(filters),
+            reportsAPI.getRoomOccupancy(paginatedFilters),
             reportsAPI.getRoomOccupancySummary(),
           ]);
           setRoomOccupancy(occupancyData.data.occupancyData || []);
@@ -54,7 +59,7 @@ const Reports: React.FC = () => {
 
         case "guest-billing": {
           const [billingData, billingSummaryData] = await Promise.all([
-            reportsAPI.getGuestBilling(filters),
+            reportsAPI.getGuestBilling(paginatedFilters),
             reportsAPI.getGuestBillingSummary(),
           ]);
           setGuestBilling(billingData.data.guestBilling || []);
@@ -64,7 +69,7 @@ const Reports: React.FC = () => {
 
         case "service-usage": {
           const [usageData, usageSummaryData] = await Promise.all([
-            reportsAPI.getServiceUsageBreakdown(filters),
+            reportsAPI.getServiceUsageBreakdown(paginatedFilters),
             reportsAPI.getServiceUsageSummary(),
           ]);
           setServiceUsageBreakdown(usageData.data.serviceUsageBreakdown || []);
@@ -84,13 +89,39 @@ const Reports: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, currentPage, pageSize]);
 
   useEffect(() => {
     if (selectedReport) {
       loadReport(selectedReport);
     }
   }, [selectedReport, loadReport]);
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => {
+      if (value === "") {
+        const newFilters = { ...prev };
+        delete newFilters[key];
+        return newFilters;
+      }
+      return { ...prev, [key]: value };
+    });
+    setCurrentPage(1); // Reset to first page when filters change
+  };
+
+  const applyFilters = () => {
+    if (selectedReport) {
+      loadReport(selectedReport);
+    }
+  };
+
+  const clearFilters = () => {
+    setFilters({});
+    setCurrentPage(1);
+    if (selectedReport) {
+      loadReport(selectedReport);
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -228,6 +259,259 @@ const Reports: React.FC = () => {
 
           {!loading && !error && (
             <>
+              {/* Filters Section */}
+              <Card className="p-6 mb-6">
+                <h3 className="text-lg font-semibold mb-4">Filters</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  
+                  {/* Common Filters */}
+                  {(selectedReport === "monthly-revenue" || selectedReport === "room-occupancy" || selectedReport === "guest-billing" || selectedReport === "service-usage" || selectedReport === "service-trends") && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <input
+                          type="date"
+                          value={filters.startDate || ""}
+                          onChange={(e) => handleFilterChange("startDate", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                        <input
+                          type="date"
+                          value={filters.endDate || ""}
+                          onChange={(e) => handleFilterChange("endDate", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                        <input
+                          type="text"
+                          value={filters.city || ""}
+                          onChange={(e) => handleFilterChange("city", e.target.value)}
+                          placeholder="Enter city name"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Branch ID</label>
+                        <input
+                          type="number"
+                          value={filters.branchId || ""}
+                          onChange={(e) => handleFilterChange("branchId", e.target.value)}
+                          placeholder="Enter branch ID"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Monthly Revenue Specific Filters */}
+                  {selectedReport === "monthly-revenue" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Month (YYYY-MM)</label>
+                      <input
+                        type="month"
+                        value={filters.monthYear || ""}
+                        onChange={(e) => handleFilterChange("monthYear", e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  )}
+
+                  {/* Room Occupancy Specific Filters */}
+                  {selectedReport === "room-occupancy" && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Room Type</label>
+                        <input
+                          type="text"
+                          value={filters.roomType || ""}
+                          onChange={(e) => handleFilterChange("roomType", e.target.value)}
+                          placeholder="Single, Double, Suite, etc."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Occupancy Status</label>
+                        <select
+                          value={filters.occupancyStatus || ""}
+                          onChange={(e) => handleFilterChange("occupancyStatus", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">All</option>
+                          <option value="Occupied">Occupied</option>
+                          <option value="Available">Available</option>
+                          <option value="Maintenance">Maintenance</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Booking Status</label>
+                        <select
+                          value={filters.bookingStatus || ""}
+                          onChange={(e) => handleFilterChange("bookingStatus", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">All</option>
+                          <option value="Booked">Booked</option>
+                          <option value="Checked-In">Checked-In</option>
+                          <option value="Checked-Out">Checked-Out</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Guest Name</label>
+                        <input
+                          type="text"
+                          value={filters.guestName || ""}
+                          onChange={(e) => handleFilterChange("guestName", e.target.value)}
+                          placeholder="Search by guest name"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Guest Billing Specific Filters */}
+                  {selectedReport === "guest-billing" && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
+                        <select
+                          value={filters.paymentStatus || ""}
+                          onChange={(e) => handleFilterChange("paymentStatus", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">All</option>
+                          <option value="Paid">Paid</option>
+                          <option value="Unpaid">Unpaid</option>
+                          <option value="Partially Paid">Partially Paid</option>
+                          <option value="Pending">Pending</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Guest Name</label>
+                        <input
+                          type="text"
+                          value={filters.guestName || ""}
+                          onChange={(e) => handleFilterChange("guestName", e.target.value)}
+                          placeholder="Search by guest name"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Min Outstanding</label>
+                        <input
+                          type="number"
+                          value={filters.minOutstanding || ""}
+                          onChange={(e) => handleFilterChange("minOutstanding", e.target.value)}
+                          placeholder="Min amount"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Max Outstanding</label>
+                        <input
+                          type="number"
+                          value={filters.maxOutstanding || ""}
+                          onChange={(e) => handleFilterChange("maxOutstanding", e.target.value)}
+                          placeholder="Max amount"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Service Usage Specific Filters */}
+                  {selectedReport === "service-usage" && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
+                        <input
+                          type="text"
+                          value={filters.serviceName || ""}
+                          onChange={(e) => handleFilterChange("serviceName", e.target.value)}
+                          placeholder="Search by service name"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Room Type</label>
+                        <input
+                          type="text"
+                          value={filters.roomType || ""}
+                          onChange={(e) => handleFilterChange("roomType", e.target.value)}
+                          placeholder="Single, Double, Suite, etc."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Booking Status</label>
+                        <select
+                          value={filters.bookingStatus || ""}
+                          onChange={(e) => handleFilterChange("bookingStatus", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">All</option>
+                          <option value="Booked">Booked</option>
+                          <option value="Checked-In">Checked-In</option>
+                          <option value="Checked-Out">Checked-Out</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Service Trends Specific Filters */}
+                  {selectedReport === "service-trends" && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
+                        <input
+                          type="text"
+                          value={filters.serviceName || ""}
+                          onChange={(e) => handleFilterChange("serviceName", e.target.value)}
+                          placeholder="Search by service name"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Min Bookings</label>
+                        <input
+                          type="number"
+                          value={filters.minBookings || ""}
+                          onChange={(e) => handleFilterChange("minBookings", e.target.value)}
+                          placeholder="Minimum bookings"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Min Revenue</label>
+                        <input
+                          type="number"
+                          value={filters.minRevenue || ""}
+                          onChange={(e) => handleFilterChange("minRevenue", e.target.value)}
+                          placeholder="Minimum revenue"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex gap-3 mt-4">
+                  <Button onClick={applyFilters} variant="primary">
+                    Apply Filters
+                  </Button>
+                  <Button onClick={clearFilters} variant="outline">
+                    Clear Filters
+                  </Button>
+                </div>
+              </Card>
+
+              {/* Reports Content */}
               {/* Monthly Revenue Report */}
               {selectedReport === "monthly-revenue" && (
                 <div>
@@ -291,6 +575,10 @@ const Reports: React.FC = () => {
                         </tbody>
                       </table>
                     </div>
+
+                    {monthlyRevenue.length === 0 && (
+                      <p className="text-center text-gray-500 py-8">No data available for the selected filters.</p>
+                    )}
                   </Card>
                 </div>
               )}
@@ -339,7 +627,7 @@ const Reports: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {roomOccupancy.slice(0, 50).map((room, idx) => (
+                          {roomOccupancy.slice(0, pageSize).map((room, idx) => (
                             <tr key={idx} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{room.roomNumber}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{room.roomType}</td>
@@ -361,6 +649,38 @@ const Reports: React.FC = () => {
                         </tbody>
                       </table>
                     </div>
+
+                    {roomOccupancy.length === 0 && (
+                      <p className="text-center text-gray-500 py-8">No rooms found for the selected filters.</p>
+                    )}
+
+                    {/* Pagination */}
+                    {roomOccupancy.length > 0 && (
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                        <p className="text-sm text-gray-600">
+                          Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, roomOccupancy.length)} of {roomOccupancy.length} results
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                          >
+                            Previous
+                          </Button>
+                          <span className="px-3 py-2 text-sm">Page {currentPage}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(p => p + 1)}
+                            disabled={currentPage * pageSize >= roomOccupancy.length}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </Card>
                 </div>
               )}
@@ -405,7 +725,7 @@ const Reports: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {guestBilling.slice(0, 50).map((bill, idx) => (
+                          {guestBilling.slice(0, pageSize).map((bill, idx) => (
                             <tr key={idx} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{bill.guestName}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{bill.roomNumber} ({bill.roomType})</td>
@@ -427,6 +747,38 @@ const Reports: React.FC = () => {
                         </tbody>
                       </table>
                     </div>
+
+                    {guestBilling.length === 0 && (
+                      <p className="text-center text-gray-500 py-8">No billing records found for the selected filters.</p>
+                    )}
+
+                    {/* Pagination */}
+                    {guestBilling.length > 0 && (
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                        <p className="text-sm text-gray-600">
+                          Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, guestBilling.length)} of {guestBilling.length} results
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                          >
+                            Previous
+                          </Button>
+                          <span className="px-3 py-2 text-sm">Page {currentPage}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(p => p + 1)}
+                            disabled={currentPage * pageSize >= guestBilling.length}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </Card>
                 </div>
               )}
@@ -471,7 +823,7 @@ const Reports: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {serviceUsageBreakdown.slice(0, 50).map((usage, idx) => (
+                          {serviceUsageBreakdown.slice(0, pageSize).map((usage, idx) => (
                             <tr key={idx} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{usage.serviceName}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{usage.guestName}</td>
@@ -485,6 +837,38 @@ const Reports: React.FC = () => {
                         </tbody>
                       </table>
                     </div>
+
+                    {serviceUsageBreakdown.length === 0 && (
+                      <p className="text-center text-gray-500 py-8">No service usage records found for the selected filters.</p>
+                    )}
+
+                    {/* Pagination */}
+                    {serviceUsageBreakdown.length > 0 && (
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                        <p className="text-sm text-gray-600">
+                          Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, serviceUsageBreakdown.length)} of {serviceUsageBreakdown.length} results
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                          >
+                            Previous
+                          </Button>
+                          <span className="px-3 py-2 text-sm">Page {currentPage}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(p => p + 1)}
+                            disabled={currentPage * pageSize >= serviceUsageBreakdown.length}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </Card>
                 </div>
               )}
@@ -494,36 +878,41 @@ const Reports: React.FC = () => {
                 <div>
                   <Card className="p-6">
                     <h2 className="text-xl font-bold mb-4">Top Services & Trends</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {topServicesTrends.map((service, idx) => (
-                        <Card key={idx} className="p-4 border-2 hover:border-blue-300 transition-colors">
-                          <div className="flex items-start justify-between mb-3">
-                            <h3 className="font-semibold text-gray-900">{service.serviceName}</h3>
-                            <span className="text-2xl">#{idx + 1}</span>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">{service.branchName} - {service.city}</p>
-                          
-                          <div className="grid grid-cols-2 gap-2 mt-4">
-                            <div className="bg-blue-50 p-2 rounded">
-                              <p className="text-xs text-gray-600">Bookings</p>
-                              <p className="text-lg font-bold text-blue-600">{service.bookingsUsingService}</p>
+                    
+                    {topServicesTrends.length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">No trending services found for the selected filters.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {topServicesTrends.map((service, idx) => (
+                          <Card key={idx} className="p-4 border-2 hover:border-blue-300 transition-colors">
+                            <div className="flex items-start justify-between mb-3">
+                              <h3 className="font-semibold text-gray-900">{service.serviceName}</h3>
+                              <span className="text-2xl">#{idx + 1}</span>
                             </div>
-                            <div className="bg-green-50 p-2 rounded">
-                              <p className="text-xs text-gray-600">Revenue</p>
-                              <p className="text-lg font-bold text-green-600">{formatCurrency(service.totalRevenueFromService)}</p>
+                            <p className="text-sm text-gray-600 mb-2">{service.branchName} - {service.city}</p>
+                            
+                            <div className="grid grid-cols-2 gap-2 mt-4">
+                              <div className="bg-blue-50 p-2 rounded">
+                                <p className="text-xs text-gray-600">Bookings</p>
+                                <p className="text-lg font-bold text-blue-600">{service.bookingsUsingService}</p>
+                              </div>
+                              <div className="bg-green-50 p-2 rounded">
+                                <p className="text-xs text-gray-600">Revenue</p>
+                                <p className="text-lg font-bold text-green-600">{formatCurrency(service.totalRevenueFromService)}</p>
+                              </div>
+                              <div className="bg-purple-50 p-2 rounded">
+                                <p className="text-xs text-gray-600">Total Uses</p>
+                                <p className="text-lg font-bold text-purple-600">{service.totalUsageRecords}</p>
+                              </div>
+                              <div className="bg-orange-50 p-2 rounded">
+                                <p className="text-xs text-gray-600">Unit Price</p>
+                                <p className="text-lg font-bold text-orange-600">{formatCurrency(service.unitPrice)}</p>
+                              </div>
                             </div>
-                            <div className="bg-purple-50 p-2 rounded">
-                              <p className="text-xs text-gray-600">Total Uses</p>
-                              <p className="text-lg font-bold text-purple-600">{service.totalUsageRecords}</p>
-                            </div>
-                            <div className="bg-orange-50 p-2 rounded">
-                              <p className="text-xs text-gray-600">Unit Price</p>
-                              <p className="text-lg font-bold text-orange-600">{formatCurrency(service.unitPrice)}</p>
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </Card>
                 </div>
               )}
