@@ -33,7 +33,7 @@ const mapToPublic = (row: BookingRow): BookingPublic => ({
  * Get all booking records. (READ All)
  */
 export async function getAllBookingsDB(
-  filters: { guestId?: number, roomId?: number, branchId?: number } = {},
+  filters: { guestId?: number; roomId?: number; branchId?: number } = {}
 ): Promise<BookingPublic[] | null> {
   let sql = `
             SELECT 
@@ -110,7 +110,7 @@ export async function getBookingByIDDB(bookingId: number): Promise<BookingPublic
 export async function getConflictingBookings(
   roomId: number,
   checkIn: Date,
-  checkOut: Date,
+  checkOut: Date
 ): Promise<BookingPublic[] | null> {
   const sql = `
             SELECT 
@@ -138,7 +138,7 @@ export async function getConflictingBookings(
  */
 export async function createBookingDB(bookingData: BookingCreate): Promise<BookingPublic | null> {
   const client = await db.getClient();
-  
+
   try {
     // Start transaction with SERIALIZABLE isolation level
     await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
@@ -152,12 +152,8 @@ export async function createBookingDB(bookingData: BookingCreate): Promise<Booki
         AND TSTZRANGE(check_in, check_out) && TSTZRANGE($2, $3)
       FOR UPDATE;
     `;
-    
-    const conflicts = await client.query(conflictSql, [
-      bookingData.roomId,
-      bookingData.checkIn,
-      bookingData.checkOut,
-    ]);
+
+    const conflicts = await client.query(conflictSql, [bookingData.roomId, bookingData.checkIn, bookingData.checkOut]);
 
     if (conflicts.rows.length > 0) {
       await client.query("ROLLBACK");
@@ -171,7 +167,7 @@ export async function createBookingDB(bookingData: BookingCreate): Promise<Booki
       VALUES ($1, $2, $3, $4, $5, $6, NOW())
       RETURNING *;
     `;
-    
+
     const values = [
       bookingData.userId,
       bookingData.guestId,
@@ -182,12 +178,11 @@ export async function createBookingDB(bookingData: BookingCreate): Promise<Booki
     ];
 
     const result = await client.query(insertSql, values);
-    
+
     // Commit transaction
     await client.query("COMMIT");
-    
-    return mapToPublic(result.rows[0] as BookingRow);
 
+    return mapToPublic(result.rows[0] as BookingRow);
   } catch (error) {
     // Rollback on any error
     await client.query("ROLLBACK");
@@ -204,7 +199,7 @@ export async function createBookingDB(bookingData: BookingCreate): Promise<Booki
  */
 export async function updateBookingDB(bookingData: BookingUpdate): Promise<BookingPublic | null> {
   const client = await db.getClient();
-  
+
   try {
     await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
 
@@ -213,7 +208,7 @@ export async function updateBookingDB(bookingData: BookingUpdate): Promise<Booki
       SELECT * FROM booking WHERE booking_id = $1 FOR UPDATE;
     `;
     const current = await client.query(currentSql, [bookingData.bookingId]);
-    
+
     if (current.rows.length === 0) {
       await client.query("ROLLBACK");
       return null;
@@ -235,13 +230,8 @@ export async function updateBookingDB(bookingData: BookingUpdate): Promise<Booki
           AND TSTZRANGE(check_in, check_out) && TSTZRANGE($3, $4)
         FOR UPDATE;
       `;
-      
-      const conflicts = await client.query(conflictSql, [
-        newRoomId,
-        bookingData.bookingId,
-        newCheckIn,
-        newCheckOut,
-      ]);
+
+      const conflicts = await client.query(conflictSql, [newRoomId, bookingData.bookingId, newCheckIn, newCheckOut]);
 
       if (conflicts.rows.length > 0) {
         await client.query("ROLLBACK");
@@ -265,7 +255,7 @@ export async function updateBookingDB(bookingData: BookingUpdate): Promise<Booki
       values.push(bookingData.guestId);
       paramIndex++;
     }
-    
+
     if (bookingData.roomId !== undefined) {
       updates.push("room_id = $" + paramIndex);
       values.push(bookingData.roomId);
@@ -283,7 +273,7 @@ export async function updateBookingDB(bookingData: BookingUpdate): Promise<Booki
       values.push(bookingData.checkIn);
       paramIndex++;
     }
-    
+
     if (bookingData.checkOut) {
       updates.push("check_out = $" + paramIndex);
       values.push(bookingData.checkOut);
@@ -304,7 +294,7 @@ export async function updateBookingDB(bookingData: BookingUpdate): Promise<Booki
     values.push(bookingData.bookingId);
 
     const result = await client.query(updateSql, values);
-    
+
     await client.query("COMMIT");
 
     if (result.rows.length === 0) {
@@ -312,7 +302,6 @@ export async function updateBookingDB(bookingData: BookingUpdate): Promise<Booki
     }
 
     return mapToPublic(result.rows[0] as BookingRow);
-
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
@@ -326,7 +315,7 @@ export async function updateBookingDB(bookingData: BookingUpdate): Promise<Booki
  */
 export async function deleteBookingDB(bookingId: number): Promise<boolean> {
   const client = await db.getClient();
-  
+
   try {
     await client.query("BEGIN");
 
@@ -341,7 +330,10 @@ export async function deleteBookingDB(bookingId: number): Promise<boolean> {
     await client.query("COMMIT");
 
     return result.rowCount !== null && result.rowCount > 0;
-
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  }
 }
 
 /**
