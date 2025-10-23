@@ -129,25 +129,25 @@ output "useful_commands" {
   description = "Useful commands for managing the infrastructure"
   value = {
     configure_kubectl = "aws eks update-kubeconfig --region ${data.aws_region.current.name} --name ${aws_eks_cluster.main.name}"
-    
+
     docker_login = "aws ecr get-login-password --region ${data.aws_region.current.name} | docker login --username AWS --password-stdin ${aws_ecr_repository.backend.repository_url}"
-    
+
     build_and_push_backend = join(" && ", [
       "cd backend",
       "docker build -t ${aws_ecr_repository.backend.repository_url}:latest .",
       "docker push ${aws_ecr_repository.backend.repository_url}:latest"
     ])
-    
+
     sync_frontend = "aws s3 sync frontend/dist/ s3://${aws_s3_bucket.frontend.bucket}/ --delete"
-    
+
     invalidate_cloudfront = "aws cloudfront create-invalidation --distribution-id ${aws_cloudfront_distribution.frontend.id} --paths '/*'"
-    
+
     get_database_password = "terraform output -raw database_password"
-    
+
     port_forward_database = "kubectl port-forward -n ${kubernetes_namespace.database.metadata[0].name} service/postgres-service 5432:5432"
-    
+
     get_backend_logs = "kubectl logs -n ${kubernetes_namespace.app.metadata[0].name} -l app=backend -f"
-    
+
     restart_backend = "kubectl rollout restart deployment/backend -n ${kubernetes_namespace.app.metadata[0].name}"
   }
 }

@@ -4,7 +4,7 @@
 resource "kubernetes_namespace" "app" {
   metadata {
     name = "${var.project_name}-app"
-    
+
     labels = {
       name        = "${var.project_name}-app"
       environment = var.environment
@@ -26,18 +26,18 @@ resource "kubernetes_secret" "backend" {
   data = {
     NODE_ENV = base64encode(var.environment == "prod" ? "production" : "development")
     PORT     = base64encode("3000")
-    
+
     # Database connection
     DB_HOST     = base64encode("postgres-service.${kubernetes_namespace.database.metadata[0].name}.svc.cluster.local")
     DB_PORT     = base64encode("5432")
     DB_NAME     = base64encode(var.db_name)
     DB_USERNAME = base64encode(var.db_username)
     DB_PASSWORD = base64encode(random_password.db_password.result)
-    
+
     # JWT secrets (you should generate these)
-    JWT_SECRET      = base64encode(random_password.jwt_secret.result)
-    JWT_EXPIRES_IN  = base64encode("7d")
-    
+    JWT_SECRET     = base64encode(random_password.jwt_secret.result)
+    JWT_EXPIRES_IN = base64encode("7d")
+
     # CORS origins
     CORS_ORIGINS = base64encode("*") # Configure this for production
   }
@@ -59,7 +59,7 @@ resource "kubernetes_config_map" "backend" {
   }
 
   data = {
-    LOG_LEVEL = "info"
+    LOG_LEVEL  = "info"
     API_PREFIX = "/api"
   }
 
@@ -71,14 +71,14 @@ resource "kubernetes_deployment" "backend" {
   metadata {
     name      = "backend"
     namespace = kubernetes_namespace.app.metadata[0].name
-    
+
     labels = {
       app = "backend"
     }
   }
 
   spec {
-    replicas = 1  # Single replica for demo to save resources
+    replicas = 1 # Single replica for demo to save resources
 
     selector {
       match_labels = {
@@ -100,7 +100,7 @@ resource "kubernetes_deployment" "backend" {
 
           port {
             container_port = 3000
-            name          = "http"
+            name           = "http"
           }
 
           env_from {
@@ -194,7 +194,7 @@ resource "kubernetes_service" "backend" {
   metadata {
     name      = "backend-service"
     namespace = kubernetes_namespace.app.metadata[0].name
-    
+
     labels = {
       app = "backend"
     }
@@ -223,7 +223,7 @@ resource "kubernetes_ingress_v1" "backend" {
   metadata {
     name      = "backend-ingress"
     namespace = kubernetes_namespace.app.metadata[0].name
-    
+
     annotations = {
       "kubernetes.io/ingress.class"                = "alb"
       "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
@@ -239,7 +239,7 @@ resource "kubernetes_ingress_v1" "backend" {
         path {
           path      = "/api"
           path_type = "Prefix"
-          
+
           backend {
             service {
               name = kubernetes_service.backend.metadata[0].name
@@ -264,6 +264,8 @@ resource "helm_release" "aws_load_balancer_controller" {
   namespace  = "kube-system"
   version    = "1.6.2"
 
+  timeout = 600 # 10 minutes timeout
+
   set {
     name  = "clusterName"
     value = aws_eks_cluster.main.name
@@ -284,9 +286,21 @@ resource "helm_release" "aws_load_balancer_controller" {
     value = aws_iam_role.aws_load_balancer_controller.arn
   }
 
+  set {
+    name  = "region"
+    value = var.aws_region
+  }
+
+  set {
+    name  = "vpcId"
+    value = aws_vpc.main.id
+  }
+
   depends_on = [
     aws_eks_cluster.main,
-    aws_iam_role_policy_attachment.aws_load_balancer_controller
+    aws_eks_node_group.main,
+    aws_iam_role_policy_attachment.aws_load_balancer_controller,
+    aws_iam_openid_connect_provider.eks
   ]
 }
 
@@ -300,24 +314,25 @@ resource "aws_iam_role" "aws_load_balancer_controller" {
       {
         Effect = "Allow"
         Principal = {
-          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}"
+          Federated = aws_iam_openid_connect_provider.eks.arn
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "${replace(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}:sub": "system:serviceaccount:kube-system:aws-load-balancer-controller"
-            "${replace(aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}:aud": "sts.amazonaws.com"
+            "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub" : "system:serviceaccount:kube-system:aws-load-balancer-controller"
+            "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:aud" : "sts.amazonaws.com"
           }
         }
       }
     ]
   })
 
-  tags = local.common_tags
+  depends_on = [aws_iam_openid_connect_provider.eks]
+  tags       = local.common_tags
 }
 
 resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
-  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/AWSLoadBalancerControllerIAMPolicy"
+  policy_arn = aws_iam_policy.aws_load_balancer_controller.arn
   role       = aws_iam_role.aws_load_balancer_controller.name
 }
 

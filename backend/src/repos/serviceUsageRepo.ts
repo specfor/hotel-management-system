@@ -13,7 +13,33 @@ interface ServiceUsageRow {
   date_time: Date;
   quantity: string;
   total_price: string;
-}   
+}
+
+interface ServiceUsageWithDetailsRow {
+  record_id: number;
+  service_id: number;
+  booking_id: number;
+  date_time: Date;
+  quantity: string;
+  total_price: string;
+  service_name: string;
+  unit_price: string;
+  unit_type: string;
+  branch_id: number;
+}
+
+export interface ServiceUsageWithDetails {
+  recordId: number;
+  serviceId: number;
+  bookingId: number;
+  dateTime: Date;
+  quantity: number;
+  totalPrice: number;
+  serviceName: string;
+  unitPrice: number;
+  unitType: string;
+  branchId: number;
+}
 
 const mapToPublic = (row: ServiceUsageRow): ServiceUsagePublic => ({
   recordId: row.record_id,
@@ -22,6 +48,19 @@ const mapToPublic = (row: ServiceUsageRow): ServiceUsagePublic => ({
   dateTime: row.date_time,
   quantity: parseFloat(row.quantity),
   totalPrice: parseFloat(row.total_price),
+});
+
+const mapToPublicWithDetails = (row: ServiceUsageWithDetailsRow): ServiceUsageWithDetails => ({
+  recordId: row.record_id,
+  serviceId: row.service_id,
+  bookingId: row.booking_id,
+  dateTime: row.date_time,
+  quantity: parseFloat(row.quantity),
+  totalPrice: parseFloat(row.total_price),
+  serviceName: row.service_name,
+  unitPrice: parseFloat(row.unit_price),
+  unitType: row.unit_type,
+  branchId: row.branch_id,
 });
 
 // --- CRUD Operations ---
@@ -65,6 +104,44 @@ export async function getServiceUsageByIDDB(recordId: number): Promise<ServiceUs
     }
 
     return mapToPublic(result.rows[0] as ServiceUsageRow);
+  } catch (err) {
+    logger.err(err);
+    return null;
+  }
+}
+
+/**
+ * Get all service usage records for a specific booking with service details. (READ by Booking)
+ */
+export async function getServicesByBookingIDDB(bookingId: number): Promise<ServiceUsageWithDetails[] | null> {
+  try {
+    const sql = `
+      SELECT 
+        su.record_id,
+        su.service_id,
+        su.booking_id,
+        su.date_time,
+        su.quantity,
+        su.total_price,
+        cs.service_name,
+        cs.unit_price,
+        cs.unit_type,
+        cs.branch_id
+      FROM 
+        service_usage su
+      INNER JOIN 
+        chargeable_services cs ON su.service_id = cs.service_id
+      WHERE
+        su.booking_id = $1
+      ORDER BY su.date_time DESC;
+    `;
+    const result = await db.query(sql, [bookingId]);
+
+    if (result.rows.length === 0) {
+      return [];
+    }
+
+    return (result.rows as ServiceUsageWithDetailsRow[]).map(mapToPublicWithDetails);
   } catch (err) {
     logger.err(err);
     return null;

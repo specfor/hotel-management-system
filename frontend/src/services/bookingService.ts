@@ -41,7 +41,7 @@ class BookingApiService extends BaseApiService {
 
   // Booking status operations
   async updateBookingStatus(id: number, status: BookingStatus): Promise<ApiResponse<Booking>> {
-    return this.patchUpdate<Booking>(id, { booking_status: status });
+    return this.patchUpdate<Booking>(id, { bookingStatus: status });
   }
 
   async checkInBooking(id: number): Promise<ApiResponse<Booking>> {
@@ -255,7 +255,7 @@ export const bookingService = {
     if (paymentData && booking.data) {
       const payment = await paymentApi.createPayment({
         ...paymentData,
-        booking_id: booking.data.booking_id,
+        booking_id: booking.data.bookingId,
       });
 
       return {
@@ -293,12 +293,12 @@ export const bookingService = {
     // Calculate dashboard statistics
     const stats = {
       totalBookings: bookings.length,
-      pendingBookings: bookings.filter((b) => b.booking_status === BookingStatusEnum.PENDING).length,
-      checkedInBookings: bookings.filter((b) => b.booking_status === BookingStatusEnum.CHECKED_IN).length,
-      checkedOutBookings: bookings.filter((b) => b.booking_status === BookingStatusEnum.CHECKED_OUT).length,
-      cancelledBookings: bookings.filter((b) => b.booking_status === BookingStatusEnum.CANCELLED).length,
+      pendingBookings: bookings.filter((b) => b.bookingStatus === BookingStatusEnum.PENDING).length,
+      checkedInBookings: bookings.filter((b) => b.bookingStatus === BookingStatusEnum.CHECKED_IN).length,
+      checkedOutBookings: bookings.filter((b) => b.bookingStatus === BookingStatusEnum.CHECKED_OUT).length,
+      cancelledBookings: bookings.filter((b) => b.bookingStatus === BookingStatusEnum.CANCELLED).length,
       totalRevenue: bookings
-        .filter((b) => b.booking_status === BookingStatusEnum.CHECKED_OUT)
+        .filter((b) => b.bookingStatus === BookingStatusEnum.CHECKED_OUT)
         .reduce((sum, b) => sum + (b.total_amount || 0), 0),
     };
 

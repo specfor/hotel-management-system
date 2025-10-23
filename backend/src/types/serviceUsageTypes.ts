@@ -26,3 +26,47 @@ export interface ServiceUsageUpdate {
     dateTime?: Date;
     quantity?: number;
 }
+
+/**
+ * Service Usage Breakdown - Report Type
+ * Represents service usage details per room and service type for reports
+ */
+export interface ServiceUsageBreakdownPublic {
+  bookingId: number;
+  roomId: number;
+  roomNumber: string;
+  roomType: string;
+  branchId: number;
+  branchName: string;
+  guestId: number;
+  guestName: string;
+  checkIn: Date;
+  checkOut: Date;
+  serviceId: number;
+  serviceName: string;
+  unitType: string;
+  unitPrice: number;
+  quantity: number;
+  usageDate: Date;
+  usageTime: string;
+  totalPrice: number;
+  createdAt: Date;
+  serviceUsageCountForBooking: number;
+  totalServicesForBooking: number;
+  roomServiceTotal: number;
+  stayDuration: number;
+}
+
+/**
+ * Filters for querying service usage breakdown data
+ */
+export interface ServiceUsageBreakdownFilters {
+  branchId?: number;
+  roomId?: number;
+  bookingId?: number;
+  serviceId?: number;
+  serviceName?: string;
+  startDate?: string; // Format: 'YYYY-MM-DD'
+  endDate?: string; // Format: 'YYYY-MM-DD'
+  guestId?: number;
+}

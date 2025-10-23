@@ -169,15 +169,9 @@ resource "aws_cloudfront_distribution" "frontend" {
   # SSL certificate
   viewer_certificate {
     cloudfront_default_certificate = var.domain_name == "" ? true : false
-    
-    dynamic "acm_certificate_arn" {
-      for_each = var.domain_name != "" ? [1] : []
-      content {
-        acm_certificate_arn      = aws_acm_certificate.frontend[0].arn
-        ssl_support_method       = "sni-only"
-        minimum_protocol_version = "TLSv1.2_2021"
-      }
-    }
+    acm_certificate_arn            = var.domain_name != "" ? aws_acm_certificate.frontend[0].arn : null
+    ssl_support_method             = var.domain_name != "" ? "sni-only" : null
+    minimum_protocol_version       = var.domain_name != "" ? "TLSv1.2_2021" : null
   }
 
   # Aliases (if domain is provided)
@@ -206,7 +200,7 @@ resource "aws_acm_certificate" "frontend" {
 # Route53 hosted zone (if domain is provided)
 resource "aws_route53_zone" "main" {
   count = var.domain_name != "" ? 1 : 0
-  
+
   name = var.domain_name
 
   tags = local.common_tags

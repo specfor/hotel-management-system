@@ -19,9 +19,9 @@ variable "aws_region" {
 }
 
 variable "availability_zones" {
-  description = "Availability zones"
+  description = "Availability zones (single AZ for free tier optimization)"
   type        = list(string)
-  default     = ["us-east-1a", "us-east-1b"]
+  default     = ["us-east-1a"]  # Single AZ to minimize costs
 }
 
 variable "vpc_cidr" {
@@ -31,33 +31,33 @@ variable "vpc_cidr" {
 }
 
 variable "private_subnets" {
-  description = "Private subnet CIDR blocks"
+  description = "Private subnet CIDR blocks (single subnet for free tier)"
   type        = list(string)
-  default     = ["10.0.1.0/24", "10.0.2.0/24"]
+  default     = ["10.0.1.0/24"]  # Single private subnet
 }
 
 variable "public_subnets" {
-  description = "Public subnet CIDR blocks"
+  description = "Public subnet CIDR blocks (single subnet for free tier)"
   type        = list(string)
-  default     = ["10.0.101.0/24", "10.0.102.0/24"]
+  default     = ["10.0.101.0/24"]  # Single public subnet
 }
 
 variable "node_instance_types" {
-  description = "EC2 instance types for EKS worker nodes"
+  description = "EC2 instance types for EKS worker nodes (free tier eligible)"
   type        = list(string)
-  default     = ["t3.micro"]  # Smallest instance for demo
+  default     = ["t3.micro"]  # Free tier eligible: 750 hours/month
 }
 
 variable "node_desired_capacity" {
-  description = "Desired number of worker nodes"
+  description = "Desired number of worker nodes (free tier: 1 node)"
   type        = number
-  default     = 1  # Single node for cost optimization
+  default     = 1  # Single node for free tier
 }
 
 variable "node_max_capacity" {
   description = "Maximum number of worker nodes"
   type        = number
-  default     = 2  # Limit max scaling for cost control
+  default     = 1  # Keep at 1 for free tier
 }
 
 variable "node_min_capacity" {
@@ -67,15 +67,15 @@ variable "node_min_capacity" {
 }
 
 variable "db_instance_class" {
-  description = "RDS instance class"
+  description = "RDS instance class (free tier: db.t3.micro or db.t4g.micro)"
   type        = string
-  default     = "db.t3.micro"
+  default     = "db.t3.micro"  # Free tier: 750 hours/month
 }
 
 variable "db_allocated_storage" {
-  description = "RDS allocated storage"
+  description = "RDS allocated storage (free tier: up to 20GB)"
   type        = number
-  default     = 10  # Minimal storage for demo
+  default     = 20  # Max free tier storage
 }
 
 variable "db_name" {
@@ -103,16 +103,22 @@ variable "enable_logging" {
 }
 
 variable "node_capacity_type" {
-  description = "Type of capacity associated with the EKS Node Group. Valid values: ON_DEMAND, SPOT"
+  description = "Type of capacity (SPOT for cost savings, ON_DEMAND for free tier)"
   type        = string
-  default     = "ON_DEMAND"
+  default     = "ON_DEMAND"  # Use ON_DEMAND for free tier eligibility
+}
+
+variable "kubernetes_version" {
+  description = "Kubernetes version for the EKS cluster"
+  type        = string
+  default     = "1.30"
 }
 
 variable "tags" {
   description = "Common tags for all resources"
   type        = map(string)
   default = {
-    Project     = "hotel-management-system"
-    ManagedBy   = "terraform"
+    Project   = "hotel-management-system"
+    ManagedBy = "terraform"
   }
 }

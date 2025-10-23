@@ -15,61 +15,57 @@ export function globalAuthMiddleware(req: AuthRequest, res: Response, next: Next
   if (isPublicRoute(req.path)) {
     return next();
   }
-  req.user = { staffId: 1, username: "admin" }; // Temporary bypass for testing
-  next();
 
   // Check for Authorization header
-  // try {
-  //   const authHeader = req.headers.authorization;
+  try {
+    const authHeader = req.headers.authorization;
 
-  //   if (!authHeader?.startsWith("Bearer ")) {
-  //     return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-  //       error: "No token provided. Authorization header must be: Bearer <token>",
-  //     });
-  //   }
+    if (!authHeader?.startsWith("Bearer ")) {
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        error: "No token provided. Authorization header must be: Bearer <token>",
+      });
+    }
 
-  //   const token = authHeader.split(" ")[1];
+    const token = authHeader.split(" ")[1];
 
-  //   if (!token) {
-  //     return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-  //       error: "No token provided",
-  //     });
-  //   }
+    if (!token) {
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        error: "No token provided",
+      });
+    }
 
-  //   const decoded = verifyToken(token);
-  //   req.user = decoded;
-  //   next();
-  // } catch {
-  //   return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-  //     error: "Invalid or expired token",
-  //   });
-  // }
+    const decoded = verifyToken(token);
+    req.user = decoded;
+    next();
+  } catch {
+    return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+      error: "Invalid or expired token",
+    });
+  }
 }
 
 //Individual route authentication middleware (for specific routes if needed)
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    req.user = { staffId: 1, username: "admin" }; // Temporary bypass for testing
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        error: "No token provided. Authorization header must be: Bearer <token>",
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    if (!token) {
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        error: "No token provided",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    req.user = decoded;
     next();
-    // const authHeader = req.headers.authorization;
-
-    // if (!authHeader?.startsWith("Bearer ")) {
-    //   return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-    //     error: "No token provided. Authorization header must be: Bearer <token>",
-    //   });
-    // }
-
-    // const token = authHeader.split(" ")[1];
-
-    // if (!token) {
-    //   return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
-    //     error: "No token provided",
-    //   });
-    // }
-
-    // const decoded = verifyToken(token);
-    // req.user = decoded;
-    // next();
   } catch {
     return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
       error: "Invalid or expired token",

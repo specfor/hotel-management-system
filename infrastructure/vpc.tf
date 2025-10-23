@@ -7,7 +7,7 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
 
   tags = merge(local.common_tags, {
-    Name = "${var.project_name}-${var.environment}-vpc"
+    Name                                          = "${var.project_name}-${var.environment}-vpc"
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
   })
 }
@@ -31,7 +31,7 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = merge(local.common_tags, {
-    Name = "${var.project_name}-${var.environment}-public-${count.index + 1}"
+    Name                                          = "${var.project_name}-${var.environment}-public-${count.index + 1}"
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
     "kubernetes.io/role/elb"                      = "1"
   })
@@ -46,7 +46,7 @@ resource "aws_subnet" "private" {
   availability_zone = var.availability_zones[count.index]
 
   tags = merge(local.common_tags, {
-    Name = "${var.project_name}-${var.environment}-private-${count.index + 1}"
+    Name                                          = "${var.project_name}-${var.environment}-private-${count.index + 1}"
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
     "kubernetes.io/role/internal-elb"             = "1"
   })
@@ -56,7 +56,7 @@ resource "aws_subnet" "private" {
 resource "aws_eip" "nat" {
   count = length(var.public_subnets)
 
-  domain = "vpc"
+  domain     = "vpc"
   depends_on = [aws_internet_gateway.main]
 
   tags = merge(local.common_tags, {

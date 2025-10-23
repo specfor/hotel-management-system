@@ -1,66 +1,51 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Receipt, FileText, Calculator, AlertCircle, CheckCircle } from "lucide-react";
+import { Receipt, FileText, Calculator, AlertCircle, CheckCircle, Plus } from "lucide-react";
 import Card from "../../components/primary/Card";
 import Badge from "../../components/primary/Badge";
+import Button from "../../components/primary/Button";
 import { useAlert } from "../../hooks/useAlert";
-import { type FinalBill, BookingStatusEnum, type Booking } from "../../types";
+import { type FinalBill, type Booking } from "../../types";
+import { finalBillApi, type FinalBillCreateRequest } from "../../api_connection/finalBill";
+import { bookingApi } from "../../api_connection/bookings";
+import { apiUtils } from "../../api_connection/base";
 
 interface FinalBillTabProps {
   bookingId: number;
 }
 
 const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
-  const { showError } = useAlert();
+  const { showError, showSuccess } = useAlert();
   const [finalBill, setFinalBill] = useState<FinalBill | null>(null);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
 
   const loadFinalBill = useCallback(async () => {
     try {
       setIsLoading(true);
 
-      // TODO: Replace with actual API call
-      // First check if booking is checked out
-      const mockBooking: Booking = {
-        booking_id: bookingId,
-        guest_id: 1,
-        room_id: 101,
-        user_id: 1,
-        booking_status: BookingStatusEnum.CHECKED_OUT,
-        booking_date: "2024-01-20",
-        booking_time: "14:30",
-        check_in_date: "2024-01-21",
-        check_in_time: "15:00",
-        check_out_date: "2024-01-24",
-        check_out_time: "11:00",
-        total_amount: 850.5,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      setBooking(mockBooking);
-
-      if (mockBooking.booking_status === BookingStatusEnum.CHECKED_OUT) {
-        // Load final bill only for checked-out bookings
-        const mockBill: FinalBill = {
-          bill_id: 1,
-          booking_id: bookingId,
-          room_charges: 600.0,
-          service_charges: 240.0,
-          tax_amount: 67.2,
-          discount_amount: 45.0,
-          late_checkout_charges: 0.0,
-          total_amount: 862.2,
-          total_paid_amount: 700.0,
-          outstanding_amount: 162.2,
-          bill_date: "2024-01-24",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setFinalBill(mockBill);
+      // First get the booking details to check if it's checked out
+      const bookingResponse = await bookingApi.getBookingById(bookingId);
+      if (!bookingResponse.success || !bookingResponse.data.booking) {
+        throw new Error(bookingResponse.message || "Failed to load booking details");
       }
-    } catch {
-      showError("Failed to load final bill information");
+
+      const bookingData = bookingResponse.data.booking;
+      setBooking(bookingData);
+
+      // Only load final bill if booking is checked out
+      if (bookingData.bookingStatus.toLowerCase() === "checked-out") {
+        const billResponse = await finalBillApi.getFinalBillByBookingId(bookingId);
+        if (billResponse.success && billResponse.data.finalBill) {
+          setFinalBill(billResponse.data.finalBill);
+        } else {
+          // Final bill might not exist yet, this is not necessarily an error
+          console.log("Final bill not found, might be processing:", billResponse.message);
+        }
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     } finally {
       setIsLoading(false);
     }
@@ -70,14 +55,48 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
     loadFinalBill();
   }, [loadFinalBill]);
 
-  const formatCurrency = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
+  const handleCreateBill = async () => {
+    if (!booking) {
+      showError("Booking information not available");
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      const createData: FinalBillCreateRequest = {
+        user_id: booking.userId,
+        booking_id: booking.bookingId,
+      };
+
+      const response = await finalBillApi.createFinalBill(createData);
+      if (response.success) {
+        showSuccess("Final bill created successfully");
+        await loadFinalBill(); // Reload to get the new bill
+      } else {
+        showError(response.message || "Failed to create final bill");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const formatCurrency = (amount: string | number) => {
+    const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+    return `$${numAmount.toFixed(2)}`;
   };
 
   const getBillStatusBadge = () => {
     if (!finalBill) return null;
 
-    if (finalBill.outstanding_amount > 0) {
+    const outstandingAmount =
+      typeof finalBill.outstanding_amount === "string"
+        ? parseFloat(finalBill.outstanding_amount)
+        : finalBill.outstanding_amount;
+
+    if (outstandingAmount > 0) {
       return (
         <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
           <AlertCircle className="h-3 w-3" />
@@ -105,14 +124,14 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
     );
   }
 
-  if (!booking || booking.booking_status !== BookingStatusEnum.CHECKED_OUT) {
+  if (!booking || booking.bookingStatus.toLowerCase() !== "checked-out") {
     return (
       <div className="text-center py-12">
         <Receipt className="mx-auto h-12 w-12 text-gray-400" />
         <h3 className="mt-2 text-sm font-medium text-gray-900">Final Bill Not Available</h3>
         <p className="mt-1 text-sm text-gray-500">Final bill will be generated after guest checkout.</p>
         <div className="mt-4">
-          <Badge className="bg-blue-100 text-blue-800">Current Status: {booking?.booking_status || "Unknown"}</Badge>
+          <Badge className="bg-blue-100 text-blue-800">Current Status: {booking?.bookingStatus || "Unknown"}</Badge>
         </div>
       </div>
     );
@@ -122,8 +141,16 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
     return (
       <div className="text-center py-12">
         <FileText className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">Bill Processing</h3>
-        <p className="mt-1 text-sm text-gray-500">Final bill is being processed. Please try again in a few moments.</p>
+        <h3 className="mt-2 text-sm font-medium text-gray-900">Final Bill Ready to Generate</h3>
+        <p className="mt-1 text-sm text-gray-500">
+          Booking is checked out. Create the final bill to proceed with billing.
+        </p>
+        <div className="mt-6">
+          <Button onClick={handleCreateBill} disabled={isCreating} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            {isCreating ? "Creating Bill..." : "Create Final Bill"}
+          </Button>
+        </div>
       </div>
     );
   }
@@ -137,7 +164,7 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
             <Receipt className="h-5 w-5" />
             Final Bill
           </h3>
-          <p className="text-sm text-gray-600">Generated on {new Date(finalBill.bill_date).toLocaleDateString()}</p>
+          <p className="text-sm text-gray-600">Generated on {new Date(finalBill.created_at).toLocaleDateString()}</p>
         </div>
         {getBillStatusBadge()}
       </div>
@@ -162,20 +189,20 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
               {/* Service Charges */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-sm text-gray-600">Service Charges</span>
-                <span className="font-medium">{formatCurrency(finalBill.service_charges)}</span>
+                <span className="font-medium">{formatCurrency(finalBill.total_service_charges)}</span>
               </div>
 
               {/* Tax */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-sm text-gray-600">Total Tax</span>
-                <span className="font-medium">{formatCurrency(finalBill.tax_amount)}</span>
+                <span className="font-medium">{formatCurrency(finalBill.total_tax)}</span>
               </div>
 
               {/* Late Checkout Charges */}
-              {finalBill.late_checkout_charges > 0 && (
+              {parseFloat(finalBill.late_checkout_charge) > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-sm text-gray-600">Late Checkout Charges</span>
-                  <span className="font-medium text-orange-600">{formatCurrency(finalBill.late_checkout_charges)}</span>
+                  <span className="font-medium text-orange-600">{formatCurrency(finalBill.late_checkout_charge)}</span>
                 </div>
               )}
 
@@ -184,21 +211,26 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
                 <span className="text-sm font-medium text-gray-700">Subtotal</span>
                 <span className="font-semibold">
                   {formatCurrency(
-                    finalBill.room_charges +
-                      finalBill.service_charges +
-                      finalBill.tax_amount +
-                      finalBill.late_checkout_charges
+                    parseFloat(finalBill.room_charges) +
+                      parseFloat(finalBill.total_service_charges) +
+                      parseFloat(finalBill.total_tax) +
+                      parseFloat(finalBill.late_checkout_charge)
                   )}
                 </span>
               </div>
 
               {/* Discount */}
-              {finalBill.discount_amount > 0 && (
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">Total Discount</span>
-                  <span className="font-medium text-green-600">-{formatCurrency(finalBill.discount_amount)}</span>
-                </div>
-              )}
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Total Discount</span>
+                <span
+                  className={`font-medium ${
+                    parseFloat(finalBill.total_discount) > 0 ? "text-green-600" : "text-gray-500"
+                  }`}
+                >
+                  {parseFloat(finalBill.total_discount) > 0 ? "-" : ""}
+                  {formatCurrency(finalBill.total_discount)}
+                </span>
+              </div>
 
               {/* Total Amount */}
               <div className="flex justify-between items-center py-3 border-t-2 border-gray-200">
@@ -224,7 +256,7 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
               {/* Total Paid */}
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-sm text-gray-600">Total Paid</span>
-                <span className="font-medium text-green-600">{formatCurrency(finalBill.total_paid_amount)}</span>
+                <span className="font-medium text-green-600">{formatCurrency(finalBill.paid_amount)}</span>
               </div>
 
               {/* Outstanding Amount */}
@@ -232,7 +264,7 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
                 <span className="text-lg font-bold text-gray-900">Outstanding Amount</span>
                 <span
                   className={`text-lg font-bold ${
-                    finalBill.outstanding_amount > 0 ? "text-red-600" : "text-green-600"
+                    parseFloat(finalBill.outstanding_amount) > 0 ? "text-red-600" : "text-green-600"
                   }`}
                 >
                   {formatCurrency(finalBill.outstanding_amount)}
@@ -245,12 +277,12 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
                   <div>
                     <h5 className="font-medium text-gray-900">Payment Status</h5>
                     <p className="text-sm text-gray-600 mt-1">
-                      {finalBill.outstanding_amount > 0
+                      {parseFloat(finalBill.outstanding_amount) > 0
                         ? `${formatCurrency(finalBill.outstanding_amount)} remaining`
                         : "Payment completed"}
                     </p>
                   </div>
-                  {finalBill.outstanding_amount > 0 ? (
+                  {parseFloat(finalBill.outstanding_amount) > 0 ? (
                     <AlertCircle className="h-8 w-8 text-yellow-500" />
                   ) : (
                     <CheckCircle className="h-8 w-8 text-green-500" />
@@ -280,10 +312,8 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
             <p>• Room charges calculated based on nightly rate and duration of stay</p>
             <p>• Service charges include all additional services used during the stay</p>
             <p>• Tax calculated as applicable percentage on room and service charges</p>
-            {finalBill.discount_amount > 0 && (
-              <p>• Discounts applied as per promotional offers or guest loyalty program</p>
-            )}
-            {finalBill.late_checkout_charges > 0 && (
+            <p>• Discounts applied as per promotional offers or guest loyalty program</p>
+            {parseFloat(finalBill.late_checkout_charge) > 0 && (
               <p>• Late checkout charges applied for checkout after standard time</p>
             )}
             <p className="mt-3 font-medium text-gray-700">

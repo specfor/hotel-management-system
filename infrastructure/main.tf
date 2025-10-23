@@ -2,7 +2,7 @@
 
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -22,12 +22,14 @@ terraform {
     }
   }
 
-  # Uncomment and configure for remote state storage
-  # backend "s3" {
-  #   bucket = "your-terraform-state-bucket"
-  #   key    = "hotel-management/terraform.tfstate"
-  #   region = "us-east-1"
-  # }
+  # Remote state storage in S3
+  backend "s3" {
+    bucket         = "hotel-management-terraform-state-640272544168"
+    key            = "infrastructure/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "hotel-management-terraform-locks"
+    encrypt        = true
+  }
 }
 
 provider "aws" {
@@ -53,7 +55,7 @@ data "aws_region" "current" {}
 # Local values
 locals {
   cluster_name = "${var.project_name}-${var.environment}-eks"
-  
+
   common_tags = merge(var.tags, {
     Environment = var.environment
     ClusterName = local.cluster_name

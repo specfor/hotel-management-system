@@ -7,6 +7,9 @@ import Modal from "../../components/Modal";
 import Card from "../../components/primary/Card";
 import { useAlert } from "../../hooks/useAlert";
 import { ServiceUnitType, formatUnitType, type ServiceUsage, type ChargeableService } from "../../types";
+import { serviceUsageApi } from "../../api_connection/serviceUsage";
+import { chargeableServiceApi } from "../../api_connection/services";
+import { apiUtils } from "../../api_connection/base";
 
 interface ServiceUsageTabProps {
   bookingId: number;
@@ -36,119 +39,101 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
 
   const loadServiceUsages = useCallback(async () => {
     try {
-      // TODO: Replace with actual API call
-      const mockUsages: ServiceUsage[] = [
-        {
-          usage_id: 1,
+      const response = await serviceUsageApi.getServiceUsageByBookingId(bookingId);
+      if (response.success && response.data) {
+        // Handle the new backend response format
+        const servicesArray = response.data.services || [];
+
+        const transformedUsages: ServiceUsage[] = servicesArray.map((service) => ({
+          usage_id: service.recordId,
+          service_id: service.serviceId,
           booking_id: bookingId,
-          service_id: 1,
-          usage_date: "2024-01-21",
-          usage_time: "10:30",
-          quantity: 2,
-          unit_price: 15.0,
-          total_price: 30.0,
-          notes: "Extra towels requested",
+          usage_date: service.dateTime.split("T")[0], // Extract date part
+          usage_time: service.dateTime.split("T")[1]?.split(".")[0] || "00:00:00", // Extract time part
+          quantity: service.quantity,
+          unit_price: 0, // Will be populated from service data
+          total_price: service.totalPrice,
+          notes: service.notes,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          service_name: "Room Service",
-          unit_type: ServiceUnitType.PER_ITEM,
-        },
-        {
-          usage_id: 2,
-          booking_id: bookingId,
-          service_id: 2,
-          usage_date: "2024-01-22",
-          usage_time: "14:00",
-          quantity: 1,
-          unit_price: 120.0,
-          total_price: 120.0,
-          notes: "Relaxing massage",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          service_name: "Spa Treatment",
-          unit_type: ServiceUnitType.PER_HOUR,
-        },
-        {
-          usage_id: 3,
-          booking_id: bookingId,
-          service_id: 3,
-          usage_date: "2024-01-23",
-          usage_time: "19:30",
-          quantity: 2,
-          unit_price: 45.0,
-          total_price: 90.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          service_name: "Dinner Service",
-          unit_type: ServiceUnitType.PER_PERSON,
-        },
-      ];
-      setServiceUsages(mockUsages);
-    } catch {
-      showError("Failed to load service usage records");
+          service_name: service.serviceName, // Already included in response
+        }));
+
+        console.log("Backend response:", response.data);
+        console.log("Transformed usages:", transformedUsages);
+
+        setServiceUsages(transformedUsages);
+        setAreServicesPopulated(false); // Reset flag when new data loads
+      } else {
+        showError(response.message || "Failed to load service usage records");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   }, [bookingId, showError]);
 
   const loadServices = useCallback(async () => {
     try {
-      // TODO: Replace with actual API call
-      const mockServices: ChargeableService[] = [
-        {
-          service_id: 1,
-          service_name: "Room Service",
-          branch_id: 1,
-          unit_type: ServiceUnitType.PER_ITEM,
-          unit_price: 15.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          service_id: 2,
-          service_name: "Spa Treatment",
-          branch_id: 1,
-          unit_type: ServiceUnitType.PER_HOUR,
-          unit_price: 120.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          service_id: 3,
-          service_name: "Dinner Service",
-          branch_id: 1,
-          unit_type: ServiceUnitType.PER_PERSON,
-          unit_price: 45.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          service_id: 4,
-          service_name: "Laundry Service",
-          branch_id: 1,
-          unit_type: ServiceUnitType.PER_ITEM,
-          unit_price: 8.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ];
-      setServices(mockServices);
-    } catch {
-      showError("Failed to load available services");
+      const response = await chargeableServiceApi.getServices();
+      if (response.success && response.data) {
+        console.log("Services response:", response.data);
+        setServices(response.data);
+      } else {
+        showError(response.message || "Failed to load available services");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   }, [showError]);
+  const [areServicesPopulated, setAreServicesPopulated] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
-      await loadServiceUsages();
-      await loadServices();
+      await loadServices(); // Load services first
+      await loadServiceUsages(); // Then load usages
     };
     loadData();
   }, [loadServiceUsages, loadServices]);
+
+  // Populate service details in usage records after both datasets are loaded
+  useEffect(() => {
+    if (serviceUsages.length > 0 && services.length > 0 && !areServicesPopulated) {
+      const updatedUsages = serviceUsages.map((usage) => {
+        const service = services.find((s) => s.service_id === usage.service_id);
+        if (service) {
+          return {
+            ...usage,
+            unit_price: service.unit_price,
+            unit_type: service.unit_type,
+          };
+        }
+        return usage;
+      });
+      setServiceUsages(updatedUsages);
+      setAreServicesPopulated(true);
+    }
+  }, [serviceUsages, services, areServicesPopulated]);
 
   const filteredUsages = serviceUsages.filter(
     (usage) =>
       usage.service_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       usage.notes?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  interface FilteredUsagesCallback {
+    (newFilteredUsages: ServiceUsage[]): void;
+  }
+
+  const filteredUsagesEffect: FilteredUsagesCallback = (newFilteredUsages) => {
+    // Do something with the new filtered usages
+    console.log(newFilteredUsages);
+  };
+
+  useEffect(() => {
+    filteredUsagesEffect(filteredUsages);
+  }, [filteredUsages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,37 +156,47 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
         return;
       }
 
-      const totalPrice = selectedService.unit_price * quantity;
-
-      const usageData = {
-        usage_id: editingUsage ? editingUsage.usage_id : Math.max(...serviceUsages.map((u) => u.usage_id), 0) + 1,
-        booking_id: bookingId,
-        service_id: parseInt(formData.service_id),
-        usage_date: formData.usage_date,
-        usage_time: formData.usage_time,
-        quantity: quantity,
-        unit_price: selectedService.unit_price,
-        total_price: totalPrice,
-        notes: formData.notes || undefined,
-        created_at: editingUsage?.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        service_name: selectedService.service_name,
-        unit_type: selectedService.unit_type,
-      };
-
       if (editingUsage) {
         // Update existing usage
-        setServiceUsages(serviceUsages.map((u) => (u.usage_id === editingUsage.usage_id ? usageData : u)));
-        showSuccess("Service usage updated successfully");
+        const updateData = {
+          service_id: parseInt(formData.service_id),
+          usage_date: formData.usage_date,
+          usage_time: formData.usage_time,
+          quantity: quantity,
+          notes: formData.notes || undefined,
+        };
+
+        const response = await serviceUsageApi.updateServiceUsage(editingUsage.usage_id, updateData);
+        if (response.success && response.data.updatedRecord) {
+          showSuccess("Service usage updated successfully");
+          await loadServiceUsages(); // Reload to get fresh data
+        } else {
+          showError(response.message || "Failed to update service usage");
+        }
       } else {
-        // Add new usage
-        setServiceUsages([...serviceUsages, usageData]);
-        showSuccess("Service usage added successfully");
+        // Create new usage
+        const createData = {
+          booking_id: bookingId,
+          service_id: parseInt(formData.service_id),
+          usage_date: formData.usage_date,
+          usage_time: formData.usage_time,
+          quantity: quantity,
+          notes: formData.notes || undefined,
+        };
+
+        const response = await serviceUsageApi.createServiceUsage(createData);
+        if (response.success && response.data.createdRecord) {
+          showSuccess("Service usage added successfully");
+          await loadServiceUsages(); // Reload to get fresh data
+        } else {
+          showError(response.message || "Failed to add service usage");
+        }
       }
 
       resetForm();
-    } catch {
-      showError(editingUsage ? "Failed to update service usage" : "Failed to add service usage");
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   };
 
@@ -221,10 +216,16 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
     if (!confirm("Are you sure you want to delete this service usage record?")) return;
 
     try {
-      setServiceUsages(serviceUsages.filter((u) => u.usage_id !== usageId));
-      showSuccess("Service usage deleted successfully");
-    } catch {
-      showError("Failed to delete service usage");
+      const response = await serviceUsageApi.deleteServiceUsage(usageId);
+      if (response.success) {
+        await loadServiceUsages(); // Reload to get fresh data
+        showSuccess("Service usage deleted successfully");
+      } else {
+        showError(response.message || "Failed to delete service usage");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   };
 
@@ -355,7 +356,7 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{usage.quantity}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${usage.unit_price.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${usage.unit_price}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     ${usage.total_price.toFixed(2)}
                   </td>
@@ -409,9 +410,8 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
             >
               <option value="">Select Service</option>
               {services.map((service) => (
-                <option key={service.service_id} value={service.service_id.toString()}>
-                  {service.service_name} (${service.unit_price.toFixed(2)} per{" "}
-                  {formatUnitType(service.unit_type).toLowerCase()})
+                <option key={service.service_id} value={service.service_id}>
+                  {service.service_name} (${service.unit_price} per {formatUnitType(service.unit_type).toLowerCase()})
                 </option>
               ))}
             </select>
@@ -485,8 +485,7 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
               <option value="">Select Service</option>
               {services.map((service) => (
                 <option key={service.service_id} value={service.service_id.toString()}>
-                  {service.service_name} (${service.unit_price.toFixed(2)} per{" "}
-                  {formatUnitType(service.unit_type).toLowerCase()})
+                  {service.service_name} (${service.unit_price} per {formatUnitType(service.unit_type).toLowerCase()})
                 </option>
               ))}
             </select>

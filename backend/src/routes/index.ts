@@ -10,6 +10,15 @@ import {
   updateStaffMember,
   deleteStaffMember,
 } from "@src/controllers/staffController";
+import {
+  getRevenueRecords,
+  getRevenueById,
+  getRevenueByBranchId,
+  getRevenueByMonthNumber,
+  createRevenueRecord,
+  updateRevenueRecord,
+  deleteRevenueRecord,
+} from "@src/controllers/revenueController";
 import * as branchController from "@src/controllers/branchController";
 import * as roomTypeController from "@src/controllers/roomTypeController";
 import * as paymentController from "@src/controllers/paymentController";
@@ -20,6 +29,11 @@ import * as serviceController from "@src/controllers/chargeableServiceController
 import * as bookingController from "@src/controllers/bookingController";
 import * as serviceUsageController from "@src/controllers/serviceUsageController";
 import * as guestController from "@src/controllers/guestController";
+import * as monthlyRevenueController from "@src/controllers/monthlyRevenueController";
+import * as roomOccupancyController from "@src/controllers/roomOccupancyController";
+import * as guestBillingController from "@src/controllers/guestBillingController";
+import * as serviceReportController from "@src/controllers/serviceReportController";
+import * as dashboardController from "@src/controllers/dashboardController";
 
 /******************************************************************************
                                 Setup
@@ -33,14 +47,14 @@ apiRouter.use("/api", apiRouter);
 apiRouter.post("/auth/register", register);
 apiRouter.post("/auth/login", login);
 
-// User Routes (Public)
+// User Routes (Protected by global auth middleware)
 
 apiRouter.get("/users", getUsers);
 apiRouter.get("/users/staff/:staffId", getUserByStaffId);
 apiRouter.get("/users/username/:username", getUserByUsername);
 apiRouter.delete("/users/:staffId", deleteUserByStaffId);
 
-// Staff Routes (Public)
+// Staff Routes (Protected by global auth middleware)
 
 apiRouter.get("/staff", getStaffMembers);
 apiRouter.get("/staff/:staffId", getStaffById);
@@ -49,6 +63,17 @@ apiRouter.post("/staff", createStaffMember);
 apiRouter.put("/staff/:staffId", updateStaffMember);
 apiRouter.delete("/staff/:staffId", deleteStaffMember);
 
+// Revenue Routes (Protected by global auth middleware)
+
+apiRouter.get("/revenue", getRevenueRecords);
+apiRouter.get("/revenue/:recordId", getRevenueById);
+apiRouter.get("/revenue/branch/:branchId", getRevenueByBranchId);
+apiRouter.get("/revenue/month/:month", getRevenueByMonthNumber);
+apiRouter.post("/revenue", createRevenueRecord);
+apiRouter.put("/revenue/:recordId", updateRevenueRecord);
+apiRouter.delete("/revenue/:recordId", deleteRevenueRecord);
+
+apiRouter.use("/api", apiRouter);
 // endpoints for guest
 apiRouter.get("/guest", guestController.getAllGuests);
 apiRouter.get("/guest/:id", guestController.getGuestByID);
@@ -75,7 +100,8 @@ apiRouter.delete("/room-type/:branchId/:roomTypeName", roomTypeController.delete
 
 // endpoints for payment
 apiRouter.get("/payment", paymentController.getAllPayments);
-apiRouter.get("/payment/:id", paymentController.getAllPaymentsByBillID);
+apiRouter.get("/payment/bill/:bill_id", paymentController.getAllPaymentsByBillID);
+apiRouter.get("/payment/:id", paymentController.getPaymentByID);
 apiRouter.post("/payment", paymentController.addNewPayment);
 apiRouter.put("/payment/:id", paymentController.updatePayment);
 apiRouter.delete("/payment/:id", paymentController.deletePayment);
@@ -114,13 +140,35 @@ apiRouter.post("/booking", bookingController.createBooking);
 apiRouter.get("/booking/:bookingID", bookingController.getBookingByID);
 apiRouter.put("/booking/:bookingID", bookingController.updateBooking);
 apiRouter.delete("/booking/:bookingID", bookingController.deleteBooking);
+apiRouter.get("/booking/:bookingID/services", serviceUsageController.getServicesByBookingID);
+
 
 // endpoints for service-usage
 apiRouter.get("/service-usage", serviceUsageController.getAllServiceUsage);
 apiRouter.post("/service-usage", serviceUsageController.createServiceUsage);
-apiRouter.get("/service-usage/:usageID", serviceUsageController.getServiceUsageByID);
-apiRouter.put("/service-usage/:usageID", serviceUsageController.updateServiceUsage);
-apiRouter.delete("/service-usage/:usageID", serviceUsageController.deleteServiceUsage);
+apiRouter.get("/service-usage/:recordID", serviceUsageController.getServiceUsageByID);
+apiRouter.put("/service-usage/:recordID", serviceUsageController.updateServiceUsage);
+apiRouter.delete("/service-usage/:recordID", serviceUsageController.deleteServiceUsage);
+
+// endpoint to get services associated with a booking
+
+// endpoints for monthly revenue reports
+apiRouter.get("/monthly-revenue", monthlyRevenueController.getMonthlyRevenue);
+
+// endpoints for room occupancy reports
+apiRouter.get("/room-occupancy", roomOccupancyController.getRoomOccupancy);
+apiRouter.get("/room-occupancy/summary", roomOccupancyController.getOccupancySummary);
+
+// endpoints for guest billing reports
+apiRouter.get("/guest-billing", guestBillingController.getGuestBilling);
+apiRouter.get("/guest-billing/summary", guestBillingController.getBillingSummary);
+
+// endpoints for service reports
+apiRouter.get("/service-usage-breakdown", serviceReportController.getServiceUsageBreakdown);
+apiRouter.get("/top-services-trends", serviceReportController.getTopServicesTrends);
+apiRouter.get("/service-usage-summary", serviceReportController.getServiceUsageSummary);
+// endpoints for dashboard
+apiRouter.get("/dashboard", dashboardController.getDashboardStats);
 
 /******************************************************************************
  Export default

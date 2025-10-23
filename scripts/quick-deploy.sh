@@ -111,6 +111,9 @@ project_name = "$PROJECT_NAME"
 environment  = "$ENVIRONMENT"
 aws_region   = "$AWS_REGION"
 
+# Kubernetes version
+kubernetes_version = "1.30"
+
 # Demo optimized settings (edit as needed)
 node_instance_types   = ["t3.micro"]
 node_desired_capacity = 1

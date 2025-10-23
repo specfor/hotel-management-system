@@ -13,11 +13,11 @@ CREATE OR REPLACE FUNCTION update_room_status()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.booking_status = 'Checked-In' THEN
-        UPDATE room SET room_status = 'Occupied' WHERE room_id = NEW.room_id;
-    ELSIF NEW.booking_status = 'Checked-Out' OR NEW.booking_status = 'Cancelled' THEN
-        UPDATE room SET room_status = 'Available' WHERE room_id = NEW.room_id;
-    END IF;
-    RETURN NEW;
+UPDATE room SET room_status = 'Occupied' WHERE room_id = NEW.room_id;
+ELSIF NEW.booking_status = 'Checked-Out' OR NEW.booking_status = 'Cancelled' THEN
+UPDATE room SET room_status = 'Available' WHERE room_id = NEW.room_id;
+END IF;
+RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -34,8 +34,8 @@ BEGIN
           AND booking_id <> NEW.booking_id
     ) THEN
         RAISE EXCEPTION 'Room % is already booked for the given period.', NEW.room_id;
-    END IF;
-    RETURN NEW;
+END IF;
+RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -43,7 +43,7 @@ CREATE OR REPLACE FUNCTION calc_service_total()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.total_price := NEW.quantity * (SELECT unit_price FROM chargeable_services WHERE service_id = NEW.service_id);
-    RETURN NEW;
+RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -77,7 +77,7 @@ CREATE OR REPLACE FUNCTION update_final_bill_outstanding()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.outstanding_amount := COALESCE(NEW.total_amount,0) - COALESCE(NEW.paid_amount,0);
-    RETURN NEW;
+RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -86,22 +86,22 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION calculate_room_charges(p_booking_id INT)
 RETURNS NUMERIC AS $$
 DECLARE
-    nights INT;
+nights INT;
     room_rate NUMERIC;
 BEGIN
-    SELECT EXTRACT(DAY FROM (b.check_out - b.check_in)) 
-    INTO nights
-    FROM booking b
-    WHERE b.booking_id = p_booking_id;
+SELECT EXTRACT(DAY FROM (b.check_out - b.check_in))
+INTO nights
+FROM booking b
+WHERE b.booking_id = p_booking_id;
 
-    SELECT rt.daily_rate
-    INTO room_rate
-    FROM booking b
-    JOIN room r ON b.room_id = r.room_id
-    JOIN room_type rt ON r.type_id = rt.type_id
-    WHERE b.booking_id = p_booking_id;
+SELECT rt.daily_rate
+INTO room_rate
+FROM booking b
+         JOIN room r ON b.room_id = r.room_id
+         JOIN room_type rt ON r.type_id = rt.type_id
+WHERE b.booking_id = p_booking_id;
 
-    RETURN COALESCE(room_rate * nights, 0);
+RETURN COALESCE(room_rate * nights, 0);
 END;
 $$ LANGUAGE plpgsql;
 
@@ -109,14 +109,14 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION calculate_total_service_charges(p_booking_id INT)
 RETURNS NUMERIC AS $$
 DECLARE
-    service_total NUMERIC;
+service_total NUMERIC;
 BEGIN
-    SELECT COALESCE(SUM(su.total_price), 0)
-    INTO service_total
-    FROM service_usage su
-    WHERE su.booking_id = p_booking_id;
+SELECT COALESCE(SUM(su.total_price), 0)
+INTO service_total
+FROM service_usage su
+WHERE su.booking_id = p_booking_id;
 
-    RETURN service_total;
+RETURN service_total;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -124,26 +124,26 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION calculate_late_checkout_charge(p_booking_id INT)
 RETURNS NUMERIC AS $$
 DECLARE
-    late_hours NUMERIC;
+late_hours NUMERIC;
     late_rate NUMERIC;
     check_out_time TIMESTAMP;
 BEGIN
     -- Get the scheduled checkout time and the room's late checkout rate
-    SELECT b.check_out, rt.late_checkout_rate
-    INTO check_out_time, late_rate
-    FROM booking b
-    JOIN room r ON b.room_id = r.room_id
-    JOIN room_type rt ON r.type_id = rt.type_id
-    WHERE b.booking_id = p_booking_id;
+SELECT b.check_out, rt.late_checkout_rate
+INTO check_out_time, late_rate
+FROM booking b
+         JOIN room r ON b.room_id = r.room_id
+         JOIN room_type rt ON r.type_id = rt.type_id
+WHERE b.booking_id = p_booking_id;
 
-    -- Calculate hours late (if positive)
-    late_hours := EXTRACT(EPOCH FROM (NOW() - check_out_time)) / 3600;
+-- Calculate hours late (if positive)
+late_hours := EXTRACT(EPOCH FROM (NOW() - check_out_time)) / 3600;
 
     IF late_hours < 0 THEN
         late_hours := 0; -- not late yet
-    END IF;
+END IF;
 
-    RETURN COALESCE(late_hours * late_rate, 0);
+RETURN COALESCE(late_hours * late_rate, 0);
 END;
 $$ LANGUAGE plpgsql;
 
@@ -156,7 +156,7 @@ BEGIN
     NEW.total_service_charges := calculate_total_service_charges(NEW.booking_id);
     NEW.total_discount := calculate_total_discount(NEW.booking_id);
 
-    RETURN NEW;
+RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Plus, Search, Edit, Trash2, Calendar, Eye, User, MapPin } from "lucide-react";
+import { Plus, Search, Trash2, Calendar, Eye, User, MapPin } from "lucide-react";
 import Button from "../../components/primary/Button";
 import Input from "../../components/primary/Input";
 import Badge from "../../components/primary/Badge";
@@ -9,8 +9,12 @@ import { useAlert } from "../../hooks/useAlert";
 import { useNavigate } from "react-router-dom";
 import CreateBookingModal from "./CreateBookingModal";
 import UpdateBookingModal from "./UpdateBookingModal";
-import { BookingStatusEnum, formatBookingStatus, getBookingStatusColor } from "../../types";
-import type { Booking, Guest, Room, User as StaffUser, CreateBookingRequest, UpdateBookingRequest } from "../../types";
+import { BookingStatus, formatBookingStatus, getBookingStatusColor } from "../../types/booking";
+import type { Booking, Guest, Room, CreateBookingRequest, UpdateBookingRequest } from "../../types";
+import { bookingApi } from "../../api_connection/bookings";
+import { guestService } from "../../api_connection/guests";
+import { roomApi } from "../../api_connection/rooms";
+import { apiUtils } from "../../api_connection/base";
 
 const BookingManagement: React.FC = () => {
   const { showSuccess, showError } = useAlert();
@@ -18,7 +22,6 @@ const BookingManagement: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [staff, setStaff] = useState<StaffUser[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -29,146 +32,48 @@ const BookingManagement: React.FC = () => {
 
   const loadBookings = useCallback(async () => {
     try {
-      // TODO: Replace with actual API call
-      const mockBookings: Booking[] = [
-        {
-          booking_id: 1,
-          guest_id: 1,
-          room_id: 1,
-          user_id: 1,
-          booking_status: BookingStatusEnum.CONFIRMED,
-          booking_date: "2024-01-15",
-          booking_time: "14:30",
-          check_in_date: "2024-01-20",
-          check_in_time: "15:00",
-          check_out_date: "2024-01-25",
-          check_out_time: "11:00",
-          special_requests: "Late checkout requested",
-          total_amount: 750.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          guest_name: "John Doe",
-          guest_nic: "123456789V",
-          room_number: "101",
-          room_type_name: "Deluxe Room",
-          branch_name: "Main Branch",
-          user_name: "Alice Johnson",
-        },
-        {
-          booking_id: 2,
-          guest_id: 2,
-          room_id: 2,
-          user_id: 2,
-          booking_status: BookingStatusEnum.CHECKED_IN,
-          booking_date: "2024-01-10",
-          booking_time: "09:15",
-          check_in_date: "2024-01-18",
-          check_in_time: "14:00",
-          check_out_date: "2024-01-22",
-          check_out_time: "12:00",
-          total_amount: 480.0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          guest_name: "Jane Smith",
-          guest_nic: "987654321V",
-          room_number: "205",
-          room_type_name: "Standard Room",
-          branch_name: "Main Branch",
-          user_name: "Bob Wilson",
-        },
-      ];
-      setBookings(mockBookings);
-    } catch {
-      showError("Failed to load bookings");
+      const response = await bookingApi.getAllBookings();
+      if (response.success && response.data.bookings) {
+        console.log("bookings ", response.data);
+
+        setBookings(response.data.bookings);
+      } else {
+        showError(response.message || "Failed to load bookings");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   }, [showError]);
 
   const loadGuests = useCallback(async () => {
     try {
-      // TODO: Replace with actual API call
-      const mockGuests: Guest[] = [
-        {
-          guest_id: 1,
-          nic: "123456789V",
-          name: "John Doe",
-          age: 35,
-          contact_number: "555-0123",
-          email: "john.doe@email.com",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          guest_id: 2,
-          nic: "987654321V",
-          name: "Jane Smith",
-          age: 28,
-          contact_number: "555-0456",
-          email: "jane.smith@email.com",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ];
-      setGuests(mockGuests);
-    } catch {
-      showError("Failed to load guests");
+      const response = await guestService.getGuests();
+      if (response.success && response.data) {
+        setGuests(response.data);
+        console.log("guests ", response.data);
+      } else {
+        showError(response.message || "Failed to load guests");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   }, [showError]);
 
   const loadRooms = useCallback(async () => {
     try {
-      // TODO: Replace with actual API call
-      const mockRooms: Room[] = [
-        {
-          room_id: 1,
-          room_number: "101",
-          branch_id: 1,
-          room_type_id: 1,
-          status: "available",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          room_type_name: "Deluxe Room",
-          branch_name: "Main Branch",
-        },
-        {
-          room_id: 2,
-          room_number: "205",
-          branch_id: 1,
-          room_type_id: 2,
-          status: "occupied",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          room_type_name: "Standard Room",
-          branch_name: "Main Branch",
-        },
-      ];
-      setRooms(mockRooms);
-    } catch {
-      showError("Failed to load rooms");
-    }
-  }, [showError]);
+      const response = await roomApi.getAllRooms();
+      if (response.success && response.data) {
+        console.log(response.data);
 
-  const loadStaff = useCallback(async () => {
-    try {
-      // TODO: Replace with actual API call
-      const mockStaff: StaffUser[] = [
-        {
-          id: "1",
-          name: "Alice Johnson",
-          email: "alice.johnson@hotel.com",
-          username: "alice.johnson@hotel.com",
-          role: "manager",
-        },
-        {
-          id: "2",
-          name: "Bob Wilson",
-          email: "bob.wilson@hotel.com",
-          username: "bob.wilson@hotel.com",
-          role: "receptionist",
-        },
-      ];
-      setStaff(mockStaff);
-    } catch {
-      showError("Failed to load staff");
+        setRooms(response.data);
+      } else {
+        showError(response.message || "Failed to load rooms");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   }, [showError]);
 
@@ -177,42 +82,41 @@ const BookingManagement: React.FC = () => {
       await loadBookings();
       await loadGuests();
       await loadRooms();
-      await loadStaff();
     };
     loadData();
-  }, [loadBookings, loadGuests, loadRooms, loadStaff]);
+  }, [loadBookings, loadGuests, loadRooms]);
 
   const filteredBookings = bookings.filter((booking) => {
+    const guest = guests.find((g) => g.guest_id === booking.guestId);
+    const room = rooms.find((r) => r.room_id === booking.roomId);
+
     const matchesSearch =
-      booking.guest_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.guest_nic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.room_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.user_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || booking.booking_status === statusFilter;
+      guest?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      guest?.nic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      room?.room_id?.toString().includes(searchTerm.toLowerCase()) ||
+      booking.bookingId?.toString().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = !statusFilter || booking.bookingStatus === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
 
   const handleCreateBooking = async (bookingData: CreateBookingRequest) => {
     try {
-      // TODO: Replace with actual API call
-      const newBooking = {
-        booking_id: Math.max(...bookings.map((b) => b.booking_id)) + 1,
-        ...bookingData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        // Add populated fields for display
-        guest_name: guests.find((g) => g.guest_id === bookingData.guest_id)?.name,
-        guest_nic: guests.find((g) => g.guest_id === bookingData.guest_id)?.nic,
-        room_number: rooms.find((r) => r.room_id === bookingData.room_id)?.room_number,
-        room_type_name: rooms.find((r) => r.room_id === bookingData.room_id)?.room_type_name,
-        branch_name: rooms.find((r) => r.room_id === bookingData.room_id)?.branch_name,
-        user_name: staff.find((s) => s.id === bookingData.user_id.toString())?.name,
-      };
-      setBookings([...bookings, newBooking]);
-      showSuccess("Booking created successfully");
-      setIsCreateModalOpen(false);
-    } catch {
-      showError("Failed to create booking");
+      const response = await bookingApi.createBooking(bookingData);
+      if (response.success && response.data.booking) {
+        // Add the new booking to the list
+        setBookings([...bookings, response.data.booking]);
+        showSuccess("Booking created successfully");
+        setIsCreateModalOpen(false);
+        // Reload bookings to get the latest data with all populated fields
+        await loadBookings();
+      } else {
+        showError(response.message || "Failed to create booking");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   };
 
@@ -220,42 +124,38 @@ const BookingManagement: React.FC = () => {
     if (!editingBooking) return;
 
     try {
-      // TODO: Replace with actual API call
-      const updatedBooking = {
-        ...editingBooking,
-        ...bookingData,
-        updated_at: new Date().toISOString(),
-        // Update populated fields for display
-        guest_name: guests.find((g) => g.guest_id === bookingData.guest_id)?.name,
-        guest_nic: guests.find((g) => g.guest_id === bookingData.guest_id)?.nic,
-        room_number: rooms.find((r) => r.room_id === bookingData.room_id)?.room_number,
-        room_type_name: rooms.find((r) => r.room_id === bookingData.room_id)?.room_type_name,
-        branch_name: rooms.find((r) => r.room_id === bookingData.room_id)?.branch_name,
-        user_name: staff.find((s) => s.id === bookingData.user_id?.toString())?.name,
-      };
-      setBookings(bookings.map((b) => (b.booking_id === editingBooking.booking_id ? updatedBooking : b)));
-      showSuccess("Booking updated successfully");
-      setIsUpdateModalOpen(false);
-      setEditingBooking(null);
-    } catch {
-      showError("Failed to update booking");
+      const response = await bookingApi.updateBooking(editingBooking.bookingId, bookingData);
+      if (response.success && response.data.booking) {
+        // Update the booking in the list
+        setBookings(bookings.map((b) => (b.bookingId === editingBooking.bookingId ? response.data.booking : b)));
+        showSuccess("Booking updated successfully");
+        setIsUpdateModalOpen(false);
+        setEditingBooking(null);
+        // Reload bookings to get the latest data with all populated fields
+        await loadBookings();
+      } else {
+        showError(response.message || "Failed to update booking");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
-  };
-
-  const handleEdit = (booking: Booking) => {
-    setEditingBooking(booking);
-    setIsUpdateModalOpen(true);
   };
 
   const handleDelete = async (bookingId: number) => {
     if (!confirm("Are you sure you want to delete this booking?")) return;
 
     try {
-      // TODO: Replace with actual API call
-      setBookings(bookings.filter((b) => b.booking_id !== bookingId));
-      showSuccess("Booking deleted successfully");
-    } catch {
-      showError("Failed to delete booking");
+      const response = await bookingApi.deleteBooking(bookingId);
+      if (response.success) {
+        setBookings(bookings.filter((b) => b.bookingId !== bookingId));
+        showSuccess("Booking deleted successfully");
+      } else {
+        showError(response.message || "Failed to delete booking");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   };
 
@@ -263,8 +163,9 @@ const BookingManagement: React.FC = () => {
     navigate(`/bookings/${bookingId}`);
   };
 
-  const formatDateTime = (date: string, time: string) => {
-    return `${new Date(date).toLocaleDateString()} ${time}`;
+  const formatDateTime = (isoString: string) => {
+    const date = new Date(isoString);
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   const getDaysCount = (checkIn: string, checkOut: string) => {
@@ -299,7 +200,7 @@ const BookingManagement: React.FC = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   type="text"
-                  placeholder="Search by guest name, NIC, room number, or staff..."
+                  placeholder="Search by guest name, NIC, or booking ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -313,7 +214,7 @@ const BookingManagement: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Statuses</option>
-                {Object.values(BookingStatusEnum).map((status) => (
+                {Object.values(BookingStatus).map((status) => (
                   <option key={status} value={status}>
                     {formatBookingStatus(status)}
                   </option>
@@ -340,12 +241,6 @@ const BookingManagement: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Staff
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
-                </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -353,15 +248,13 @@ const BookingManagement: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredBookings.map((booking) => (
-                <tr key={booking.booking_id} className="hover:bg-gray-50">
+                <tr key={booking.bookingId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <Calendar className="h-5 w-5 text-gray-400 mr-3" />
                       <div>
-                        <div className="text-sm font-medium text-gray-900">#{booking.booking_id}</div>
-                        <div className="text-sm text-gray-500">
-                          {formatDateTime(booking.booking_date, booking.booking_time)}
-                        </div>
+                        <div className="text-sm font-medium text-gray-900">#{booking.bookingId}</div>
+                        <div className="text-sm text-gray-500">{formatDateTime(booking.dateTime)}</div>
                       </div>
                     </div>
                   </td>
@@ -369,8 +262,12 @@ const BookingManagement: React.FC = () => {
                     <div className="flex items-center">
                       <User className="h-5 w-5 text-gray-400 mr-3" />
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{booking.guest_name}</div>
-                        <div className="text-sm text-gray-500">{booking.guest_nic}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {guests.find((g) => g.guest_id === booking.guestId)?.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {guests.find((g) => g.guest_id === booking.guestId)?.nic}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -378,35 +275,32 @@ const BookingManagement: React.FC = () => {
                     <div className="flex items-center">
                       <MapPin className="h-5 w-5 text-gray-400 mr-3" />
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{booking.room_number}</div>
-                        <div className="text-sm text-gray-500">{booking.room_type_name}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {rooms.find((r) => r.room_id === booking.roomId)?.room_id}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      <div>In: {formatDateTime(booking.check_in_date, booking.check_in_time)}</div>
-                      <div>Out: {formatDateTime(booking.check_out_date, booking.check_out_time)}</div>
+                      <div>In: {formatDateTime(booking.checkIn)}</div>
+                      <div>Out: {formatDateTime(booking.checkOut)}</div>
                       <div className="text-xs text-gray-500">
-                        {getDaysCount(booking.check_in_date, booking.check_out_date)} nights
+                        {getDaysCount(booking.checkIn, booking.checkOut)} nights
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge className={getBookingStatusColor(booking.booking_status)}>
-                      {formatBookingStatus(booking.booking_status)}
+                    <Badge className={getBookingStatusColor(booking.bookingStatus)}>
+                      {formatBookingStatus(booking.bookingStatus)}
                     </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{booking.user_name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ${booking.total_amount?.toFixed(2) || "0.00"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end space-x-2">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleViewDetails(booking.booking_id)}
+                        onClick={() => handleViewDetails(booking.bookingId)}
                         className="text-indigo-600 hover:text-indigo-900"
                       >
                         <Eye className="h-4 w-4" />
@@ -414,15 +308,7 @@ const BookingManagement: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEdit(booking)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(booking.booking_id)}
+                        onClick={() => handleDelete(booking.bookingId)}
                         className="text-red-600 hover:text-red-900"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -454,7 +340,6 @@ const BookingManagement: React.FC = () => {
         onSubmit={handleCreateBooking}
         guests={guests}
         rooms={rooms}
-        staff={staff}
       />
 
       <UpdateBookingModal
@@ -467,7 +352,6 @@ const BookingManagement: React.FC = () => {
         booking={editingBooking}
         guests={guests}
         rooms={rooms}
-        staff={staff}
       />
     </div>
   );

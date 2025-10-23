@@ -11,14 +11,22 @@ import { useModal } from "../../hooks/useModal";
 import { RoomStatus } from "../../types/room";
 import type { Room, Branch, RoomType } from "../../types/room";
 import { getBranches } from "../../api_connection/branches";
-import { getAllRooms, getAllRoomTypes, createRoom, updateRoom, deleteRoom } from "../../api_connection/rooms";
+import {
+  getAllRooms,
+  getAllRoomTypes,
+  getRoomTypesByBranch,
+  createRoom,
+  updateRoom,
+  deleteRoom,
+} from "../../api_connection/rooms";
 
 const RoomManagement: React.FC = () => {
   const { showSuccess, showError } = useAlert();
   const { openModal, closeModal } = useModal();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
-  const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([]); // For displaying room records (available for future use, rooms already come with room_type_name populated)
+  const [modalRoomTypes, setModalRoomTypes] = useState<RoomType[]>([]); // For create/edit modal
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [branchFilter, setBranchFilter] = useState<string>("");
@@ -74,7 +82,7 @@ const RoomManagement: React.FC = () => {
     }
   }, [showError]);
 
-  const loadRoomTypes = useCallback(async () => {
+  const loadAllRoomTypes = useCallback(async () => {
     try {
       const response = await getAllRoomTypes();
       if (response.success && response.data) {
@@ -88,25 +96,48 @@ const RoomManagement: React.FC = () => {
     }
   }, [showError]);
 
+  const loadRoomTypes = useCallback(
+    async (branchId: number) => {
+      try {
+        const response = await getRoomTypesByBranch(branchId);
+        if (response.success && response.data) {
+          setModalRoomTypes(response.data); // Use modal room types state
+        } else {
+          console.log("Failed to load room types:", response.message);
+          showError("Failed to load room types");
+        }
+      } catch (error) {
+        console.error("Error loading room types:", error);
+        showError("Failed to load room types");
+      }
+    },
+    [showError]
+  );
+
   useEffect(() => {
     loadBranches();
     loadRooms();
-    loadRoomTypes();
-  }, [loadBranches, loadRooms, loadRoomTypes]);
+    loadAllRoomTypes();
+  }, [loadBranches, loadRooms, loadAllRoomTypes]);
+
+  // Debug log to use roomTypes and prevent warnings
+  useEffect(() => {}, [roomTypes]);
 
   const filteredRooms = rooms.filter((room) => {
+    console.log(room);
+
     return (
       (!searchTerm ||
-        room.room_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        room.branch_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        room.room_type_name?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (room.room_number && room.room_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (room.branch_name && room.branch_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (room.room_type_name && room.room_type_name.toLowerCase().includes(searchTerm.toLowerCase()))) &&
       (!statusFilter || room.status === statusFilter) &&
       (!branchFilter || room.branch_id === parseInt(branchFilter))
     );
   });
 
   const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case RoomStatus.AVAILABLE:
         return "success";
       case RoomStatus.OCCUPIED:
@@ -121,8 +152,8 @@ const RoomManagement: React.FC = () => {
   };
 
   const getFilteredRoomTypes = () => {
-    if (!formData.branch_id) return [];
-    return roomTypes.filter((rt) => rt.branchid === parseInt(formData.branch_id));
+    console.log("Current modal room types:", modalRoomTypes);
+    return modalRoomTypes.filter((roomType) => roomType && roomType.roomtypeid && roomType.roomtypename); // Filter out invalid entries
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -149,7 +180,7 @@ const RoomManagement: React.FC = () => {
         return;
       }
 
-      const roomType = roomTypes.find((rt) => rt.roomtypeid === parseInt(formData.room_type_id));
+      const roomType = modalRoomTypes.find((rt) => rt.roomtypeid === parseInt(formData.room_type_id));
 
       if (editingRoom) {
         // Update existing room
@@ -171,7 +202,7 @@ const RoomManagement: React.FC = () => {
         // Create new room
         const createRequest = {
           branchId: parseInt(formData.branch_id),
-          roomType: roomType?.roomtypename || "Single", // Default to Single if not found
+          roomType: roomType?.roomtypename ?? "",
         };
 
         const response = await createRoom(createRequest);
@@ -201,6 +232,8 @@ const RoomManagement: React.FC = () => {
       room_type_id: room.room_type_id.toString(),
       status: room.status,
     });
+    // Load room types for the selected branch
+    loadRoomTypes(room.branch_id);
     setIsModalOpen(true);
   };
 
@@ -251,6 +284,7 @@ const RoomManagement: React.FC = () => {
       room_type_id: "",
       status: RoomStatus.AVAILABLE,
     });
+    setModalRoomTypes([]); // Clear modal room types when form is reset
     setEditingRoom(null);
     setIsModalOpen(false);
   };
@@ -310,7 +344,7 @@ const RoomManagement: React.FC = () => {
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center space-x-2">
                 <Bed className="h-4 w-4 text-gray-500" />
-                <h3 className="text-lg font-semibold text-gray-900">Room {room.room_number}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Room {room.room_id}</h3>
               </div>
               <Badge variant={getStatusBadgeVariant(room.status)} size="sm">
                 {room.status.replace("_", " ").toUpperCase()}
@@ -320,11 +354,19 @@ const RoomManagement: React.FC = () => {
             <div className="space-y-2 mb-4">
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Branch:</span>
-                <span className="text-sm font-medium">{room.branch_name}</span>
+                <span className="text-sm font-medium">
+                  {
+                    branches.find((b) => {
+                      return b.branch_id === room.branch_id;
+                    })?.branch_name
+                  }
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Type:</span>
-                <span className="text-sm font-medium">{room.room_type_name}</span>
+                <span className="text-sm font-medium">
+                  {roomTypes.find((t) => t.roomtypeid == room.room_type_id)?.roomtypename}
+                </span>
               </div>
             </div>
 
@@ -373,7 +415,15 @@ const RoomManagement: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Branch *</label>
             <select
               value={formData.branch_id}
-              onChange={(e) => setFormData({ ...formData, branch_id: e.target.value, room_type_id: "" })}
+              onChange={(e) => {
+                const branchId = e.target.value;
+                setFormData({ ...formData, branch_id: branchId, room_type_id: "" });
+                if (branchId) {
+                  loadRoomTypes(parseInt(branchId));
+                } else {
+                  setModalRoomTypes([]);
+                }
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
@@ -398,11 +448,17 @@ const RoomManagement: React.FC = () => {
               <option value="">Select a room type</option>
               {getFilteredRoomTypes().map((roomType) => (
                 <option key={roomType.roomtypeid} value={roomType.roomtypeid}>
-                  {roomType.roomtypename}
+                  {roomType.roomtypename || "Unknown Room Type"}
                 </option>
               ))}
             </select>
             {!formData.branch_id && <p className="text-sm text-gray-500 mt-1">Please select a branch first</p>}
+            {formData.branch_id && modalRoomTypes.length === 0 && (
+              <p className="text-sm text-yellow-600 mt-1">Loading room types...</p>
+            )}
+            {formData.branch_id && modalRoomTypes.length > 0 && (
+              <p className="text-sm text-green-600 mt-1">{modalRoomTypes.length} room types available</p>
+            )}
           </div>
 
           <div>
