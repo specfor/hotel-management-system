@@ -22,7 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navigationItems, isCollapsed = true, 
 
   return (
     <div
-      className={`bg-white border-r border-gray-200 transition-all duration-300 flex flex-col ${sidebarWidth} ${className}`}
+      className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 flex flex-col z-40 ${sidebarWidth} ${className}`}
     >
       {/* Sidebar Header with Toggle */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
