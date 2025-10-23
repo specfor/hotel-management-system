@@ -88,7 +88,7 @@ function AppContent() {
           />
 
           {/* Main Content */}
-          <div className={`flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
+          <div className={`flex flex-col transition-all duration-300 ${isSidebarCollapsed ? "ml-16" : "ml-64"}`}>
             <Header
               hotelName="SKY NEST HOTELS"
               user={userProfile}
