@@ -50,6 +50,12 @@ FOR EACH ROW
 EXECUTE FUNCTION trg_update_final_bill_charges();
 
 
+CREATE TRIGGER trg_update_timestamp
+BEFORE UPDATE ON guest
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+
 -- Example:
 -- CREATE TABLE example_table (
 --   id SERIAL PRIMARY KEY,

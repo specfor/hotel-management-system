@@ -1,5 +1,11 @@
 import db from "@src/common/util/db";
-import { GuestPublic, GuestRepo, GuestPassword } from "@src/types/guestTypes";
+import { 
+  GuestPublic, 
+  GuestCreate, 
+  GuestUpdate, 
+  GuestsAllPublic, 
+  GuestPassword, 
+} from "@src/types/guestTypes";
 
 export async function getAllGuests_repo(
   name?: string,
@@ -7,16 +13,16 @@ export async function getAllGuests_repo(
   minAge?: number,
   maxAge?: number,
   page = 1,
-  limit = 5
-): Promise<GuestPublic[] | null> {
+  limit = 5,
+): Promise<GuestsAllPublic[] | null> {
   if (!db.isReady()) {
     await db.connect();
   }
 
   // Start building the query
   let query = `
-    SELECT guest_id, nic, name, age, contact_no, email, room_id, booking_status 
-    FROM guest_main_view 
+    SELECT guest_id, nic, name, age, contact_no, email
+    FROM guest 
     WHERE 1=1`;
   const values: (string | number | null)[] = [];
   let idx = 1;
@@ -44,7 +50,7 @@ export async function getAllGuests_repo(
   }
 
   // Paging
-  query += ` ORDER BY guest_id ASC LIMIT $${idx} OFFSET $${idx + 1}`;
+  query += ` ORDER BY guest_id LIMIT $${idx} OFFSET $${idx + 1}`;
   values.push(limit, (page - 1) * limit);
 
   const { rows } = await db.query(query, values);
@@ -52,16 +58,18 @@ export async function getAllGuests_repo(
   return rows as GuestPublic[];
 }
 
-export async function getGuestByID_repo(id: number): Promise<GuestPublic | null> {
+export async function getGuestByID_repo(
+  id: number,
+): Promise<GuestPublic | null> {
   if (!db.isReady()) {
     await db.connect();
   }
 
   const result = await db.query(
-    `select guest_id, NIC, name, age,  contact_no, email, room_id, booking_status
-    FROM guest_main_view 
+    `select guest_id, NIC, name, age,  contact_no, email, created_at, updated_at
+    FROM guest
     WHERE guest_id = $1`,
-    [id]
+    [id],
   );
 
   if (result.rows.length === 0) {
@@ -76,27 +84,38 @@ export async function getGuestByID_repo(id: number): Promise<GuestPublic | null>
     age: row.age ?? null,
     contact_no: row.contact_no ?? null,
     email: row.email ?? null,
-    room_id: row.room_id ?? null,
-    booking_status: row.booking_status ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
   };
 }
 
-export async function addNewGuest_repo(record: GuestRepo): Promise<number | null> {
+export async function addNewGuest_repo(
+  record: GuestCreate,
+): Promise<number | null> {
   if (!db.isReady()) {
     await db.connect();
   }
-  const query = `insert into guest (nic, name, age, contact_no, email, password) values
-                  ($1, $2, $3, $4, $5, $6)
+  const query = `insert into guest (nic, name, age, contact_no, email) values
+                  ($1, $2, $3, $4, $5)
                   RETURNING "guest_id";`;
 
-  const values = [record.nic, record.name, record.age, record.contact_no, record.email, record.password];
+  const values = [
+    record.nic,
+    record.name,
+    record.age,
+    record.contact_no,
+    record.email,
+  ];
 
   const result = await db.query(query, values);
   const newguest_id = result.rows[0].guest_id as number;
   return newguest_id;
 }
 
-export async function updateGuestInfo_repo(record: GuestRepo, guest_id: number): Promise<GuestPublic | null> {
+export async function updateGuestInfo_repo(
+  record: GuestUpdate,
+  guest_id: number,
+): Promise<void> {
   if (!db.isReady()) {
     await db.connect();
   }
@@ -107,27 +126,23 @@ export async function updateGuestInfo_repo(record: GuestRepo, guest_id: number):
         age = $3,
         contact_no = $4,
         email = $5
-      WHERE guest_id = $6
-      RETURNING guest_id, nic, name, age, contact_no, email;`;
+      WHERE guest_id = $6;`;
 
-  const values = [record.nic, record.name, record.age, record.contact_no, record.email, guest_id];
+  const values = [
+    record.nic,
+    record.name,
+    record.age,
+    record.contact_no,
+    record.email,
+    guest_id,
+  ];
 
-  const result = await db.query(query, values);
-
-  const row = result.rows[0] as GuestPublic;
-  return {
-    guest_id: row.guest_id,
-    nic: row.nic ?? null,
-    name: row.name ?? null,
-    age: row.age ?? null,
-    contact_no: row.contact_no ?? null,
-    email: row.email ?? null,
-    room_id: null,
-    booking_status: null,
-  };
+  await db.query(query, values);
 }
 
-export async function changeGuestPassword_repo(record: GuestPassword): Promise<void> {
+export async function changeGuestPassword_repo(
+  record: GuestPassword,
+): Promise<void> {
   if (!db.isReady()) {
     await db.connect();
   }

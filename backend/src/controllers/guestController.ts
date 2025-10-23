@@ -10,7 +10,12 @@ import {
   changeGuestPassword_repo,
   deleteGuest_repo,
 } from "@src/repos/guestRepo";
-import { GuestRepo, GuestPassword } from "@src/types/guestTypes";
+import { getCurrentBookingByGuestID } from "@src/repos/bookingRepo";
+import { 
+  GuestPassword, 
+  GuestCreate, 
+  GuestUpdate, 
+} from "@src/types/guestTypes";
 
 /**
  * Handles the HTTP request to retrieve all guests.
@@ -24,14 +29,30 @@ import { GuestRepo, GuestPassword } from "@src/types/guestTypes";
 export async function getAllGuests(req: Request, res: Response): Promise<void> {
   try {
     // Extract query params
-    const name = typeof req.query.name === "string" ? req.query.name : undefined;
+    const name =
+      typeof req.query.name === "string" ? req.query.name : undefined;
     const nic = typeof req.query.nic === "string" ? req.query.nic : undefined;
-    const minAge = typeof req.query.minAge === "string" ? Number(req.query.minAge) : undefined;
-    const maxAge = typeof req.query.maxAge === "string" ? Number(req.query.maxAge) : undefined;
-    const page = typeof req.query.page === "string" ? Number(req.query.page) : 1;
-    const limit = typeof req.query.limit === "string" ? Number(req.query.limit) : 5;
+    const minAge =
+      typeof req.query.minAge === "string"
+        ? Number(req.query.minAge)
+        : undefined;
+    const maxAge =
+      typeof req.query.maxAge === "string"
+        ? Number(req.query.maxAge)
+        : undefined;
+    const page =
+      typeof req.query.page === "string" ? Number(req.query.page) : 1;
+    const limit =
+      typeof req.query.limit === "string" ? Number(req.query.limit) : 5;
 
-    const guests = await getAllGuests_repo(name, nic, minAge, maxAge, page, limit);
+    const guests = await getAllGuests_repo(
+      name,
+      nic,
+      minAge,
+      maxAge,
+      page,
+      limit,
+    );
 
     jsonResponse(res, true, HttpStatusCodes.OK, { guests });
   } catch {
@@ -85,7 +106,7 @@ export async function addNewGuest(req: Request, res: Response): Promise<void> {
   }
 
   try {
-    const guest = await addNewGuest_repo(req.body as GuestRepo);
+    const guest = await addNewGuest_repo(req.body as GuestCreate);
     jsonResponse(res, true, HttpStatusCodes.CREATED, { guest });
   } catch {
     jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
@@ -94,7 +115,10 @@ export async function addNewGuest(req: Request, res: Response): Promise<void> {
   }
 }
 
-export async function updateGuestInfo(req: Request, res: Response): Promise<void> {
+export async function updateGuestInfo(
+  req: Request,
+  res: Response,
+): Promise<void> {
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
@@ -121,8 +145,8 @@ export async function updateGuestInfo(req: Request, res: Response): Promise<void
   }
 
   try {
-    const guest = await updateGuestInfo_repo(req.body as GuestRepo, id);
-    jsonResponse(res, true, HttpStatusCodes.OK, { guest });
+    await updateGuestInfo_repo(req.body as GuestUpdate, id);
+    jsonResponse(res, true, HttpStatusCodes.OK, {});
   } catch {
     jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
       error: "Failed to update guest information",
@@ -130,7 +154,10 @@ export async function updateGuestInfo(req: Request, res: Response): Promise<void
   }
 }
 
-export async function changeGuestPassword(req: Request, res: Response): Promise<void> {
+export async function changeGuestPassword(
+  req: Request,
+  res: Response,
+): Promise<void> {
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
@@ -154,4 +181,28 @@ export async function deleteGuest(req: Request, res: Response): Promise<void> {
   await deleteGuest_repo(id);
 
   jsonResponse(res, true, HttpStatusCodes.OK, {});
+}
+
+export async function guestBookings(req: Request, res: Response): Promise<void> {
+  try{
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, {
+        error: "Invalid guest ID",
+      });
+      return;
+    }
+    const bookings = await getCurrentBookingByGuestID(id);
+    if (!bookings) {
+      jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {
+        error: "No active bookings found for the guest",
+      });
+      return;
+    }
+    jsonResponse(res, true, HttpStatusCodes.OK, { bookings });
+  }catch{
+    jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
+      error: "Failed to retrieve guest bookings",
+    });
+  }
 }

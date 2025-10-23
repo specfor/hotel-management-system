@@ -154,6 +154,28 @@ export async function updateFinalBillPaidAmount_repo(
   await db.query(query, [bill_id, totalPaidAmount]);
 }
 
+export async function lockFinalBill(
+  bill_id: number,
+){
+  if (!db.isReady()) {
+    await db.connect();
+  }
+  const query = `
+    BEGIN;
+    SELECT * FROM final_bill
+    WHERE bill_id = $1
+    FOR UPDATE;
+  `;
+  await db.query(query, [bill_id]);
+}
+
+export async function releaseFinalBill(){
+  if (!db.isReady()) {
+    await db.connect();
+  }
+  await db.query("COMMIT;");
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 
