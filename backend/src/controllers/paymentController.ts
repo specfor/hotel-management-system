@@ -8,10 +8,7 @@ import {
   updatePaymentInfo_model,
   getAllPaymentsByBillID_model,
 } from "@src/models/paymentModel";
-import {
-  getAllPayments_repo,
-  getPaymentByID_repo,
-} from "@src/repos/paymentRepo";
+import { getAllPayments_repo, getPaymentByID_repo } from "@src/repos/paymentRepo";
 import { PaymentPrivate, PaymentPublic } from "@src/types/paymentTypes";
 // ES Modules
 import Joi from "joi";
@@ -26,10 +23,7 @@ import Joi from "joi";
  * PaymentPublic
  * Responds with a JSON object containing the list of all Payments.
  */
-export async function getAllPayments(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function getAllPayments(req: Request, res: Response): Promise<void> {
   try {
     const Payments = await getAllPayments_repo();
     if (Payments === null) {
@@ -46,20 +40,13 @@ export async function getAllPayments(
   }
 }
 
-export async function getAllPaymentsByBillID(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function getAllPaymentsByBillID(req: Request, res: Response): Promise<void> {
   try {
     // Extract query params
-    const method =
-      typeof req.query.method === "string" ? req.query.method : undefined;
-    const reference =
-      typeof req.query.reference === "string" ? req.query.reference : undefined;
-    const notes =
-      typeof req.query.notes === "string" ? req.query.notes : undefined;
-    const date_time =
-      typeof req.query.date_time === "string" ? req.query.date_time : undefined;
+    const method = typeof req.query.method === "string" ? req.query.method : undefined;
+    const reference = typeof req.query.reference === "string" ? req.query.reference : undefined;
+    const notes = typeof req.query.notes === "string" ? req.query.notes : undefined;
+    const date_time = typeof req.query.date_time === "string" ? req.query.date_time : undefined;
 
     const bill_id = parseInt(req.params.bill_id);
     if (isNaN(bill_id)) {
@@ -68,13 +55,7 @@ export async function getAllPaymentsByBillID(
       });
       return;
     }
-    const result = await getAllPaymentsByBillID_model(
-      bill_id,
-      method,
-      reference,
-      notes,
-      date_time,
-    );
+    const result = await getAllPaymentsByBillID_model(bill_id, method, reference, notes, date_time);
 
     if (!result.success) {
       jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {
@@ -82,12 +63,7 @@ export async function getAllPaymentsByBillID(
       });
       return;
     }
-    if (result.payments === null) {
-      jsonResponse(res, false, HttpStatusCodes.NOT_FOUND, {
-        error: "Payments not found for the given Bill ID",
-      });
-      return;
-    }
+
     jsonResponse(res, true, HttpStatusCodes.OK, { Payments: result.payments });
   } catch {
     jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, {
@@ -96,10 +72,7 @@ export async function getAllPaymentsByBillID(
   }
 }
 
-export async function getPaymentByID(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function getPaymentByID(req: Request, res: Response): Promise<void> {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -124,25 +97,15 @@ export async function getPaymentByID(
   }
 }
 
-export async function addNewPayment(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function addNewPayment(req: Request, res: Response): Promise<void> {
   try {
     const newPaymentSchema = Joi.object({
       bill_id: Joi.number().integer().positive().required().label("Bill ID"),
 
-      paid_method: Joi.string()
-        .valid("Cash", "Card", "Online", "BankTransfer")
-        .required()
-        .label("Paid Method"),
+      paid_method: Joi.string().valid("Cash", "Card", "Online", "BankTransfer").required().label("Paid Method"),
 
-      paid_amount: Joi.number()
-        .positive()
-        .precision(2)
-        .required()
-        .label("Paid Amount"),
-
+      paid_amount: Joi.number().positive().precision(2).required().label("Paid Amount"),
+      notes: Joi.string().allow(null, "").label("Notes"),
       date_time: Joi.date().iso().allow(null).label("Date and Time"),
     });
     const validationResult = newPaymentSchema.validate(req.body);
@@ -169,10 +132,7 @@ export async function addNewPayment(
   }
 }
 
-export async function updatePayment(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function updatePayment(req: Request, res: Response): Promise<void> {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -184,16 +144,9 @@ export async function updatePayment(
     const updatePaymentSchema = Joi.object({
       bill_id: Joi.number().integer().positive().required().label("Bill ID"),
 
-      paid_method: Joi.string()
-        .valid("Cash", "Card", "Online", "BankTransfer")
-        .required()
-        .label("Paid Method"),
+      paid_method: Joi.string().valid("Cash", "Card", "Online", "BankTransfer").required().label("Paid Method"),
 
-      paid_amount: Joi.number()
-        .positive()
-        .precision(2)
-        .required()
-        .label("Paid Amount"),
+      paid_amount: Joi.number().positive().precision(2).required().label("Paid Amount"),
 
       date_time: Joi.date().iso().allow(null).label("Date and Time"),
     });
@@ -205,10 +158,7 @@ export async function updatePayment(
       });
       return;
     }
-    const Payment = await updatePaymentInfo_model(
-      req.body as PaymentPublic,
-      id,
-    );
+    const Payment = await updatePaymentInfo_model(req.body as PaymentPublic, id);
 
     jsonResponse(res, true, HttpStatusCodes.OK, { Payment });
   } catch {
@@ -218,10 +168,7 @@ export async function updatePayment(
   }
 }
 
-export async function deletePayment(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function deletePayment(req: Request, res: Response): Promise<void> {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {

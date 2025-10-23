@@ -9,7 +9,7 @@ export async function getAllPayments_repo(): Promise<PaymentPublic[] | null> {
   const result = await db.query(
     `SELECT * 
     FROM payment 
-    ORDER BY payment_id ASC`,
+    ORDER BY payment_id ASC`
   );
   if (result.rows.length === 0) {
     return null;
@@ -22,7 +22,7 @@ export async function getAllPaymentsByBillID_repo(
   method: string | undefined,
   reference: string | undefined,
   notes: string | undefined,
-  date_time: string | undefined,
+  date_time: string | undefined
 ): Promise<PaymentPublic[] | null> {
   if (!db.isReady()) {
     await db.connect();
@@ -60,15 +60,11 @@ export async function getAllPaymentsByBillID_repo(
   query += " ORDER BY date_time DESC";
 
   const result = await db.query(query, values);
-  if (result.rows.length === 0) {
-    return null;
-  }
+
   return result.rows as PaymentPublic[];
 }
 
-export async function getPaymentByID_repo(
-  id: number,
-): Promise<PaymentPublic | null> {
+export async function getPaymentByID_repo(id: number): Promise<PaymentPublic | null> {
   if (!db.isReady()) {
     await db.connect();
   }
@@ -77,7 +73,7 @@ export async function getPaymentByID_repo(
     `SELECT *
     FROM payment 
     WHERE payment_id = $1`,
-    [id],
+    [id]
   );
 
   if (result.rows.length === 0) {
@@ -87,35 +83,26 @@ export async function getPaymentByID_repo(
   return result.rows[0] as PaymentPublic;
 }
 
-export async function addNewPayment_repo(
-  record: PaymentPrivate,
-): Promise<number | null> {
+export async function addNewPayment_repo(record: PaymentPrivate): Promise<number | null> {
   if (!db.isReady()) {
     await db.connect();
   }
+  console.log("Adding new payment record:", record);
 
   const query = `
     insert into payment (bill_id, paid_method, paid_amount, notes, date_time) values
       ($1, $2, $3, $4, $5)
     RETURNING "payment_id";`;
 
-  const values = [
-    record.bill_id,
-    record.paid_method,
-    record.paid_amount,
-    record.notes,
-    record.date_time,
-  ];
-
+  const values = [record.bill_id, record.paid_method, record.paid_amount, record.notes, record.date_time];
+  console.log("Executing query:", query, "with values:", values);
   const result = await db.query(query, values);
+  console.log("New payment added with ID:", result.rows[0].payment_id);
   const newpayment_id = result.rows[0].payment_id as number;
   return newpayment_id;
 }
 
-export async function updatePaymentInfo_repo(
-  record: PaymentPrivate,
-  payment_id: number,
-): Promise<number | null> {
+export async function updatePaymentInfo_repo(record: PaymentPrivate, payment_id: number): Promise<number | null> {
   if (!db.isReady()) {
     await db.connect();
   }
@@ -128,13 +115,7 @@ export async function updatePaymentInfo_repo(
       WHERE payment_id = $5
       RETURNING payment_id`;
 
-  const values = [
-    record.bill_id,
-    record.paid_method,
-    record.paid_amount,
-    record.notes,
-    payment_id,
-  ];
+  const values = [record.bill_id, record.paid_method, record.paid_amount, record.notes, payment_id];
 
   const result = await db.query(query, values);
 
@@ -150,9 +131,7 @@ export async function deletePayment_repo(id: number): Promise<void> {
   await db.query(query, values);
 }
 
-export async function getTotalPaidAmountByID_repo(
-  bill_id: number,
-): Promise<number> {
+export async function getTotalPaidAmountByID_repo(bill_id: number): Promise<number> {
   if (!db.isReady()) {
     await db.connect();
   }
