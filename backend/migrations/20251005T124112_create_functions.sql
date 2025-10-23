@@ -50,13 +50,25 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION update_final_bill_total_amount()
 RETURNS TRIGGER AS $$
+DECLARE
+    subtotal NUMERIC;
+    tax_rate NUMERIC := 15.00;  
+    tax_amount NUMERIC;
 BEGIN
-    NEW.total_amount := COALESCE(NEW.room_charges,0)
-                      + COALESCE(NEW.total_service_charges,0)
-                      + COALESCE(NEW.total_tax,0)
-                      + COALESCE(NEW.late_checkout_charge,0)
-                      - COALESCE(NEW.total_discount,0);
-RETURN NEW;
+    subtotal := COALESCE(NEW.room_charges,0) 
+              + COALESCE(NEW.total_service_charges,0) 
+              + COALESCE(NEW.late_checkout_charge,0) 
+              - COALESCE(NEW.total_discount,0);
+    
+    tax_amount := subtotal * (tax_rate / 100);
+    
+    NEW.total_tax := tax_amount;
+    
+    NEW.total_amount := subtotal + tax_amount;
+    
+    NEW.outstanding_amount := NEW.total_amount - COALESCE(NEW.paid_amount,0);
+    
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -136,41 +148,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION calculate_total_discount(p_booking_id INT)
-RETURNS NUMERIC AS $$
-DECLARE
-discount_total NUMERIC;
-    room_charges NUMERIC;
-    branchID INT;
-BEGIN
-    -- Get room charges for this booking
-SELECT calculate_room_charges(p_booking_id) INTO room_charges;
-
--- Get the branch of the booked room
-SELECT r.branch_id
-INTO branchID
-FROM booking b
-         JOIN room r ON b.room_id = r.room_id
-WHERE b.booking_id = p_booking_id;
-
--- Sum all valid discounts for that branch
-SELECT COALESCE(SUM(
-                        CASE
-                            WHEN d.discount_type = 'percentage' THEN d.discount_value * room_charges / 100
-                            WHEN d.discount_type = 'fixed' THEN d.discount_value
-                            ELSE 0
-                            END
-                ), 0)
-INTO discount_total
-FROM discount d
-WHERE d.branch_id = branchID
-  AND d.valid_from <= CURRENT_DATE
-  AND d.valid_to >= CURRENT_DATE;
-
-RETURN discount_total;
-END;
-$$ LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION trg_update_final_bill_charges()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -183,6 +160,130 @@ RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+
+-- function to update the updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION calculate_total_discount(p_booking_id INT)
+RETURNS NUMERIC AS $$
+DECLARE
+    discount_total NUMERIC := 0;
+    room_charges NUMERIC;
+    branchID INT;
+    guest_created_at TIMESTAMP;
+    booking_check_in TIMESTAMP;
+    booking_check_out TIMESTAMP;
+    nights_count INT;
+    current_month INT;
+    days_before_checkin INT;
+    discount_record RECORD;
+BEGIN
+    SELECT calculate_room_charges(p_booking_id) INTO room_charges;
+
+    SELECT 
+        r.branch_id, 
+        g.created_at, 
+        b.check_in, 
+        b.check_out,
+        EXTRACT(DAY FROM (b.check_out - b.check_in))::INT
+    INTO branchID, guest_created_at, booking_check_in, booking_check_out, nights_count
+    FROM booking b
+    JOIN room r ON b.room_id = r.room_id
+    JOIN guest g ON b.guest_id = g.guest_id
+    WHERE b.booking_id = p_booking_id;
+
+    current_month := EXTRACT(MONTH FROM CURRENT_DATE);
+    days_before_checkin := EXTRACT(DAY FROM (booking_check_in - CURRENT_DATE))::INT;
+
+    FOR discount_record IN 
+        SELECT *
+        FROM discount d
+        WHERE d.branch_id = branchID   -- check branch
+          AND d.valid_from <= CURRENT_DATE
+          AND d.valid_to >= CURRENT_DATE
+    LOOP
+        -- Check if discount conditions are met
+        CASE discount_record.discount_condition
+            WHEN 'Seasonal Discount' THEN
+                -- Jan, Apr, Dec, Aug
+                IF current_month IN (1, 4, 8, 12) THEN
+                    IF discount_record.discount_type = 'percentage' THEN
+                        discount_total := discount_total + (discount_record.discount_value * room_charges / 100);
+                    ELSIF discount_record.discount_type = 'fixed' THEN
+                        discount_total := discount_total + discount_record.discount_value;
+                    END IF;
+                END IF;
+
+            WHEN 'Amount Greater Than' THEN
+                -- Check if room charges exceed minimum bill amount
+                IF room_charges > COALESCE(discount_record.min_bill_amount, 0) THEN
+                    IF discount_record.discount_type = 'percentage' THEN
+                        discount_total := discount_total + (discount_record.discount_value * room_charges / 100);
+                    ELSIF discount_record.discount_type = 'fixed' THEN
+                        discount_total := discount_total + discount_record.discount_value;
+                    END IF;
+                END IF;
+
+            WHEN 'Amount Less Than' THEN
+                -- Check if room charges are below maximum amount
+                IF room_charges < COALESCE(discount_record.min_bill_amount, 999999) THEN
+                    IF discount_record.discount_type = 'percentage' THEN
+                        discount_total := discount_total + (discount_record.discount_value * room_charges / 100);
+                    ELSIF discount_record.discount_type = 'fixed' THEN
+                        discount_total := discount_total + discount_record.discount_value;
+                    END IF;
+                END IF;
+
+            WHEN 'Minimum Nights' THEN
+                -- Check if stay duration meets minimum nights requirement
+                IF nights_count >= COALESCE(discount_record.min_bill_amount, 1) THEN
+                    IF discount_record.discount_type = 'percentage' THEN
+                        discount_total := discount_total + (discount_record.discount_value * room_charges / 100);
+                    ELSIF discount_record.discount_type = 'fixed' THEN
+                        discount_total := discount_total + discount_record.discount_value;
+                    END IF;
+                END IF;
+
+            WHEN 'Early Bookings' THEN
+                -- Check if booking is made early
+                IF days_before_checkin >= COALESCE(discount_record.min_bill_amount, 30) THEN
+                    IF discount_record.discount_type = 'percentage' THEN
+                        discount_total := discount_total + (discount_record.discount_value * room_charges / 100);
+                    ELSIF discount_record.discount_type = 'fixed' THEN
+                        discount_total := discount_total + discount_record.discount_value;
+                    END IF;
+                END IF;
+
+            WHEN 'Loyalty Member' THEN
+                -- Check if guest is a loyalty member (registered at least 5 years ago)
+                IF guest_created_at <= (CURRENT_DATE - INTERVAL '5 years') THEN
+                    IF discount_record.discount_type = 'percentage' THEN
+                        discount_total := discount_total + (discount_record.discount_value * room_charges / 100);
+                    ELSIF discount_record.discount_type = 'fixed' THEN
+                        discount_total := discount_total + discount_record.discount_value;
+                    END IF;
+                END IF;
+
+            ELSE
+                -- Default case for any other condition or legacy conditions
+                IF discount_record.discount_type = 'percentage' THEN
+                    discount_total := discount_total + (discount_record.discount_value * room_charges / 100);
+                ELSIF discount_record.discount_type = 'fixed' THEN
+                    discount_total := discount_total + discount_record.discount_value;
+                END IF;
+        END CASE;
+    END LOOP;
+
+    RETURN COALESCE(discount_total, 0);
+END;
+$$ LANGUAGE plpgsql;
 --------------------------------------------------------------------
 
 

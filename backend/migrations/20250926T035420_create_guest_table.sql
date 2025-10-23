@@ -16,7 +16,9 @@ CREATE TABLE guest (
   age INT,
   contact_no VARCHAR(15),     -- there can be foreign guests
   email VARCHAR(50),
-  password VARCHAR(255)
+  password VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE UNIQUE INDEX idx_guest_nic ON guest(NIC);

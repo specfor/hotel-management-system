@@ -342,10 +342,63 @@ export async function deleteBookingDB(bookingId: number): Promise<boolean> {
 
     return result.rowCount !== null && result.rowCount > 0;
 
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
+}
+
+/**
+ * Get current (active) booking information by Guest ID
+ * Returns bookings with status 'Booked' or 'Checked-In'
+ */
+export async function getCurrentBookingByGuestID(guestId: number): Promise<BookingPublic[] | null> {
+  if (!db.isReady()) {
+    await db.connect();
   }
+
+  const sql = `
+    SELECT 
+      booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out
+    FROM 
+      booking
+    WHERE
+      guest_id = $1
+      AND booking_status IN ('Booked', 'Checked-In')
+    ORDER BY check_in DESC;
+  `;
+
+  const result = await db.query(sql, [guestId]);
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  return (result.rows as BookingRow[]).map(mapToPublic);
+}
+
+/**
+ * Get the most recent current booking by Guest ID
+ * Returns only the latest active booking
+ */
+export async function getCurrentBookingByGuestIDSingle(guestId: number): Promise<BookingPublic | null> {
+  if (!db.isReady()) {
+    await db.connect();
+  }
+
+  const sql = `
+    SELECT 
+      booking_id, user_id, guest_id, room_id, booking_status, date_time, check_in, check_out
+    FROM 
+      booking
+    WHERE
+      guest_id = $1
+      AND booking_status IN ('Booked', 'Checked-In')
+    ORDER BY check_in DESC
+    LIMIT 1;
+  `;
+
+  const result = await db.query(sql, [guestId]);
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  return mapToPublic(result.rows[0] as BookingRow);
 }
