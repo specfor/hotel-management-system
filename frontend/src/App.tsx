@@ -76,7 +76,7 @@ function AppContent() {
     : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50">
       {/* Only show sidebar and header for authenticated users */}
       {isAuthenticated && userProfile && (
         <>
@@ -88,7 +88,7 @@ function AppContent() {
           />
 
           {/* Main Content */}
-          <div className="flex-1 flex flex-col">
+          <div className={`flex flex-col transition-all duration-300 ${isSidebarCollapsed ? "ml-16" : "ml-64"}`}>
             <Header
               hotelName="SKY NEST HOTELS"
               user={userProfile}
@@ -99,9 +99,9 @@ function AppContent() {
             />
 
             {/* Page Content */}
-            <div className="flex justify-center">
+            <div className="flex justify-center pt-20">
               <div className="container">
-                <main className="flex-1">
+                <main className="flex-1 min-h-screen pb-8">
                   <AppRouter />
                 </main>
               </div>
