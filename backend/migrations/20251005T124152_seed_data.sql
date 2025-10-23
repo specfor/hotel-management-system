@@ -1,408 +1,354 @@
--- Insert queries for branch table
--- Testing: Primary key auto-increment, NOT NULL on branch_id, realistic branch names and addresses
--- Includes at least 20 branches across different cities for coverage
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Luxury Inn Downtown', 'New York', '123 Main St');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Seaside Resort', 'Miami', '456 Ocean Blvd');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Mountain Lodge', 'Denver', '789 Peak Rd');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('City Center Hotel', 'Chicago', '101 Windy Ave');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Beachfront Paradise', 'Los Angeles', '202 Sunset Dr');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Historic Manor', 'Boston', '303 Freedom Trail');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Desert Oasis', 'Las Vegas', '404 Strip Ln');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Riverfront Suites', 'Portland', '505 Bridge St');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Lakeview Retreat', 'Seattle', '606 Rainier Way');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Urban Escape', 'San Francisco', '707 Golden Gate');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Coastal Haven', 'San Diego', '808 Pacific Hwy');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Alpine Chalet', 'Aspen', '909 Snowy Path');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Bay Area Inn', 'Oakland', '1010 Harbor Blvd');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Prairie Hotel', 'Dallas', '1111 Ranch Rd');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Gulf Coast Resort', 'Houston', '1212 Bayou St');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Evergreen Lodge', 'Vancouver', '1313 Forest Dr');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Sunshine Motel', 'Phoenix', '1414 Desert Ave');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Harbor View', 'Baltimore', '1515 Chesapeake Ln');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Capital Suites', 'Washington DC', '1616 Potomac Way');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Island Paradise', 'Honolulu', '1717 Aloha Blvd');
-INSERT INTO public.branch (branch_name, city, address) VALUES ('Northern Lights Hotel', 'Anchorage', '1818 Tundra Rd');
+-- Insert into branch table first (no dependencies)
+-- Testing: Primary key auto-increment, NOT NULL implied, realistic branch names and locations
+-- Coverage: 10 branches to provide base for foreign keys in other tables
+-- Scenarios: Various cities, addresses for diversity
+INSERT INTO public.branch (branch_name, city, address) VALUES
+('Grand Central Hotel', 'New York', '350 5th Ave'),
+('Ocean Breeze Resort', 'Miami', '100 Ocean Dr'),
+('Rocky Mountain Lodge', 'Denver', '500 Peak Blvd'),
+('Windy City Inn', 'Chicago', '200 Michigan Ave'),
+('Sunset Beach Hotel', 'Los Angeles', '300 Hollywood Blvd'),
+('Freedom Trail Manor', 'Boston', '400 Beacon St'),
+('Desert Mirage Resort', 'Las Vegas', '600 Strip Ave'),
+('River Bend Suites', 'Portland', '700 Waterfront Dr'),
+('Emerald Lake Retreat', 'Seattle', '800 Rainier Ln'),
+('Golden Gate Haven', 'San Francisco', '900 Bridge Way');
 
--- Insert queries for room_type table
--- Testing: Foreign key to branch, check constraints on rates (>0), capacity >0, various types and amenities
--- Edge cases: Min/max rates, capacities; at least 20 types across branches
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (1, 'Single', 100.00, 20.00, 1, 'WiFi, TV');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (1, 'Double', 150.00, 30.00, 2, 'WiFi, TV, Mini-bar');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (1, 'Suite', 300.00, 50.00, 4, 'WiFi, TV, Kitchen');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (2, 'Single', 120.00, 25.00, 1, 'WiFi, Ocean View');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (2, 'Double', 180.00, 35.00, 2, 'WiFi, Balcony');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (3, 'Cabin', 200.00, 40.00, 3, 'Fireplace, Hiking Access');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (4, 'Standard', 110.00, 22.00, 2, 'WiFi, City View');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (5, 'Beachfront', 250.00, 45.00, 4, 'Private Beach Access');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (6, 'Historic Room', 160.00, 32.00, 2, 'Antique Furniture');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (7, 'Luxury Suite', 500.00, 100.00, 6, 'Pool, Casino Access');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (8, 'Riverside', 140.00, 28.00, 2, 'River View, Kayak Rental');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (9, 'Lakeview', 170.00, 34.00, 3, 'Boating Access');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (10, 'Penthouse', 400.00, 80.00, 5, 'Rooftop Terrace');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (11, 'Oceanfront', 220.00, 44.00, 4, 'Surfboard Rental');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (12, 'Ski-in/Ski-out', 280.00, 56.00, 4, 'Ski Storage');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (13, 'Harbor View', 130.00, 26.00, 2, 'Ferry Access');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (14, 'Ranch Style', 190.00, 38.00, 3, 'Horse Riding');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (15, 'Bayou Bungalow', 210.00, 42.00, 4, 'Fishing Gear');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (16, 'Forest Cabin', 150.00, 30.00, 2, 'Hiking Trails');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (17, 'Desert Tent', 180.00, 36.00, 2, 'Camel Rides');
+-- Additional 5 for volume (total 15 >10)
+INSERT INTO public.branch (branch_name, city, address) VALUES
+('Pacific Coast Inn', 'San Diego', '1000 Harbor Blvd'),
+('Snow Peak Chalet', 'Aspen', '1100 Slope Rd'),
+('Bay Area Lodge', 'Oakland', '1200 Port St'),
+('Lone Star Hotel', 'Dallas', '1300 Ranch Dr'),
+('Bayou Breeze Resort', 'Houston', '1400 Gulf Way');
 
--- Additional room_types to reach 20
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (18, 'Harbor Suite', 240.00, 48.00, 4, 'Yacht View');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (19, 'Monument Room', 160.00, 32.00, 2, 'Historical Tours');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (20, 'Tropical Bungalow', 300.00, 60.00, 4, 'Private Pool');
-INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES (21, 'Arctic Igloo', 350.00, 70.00, 3, 'Aurora Viewing');
+-- Insert into room_type (depends on branch)
+-- Testing: FK to branch, primary key, check on rates >0 implicitly, capacity >0
+-- Coverage: Multiple types per branch, varying rates, amenities
+-- Scenarios: Low/high capacity, different amenities, boundary rates (min 50, max 1000)
+-- Note: Insert order respects FK, using branch_ids 1-10
+-- Testing defaults: No defaults here
+INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES
+(1, 'Standard Single', 100.00, 20.00, 1, 'WiFi, TV'),
+(1, 'Deluxe Double', 150.00, 30.00, 2, 'WiFi, TV, Mini-bar'),
+(1, 'Executive Suite', 300.00, 50.00, 4, 'WiFi, TV, Kitchenette'),
+(2, 'Beachfront Single', 120.00, 25.00, 1, 'WiFi, Ocean View'),
+(2, 'Ocean View Double', 180.00, 35.00, 2, 'WiFi, Balcony'),
+(3, 'Mountain Cabin', 200.00, 40.00, 3, 'Fireplace, Hiking Access'),
+(4, 'City Standard', 110.00, 22.00, 2, 'WiFi, City View'),
+(5, 'Luxury Beachfront', 250.00, 45.00, 4, 'Private Beach Access'),
+(6, 'Historic Room', 160.00, 32.00, 2, 'Antique Furniture'),
+(7, 'Vegas Suite', 500.00, 100.00, 6, 'Pool, Casino Access');
 
--- Insert queries for room table
--- Testing: Foreign keys to branch and room_type, default 'Available', enum for room_status
--- Edge cases: Multiple rooms per type, some Occupied for testing
--- At least 20 rooms
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (1, 1, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (1, 2, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (1, 3, 'Occupied');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (2, 4, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (2, 5, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (3, 6, 'Occupied');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (4, 7, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (5, 8, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (6, 9, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (7, 10, 'Occupied');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (8, 11, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (9, 12, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (10, 13, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (11, 14, 'Occupied');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (12, 15, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (13, 16, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (14, 17, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (15, 18, 'Occupied');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (16, 19, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (17, 20, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (18, 21, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (19, 1, 'Occupied');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (20, 2, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (21, 3, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (1, 4, 'Available');
-INSERT INTO public.room (branch_id, type_id, room_status) VALUES (2, 5, 'Occupied');
+-- Additional for volume and variety (total 20 >10), including boundary capacity 1/10, rates min/max
+INSERT INTO public.room_type (branch_id, type_name, daily_rate, late_checkout_rate, capacity, amenities) VALUES
+(8, 'Riverside Double', 140.00, 28.00, 2, 'River View, Kayak Rental'),
+(9, 'Lakeview Triple', 170.00, 34.00, 3, 'Boating Access'),
+(10, 'City Penthouse', 400.00, 80.00, 5, 'Rooftop Terrace'),
+(1, 'Budget Single', 50.00, 10.00, 1, 'WiFi'),
+(2, 'Premium Suite', 1000.00, 200.00, 10, 'All Amenities'),
+(3, 'Cozy Cabin', 80.00, 15.00, 2, 'Basic'),
+(4, 'Family Room', 220.00, 44.00, 4, 'Kids Area'),
+(5, 'VIP Bungalow', 350.00, 70.00, 6, 'Private Pool'),
+(6, 'Economy Double', 90.00, 18.00, 2, 'TV'),
+(7, 'High Roller Suite', 800.00, 160.00, 8, 'Jacuzzi, Bar');
 
--- Insert queries for chargeable_services table
--- Testing: Foreign key to branch, positive unit_price, various services
--- Edge cases: Min price 0.01, max 1000, different units
--- At least 20 services
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (1, 'Laundry', 10.00, 'per load');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (1, 'Room Service Meal', 25.00, 'per meal');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (1, 'Mini-bar Restock', 15.00, 'per item');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (2, 'Spa Treatment', 50.00, 'per session');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (2, 'Beach Towel Rental', 5.00, 'per day');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (3, 'Guided Hike', 30.00, 'per person');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (4, 'Airport Shuttle', 20.00, 'per trip');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (5, 'Surf Lesson', 40.00, 'per hour');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (6, 'Historical Tour', 15.00, 'per person');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (7, 'Casino Chips', 100.00, 'per set');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (8, 'Kayak Rental', 25.00, 'per hour');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (9, 'Boat Rental', 50.00, 'per hour');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (10, 'Bike Rental', 10.00, 'per day');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (11, 'Surfboard Rental', 20.00, 'per day');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (12, 'Ski Rental', 35.00, 'per day');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (13, 'Ferry Ticket', 15.00, 'per trip');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (14, 'Horse Riding', 40.00, 'per hour');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (15, 'Fishing Trip', 60.00, 'per person');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (16, 'Trail Guide', 25.00, 'per group');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (17, 'Camel Ride', 30.00, 'per person');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (18, 'Yacht Tour', 200.00, 'per hour');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (19, 'Museum Pass', 10.00, 'per person');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (20, 'Luau Dinner', 50.00, 'per person');
-INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES (21, 'Snowmobile Rental', 80.00, 'per hour');
+-- Insert into discount (depends on branch)
+-- Testing: FK to branch, check on discount_type (percentage/fixed), valid dates past/present/future
+-- Coverage: Various conditions, min_bill_amount boundary 0/max, values >0
+-- Scenarios: Seasonal (test months), loyalty, early bookings, etc. Spanning dates before/after 2025-10-23
+-- Note: For loyalty test, will use old guest created_at later
+INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES
+(1, 'New Year Special', 'percentage', 10.00, 100.00, 'Seasonal Discount', '2025-01-01', '2025-01-31'),
+(1, 'Loyalty Reward', 'fixed', 50.00, NULL, 'Loyalty Member', '2020-01-01', '2030-12-31'),
+(2, 'Summer Deal', 'percentage', 15.00, 200.00, 'Seasonal Discount', '2025-06-01', '2025-08-31'),
+(2, 'Early Bird', 'fixed', 30.00, 30, 'Early Bookings', '2025-10-01', '2025-12-31'),
+(3, 'Winter Promo', 'percentage', 20.00, 5, 'Minimum Nights', '2025-12-01', '2026-02-28'),
+(4, 'Group Discount', 'fixed', 100.00, 500.00, 'Amount Greater Than', '2025-01-01', '2025-12-31'),
+(5, 'Beach Package', 'percentage', 5.00, 100.00, 'Amount Less Than', '2024-07-01', '2024-09-30'),  -- Past validity
+(6, 'History Buff', 'fixed', 20.00, NULL, 'Loyalty Member', '2025-10-01', '2025-11-30'),
+(7, 'VIP Offer', 'percentage', 25.00, 1000.00, 'Amount Greater Than', '2026-01-01', '2026-12-31'),  -- Future
+(8, 'River Adventure', 'fixed', 15.00, 150.00, 'Amount Greater Than', '2025-05-01', '2025-08-31');
 
--- Insert queries for discount table
--- Testing: Foreign key to branch, check on discount_type, positive values, valid dates past/present/future
--- Edge cases: Min value 0.01, expired discounts, min_bill_amount
--- At least 20 discounts
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (1, 'Weekend Special', 'percentage', 10.00, 100.00, 'Weekends only', '2025-01-01', '2025-12-31');
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (1, 'Loyalty Discount', 'fixed', 20.00, 150.00, 'Repeat guests', '2024-01-01', '2024-12-31'); -- Past
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (2, 'Summer Sale', 'percentage', 15.00, 200.00, 'Summer months', '2026-06-01', '2026-08-31'); -- Future
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (2, 'Early Bird', 'fixed', 30.00, 0.00, 'Book 30 days ahead', '2025-10-01', '2025-10-31');
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (3, 'Winter Special', 'percentage', 20.00, 250.00, 'Winter bookings', '2025-12-01', '2026-02-28');
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (4, 'Group Discount', 'fixed', 50.00, 500.00, 'Groups of 5+', '2025-01-01', '2025-12-31');
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (5, 'Beach Package', 'percentage', 5.00, 100.00, 'With services', '2024-07-01', '2024-09-30'); -- Past
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (6, 'History Buff', 'fixed', 10.00, 0.00, 'Tour included', '2025-10-22', '2025-11-22');
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (7, 'VIP Deal', 'percentage', 25.00, 1000.00, 'Suites only', '2026-01-01', '2026-12-31'); -- Future
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (8, 'River Adventure', 'fixed', 15.00, 150.00, 'With kayak', '2025-05-01', '2025-08-31');
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (9, 'Lake Escape', 'percentage', 10.00, 200.00, 'Boating included', '2024-01-01', '2024-12-31'); -- Past
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (10, 'City Explorer', 'fixed', 25.00, 300.00, 'Long stays', '2025-10-22', '2025-12-31');
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (11, 'Surf Special', 'percentage', 15.00, 250.00, 'Lessons included', '2026-07-01', '2026-09-30'); -- Future
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (12, 'Ski Package', 'fixed', 40.00, 400.00, 'Rentals included', '2025-12-01', '2026-03-31');
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (13, 'Harbor Hop', 'percentage', 5.00, 100.00, 'Ferry ticket', '2024-04-01', '2024-06-30'); -- Past
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (14, 'Ranch Retreat', 'fixed', 30.00, 200.00, 'Riding included', '2025-10-22', '2025-11-22');
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (15, 'Bayou Bundle', 'percentage', 20.00, 300.00, 'Fishing trip', '2026-05-01', '2026-07-31'); -- Future
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (16, 'Forest Foray', 'fixed', 20.00, 150.00, 'Guide included', '2025-09-01', '2025-11-30');
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (17, 'Desert Deal', 'percentage', 10.00, 200.00, 'Camel ride', '2024-10-01', '2024-12-31'); -- Past
-INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES (18, 'Yacht Yacht', 'fixed', 50.00, 500.00, 'Tour included', '2025-10-22', '2025-12-31');
+-- Additional (total 15 >10), including edge min_bill 0, high value, different conditions
+INSERT INTO public.discount (branch_id, discount_name, discount_type, discount_value, min_bill_amount, discount_condition, valid_from, valid_to) VALUES
+(9, 'Lake Escape', 'percentage', 10.00, 200.00, 'Amount Greater Than', '2025-01-01', '2025-12-31'),
+(10, 'City Explorer', 'fixed', 25.00, 0.00, 'Minimum Nights', '2025-10-23', '2025-12-31'),  -- Current date start
+(1, 'Flash Sale', 'percentage', 50.00, 5000.00, 'Amount Greater Than', '2025-10-20', '2025-10-25'),  -- Short period around current
+(2, 'Last Minute', 'fixed', 10.00, NULL, 'Early Bookings', '2024-01-01', '2024-12-31'),  -- Past
+(3, 'Long Stay', 'percentage', 30.00, 10, 'Minimum Nights', '2026-01-01', '2026-12-31');  -- Future
 
--- Insert queries for staff table
--- Testing: Foreign key to branch, positive salary, realistic names/emails
--- Edge cases: Min salary, various job titles
--- At least 20 staff
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (1, 'John Doe', 1234567890, 'john@example.com', 'Manager', 60000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (1, 'Jane Smith', 2345678901, 'jane@example.com', 'Receptionist', 40000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (2, 'Alice Johnson', 3456789012, 'alice@example.com', 'Concierge', 45000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (2, 'Bob Brown', 4567890123, 'bob@example.com', 'Housekeeper', 35000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (3, 'Charlie Davis', 5678901234, 'charlie@example.com', 'Guide', 42000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (4, 'David Evans', 6789012345, 'david@example.com', 'Driver', 38000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (5, 'Eva Frank', 7890123456, 'eva@example.com', 'Instructor', 46000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (6, 'Frank Green', 8901234567, 'frank@example.com', 'Tour Guide', 41000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (7, 'Grace Harris', 9012345678, 'grace@example.com', 'Dealer', 50000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (8, 'Henry Irving', 0123456789, 'henry@example.com', 'Rental Staff', 37000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (9, 'Ivy Jackson', 1234567891, 'ivy@example.com', 'Boating Captain', 48000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (10, 'Jack King', 2345678902, 'jack@example.com', 'Bike Mechanic', 39000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (11, 'Kara Lee', 3456789013, 'kara@example.com', 'Surf Instructor', 44000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (12, 'Leo Martin', 4567890124, 'leo@example.com', 'Ski Patrol', 47000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (13, 'Mia Nelson', 5678901235, 'mia@example.com', 'Ferry Operator', 43000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (14, 'Noah Oliver', 6789012346, 'noah@example.com', 'Ranch Hand', 36000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (15, 'Olivia Perez', 7890123457, 'olivia@example.com', 'Fisher Guide', 45000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (16, 'Paul Quinn', 8901234568, 'paul@example.com', 'Trail Leader', 41000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (17, 'Quinn Rose', 9012345679, 'quinn@example.com', 'Camel Handler', 38000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (18, 'Rose Smith', 0123456790, 'rose@example.com', 'Yacht Captain', 55000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (19, 'Sam Taylor', 1234567892, 'sam@example.com', 'Museum Curator', 46000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (20, 'Tina Upton', 2345678903, 'tina@example.com', 'Event Coordinator', 49000.00);
-INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES (21, 'Uma Vance', 3456789014, 'uma@example.com', 'Tour Guide', 42000.00);
+-- Insert into chargeable_services (depends on branch)
+-- Testing: FK to branch, unit_price >0, various unit_types
+-- Coverage: Multiple services per branch, prices min 5 max 200
+-- Scenarios: Realistic services, quantities in usage later
+INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES
+(1, 'Laundry Service', 10.00, 'per load'),
+(1, 'Room Service Breakfast', 25.00, 'per meal'),
+(1, 'Mini-Bar Restock', 15.00, 'per item'),
+(2, 'Spa Massage', 50.00, 'per session'),
+(2, 'Beach Towel Rental', 5.00, 'per day'),
+(3, 'Guided Mountain Hike', 30.00, 'per person'),
+(4, 'Airport Shuttle', 20.00, 'per trip'),
+(5, 'Surfing Lesson', 40.00, 'per hour'),
+(6, 'Historical City Tour', 15.00, 'per person'),
+(7, 'Casino Entry', 100.00, 'per entry');
 
--- Insert queries for user table
--- Testing: Foreign key to staff, unique usernames
--- Edge cases: Various passwords (hashed, but for test plain)
--- At least 20 users (one per staff, but extended)
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (1, 'john_doe', 'hash1');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (2, 'jane_smith', 'hash2');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (3, 'alice_johnson', 'hash3');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (4, 'bob_brown', 'hash4');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (5, 'charlie_davis', 'hash5');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (6, 'david_evans', 'hash6');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (7, 'eva_frank', 'hash7');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (8, 'frank_green', 'hash8');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (9, 'grace_harris', 'hash9');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (10, 'henry_irving', 'hash10');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (11, 'ivy_jackson', 'hash11');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (12, 'jack_king', 'hash12');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (13, 'kara_lee', 'hash13');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (14, 'leo_martin', 'hash14');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (15, 'mia_nelson', 'hash15');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (16, 'noah_oliver', 'hash16');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (17, 'olivia_perez', 'hash17');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (18, 'paul_quinn', 'hash18');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (19, 'quinn_rose', 'hash19');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (20, 'rose_smith', 'hash20');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (21, 'sam_taylor', 'hash21');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (22, 'tina_upton', 'hash22');
-INSERT INTO public."user" (staff_id, username, password_hash) VALUES (23, 'uma_vance', 'hash23');
+-- Additional (total 15 >10), boundary prices
+INSERT INTO public.chargeable_services (branch_id, service_name, unit_price, unit_type) VALUES
+(8, 'Kayak Rental', 25.00, 'per hour'),
+(9, 'Boat Tour', 50.00, 'per hour'),
+(10, 'Bike Rental', 10.00, 'per day'),
+(1, 'Premium WiFi', 5.00, 'per day'),  -- Min price
+(2, 'Luxury Yacht', 200.00, 'per hour');  -- Max price
 
--- Insert queries for guest table
--- Testing: Unique NIC and email, NOT NULL on guest_id, trigger for updated_at
--- Edge cases: Min/max age (18-100), realistic contacts/emails, update to test trigger
--- At least 20 guests
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('123456789V', 'Guest One', 30, '1112223334', 'guest1@example.com', 'pass1');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('234567890V', 'Guest Two', 45, '2223334445', 'guest2@example.com', 'pass2');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('345678901V', 'Guest Three', 25, '3334445556', 'guest3@example.com', 'pass3');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('456789012V', 'Guest Four', 60, '4445556667', 'guest4@example.com', 'pass4');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('567890123V', 'Guest Five', 18, '5556667778', 'guest5@example.com', 'pass5'); -- Min age
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('678901234V', 'Guest Six', 100, '6667778889', 'guest6@example.com', 'pass6'); -- Max age
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('789012345V', 'Guest Seven', 35, '7778889990', 'guest7@example.com', 'pass7');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('890123456V', 'Guest Eight', 50, '8889990001', 'guest8@example.com', 'pass8');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('901234567V', 'Guest Nine', 28, '9990001112', 'guest9@example.com', 'pass9');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('012345678V', 'Guest Ten', 40, '0001112223', 'guest10@example.com', 'pass10');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('123456780V', 'Guest Eleven', 55, '1112223335', 'guest11@example.com', 'pass11');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('234567891V', 'Guest Twelve', 32, '2223334446', 'guest12@example.com', 'pass12');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('345678902V', 'Guest Thirteen', 47, '3334445557', 'guest13@example.com', 'pass13');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('456789013V', 'Guest Fourteen', 22, '4445556668', 'guest14@example.com', 'pass14');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('567890124V', 'Guest Fifteen', 65, '5556667779', 'guest15@example.com', 'pass15');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('678901235V', 'Guest Sixteen', 29, '6667778890', 'guest16@example.com', 'pass16');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('789012346V', 'Guest Seventeen', 38, '7778889991', 'guest17@example.com', 'pass17');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('890123457V', 'Guest Eighteen', 52, '8889990002', 'guest18@example.com', 'pass18');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('901234568V', 'Guest Nineteen', 26, '9990001113', 'guest19@example.com', 'pass19');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('012345679V', 'Guest Twenty', 42, '0001112224', 'guest20@example.com', 'pass20');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('123456781V', 'Guest TwentyOne', 57, '1112223336', 'guest21@example.com', 'pass21');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('234567892V', 'Guest TwentyTwo', 33, '2223334447', 'guest22@example.com', 'pass22');
-INSERT INTO public.guest (nic, name, age, contact_no, email, password) VALUES ('345678903V', 'Guest TwentyThree', 48, '3334445558', 'guest23@example.com', 'pass23');
+-- Insert into guest (independent)
+-- Testing: Unique nic, email; age boundary 18-100; created_at past/present for loyalty (some <2020-10-23 for 5y)
+-- Coverage: NOT NULL on name, contact, etc.; default created_at, but override for test
+-- Scenarios: Various ages, real names/emails/phones; historical for loyalty discount test
+INSERT INTO public.guest (nic, name, age, contact_no, email, password, created_at, updated_at) VALUES
+('123456789V', 'Johnathan Doe', 35, '212-555-1234', 'john.doe@example.com', 'hashedpass1', '2018-01-01 00:00:00', '2025-10-23 00:00:00'),  -- Old for loyalty
+('234567890V', 'Jane Smith', 28, '305-555-5678', 'jane.smith@example.com', 'hashedpass2', '2025-10-23 00:00:00', '2025-10-23 00:00:00'),
+('345678901V', 'Alice Wonderland', 45, '303-555-9012', 'alice@example.com', 'hashedpass3', '2019-05-15 00:00:00', '2025-10-23 00:00:00'),  -- Old
+('456789012V', 'Bob Builder', 60, '312-555-3456', 'bob@example.com', 'hashedpass4', '2025-10-20 00:00:00', '2025-10-23 00:00:00'),
+('567890123V', 'Charlie Brown', 18, '213-555-7890', 'charlie@example.com', 'hashedpass5', '2025-10-23 00:00:00', '2025-10-23 00:00:00'),  -- Min age
+('678901234V', 'David Evans', 100, '617-555-2345', 'david@example.com', 'hashedpass6', '2015-03-10 00:00:00', '2025-10-23 00:00:00'),  -- Max age, old
+('789012345V', 'Eva Green', 32, '702-555-6789', 'eva@example.com', 'hashedpass7', '2024-01-01 00:00:00', '2025-10-23 00:00:00'),
+('890123456V', 'Frank Harris', 50, '503-555-0123', 'frank@example.com', 'hashedpass8', '2025-10-23 00:00:00', '2025-10-23 00:00:00'),
+('901234567V', 'Grace Irving', 25, '206-555-4567', 'grace@example.com', 'hashedpass9', '2017-07-20 00:00:00', '2025-10-23 00:00:00'),  -- Old
+('012345678V', 'Henry Jackson', 40, '415-555-8901', 'henry@example.com', 'hashedpass10', '2025-10-23 00:00:00', '2025-10-23 00:00:00');
 
--- To test update trigger: UPDATE public.guest SET age = 31 WHERE guest_id = 1;
+-- Additional (total 15 >10), more variety
+INSERT INTO public.guest (nic, name, age, contact_no, email, password, created_at, updated_at) VALUES
+('123456780V', 'Ivy King', 55, '619-555-2345', 'ivy@example.com', 'hashedpass11', '2016-02-05 00:00:00', '2025-10-23 00:00:00'),  -- Old
+('234567891V', 'Jack Lee', 22, '970-555-6789', 'jack@example.com', 'hashedpass12', '2025-10-23 00:00:00', '2025-10-23 00:00:00'),
+('345678902V', 'Kara Martin', 47, '510-555-0123', 'kara@example.com', 'hashedpass13', '2023-11-15 00:00:00', '2025-10-23 00:00:00'),
+('456789013V', 'Leo Nelson', 29, '214-555-4567', 'leo@example.com', 'hashedpass14', '2014-09-01 00:00:00', '2025-10-23 00:00:00'),  -- Old
+('567890124V', 'Mia Oliver', 65, '713-555-8901', 'mia@example.com', 'hashedpass15', '2025-10-23 00:00:00', '2025-10-23 00:00:00');
 
--- Insert queries for booking table
--- Testing: Foreign keys, enum booking_status, trigger prevent_double_booking, update_room_status
--- Edge cases: Overlapping dates for different rooms, same room non-overlap, past/present/future, multiple guests per room type capacity
--- Note: Inserts designed to not violate double booking; comment out invalid for test
--- At least 20 bookings
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (1, 1, 1, 'Booked', '2025-10-20', '2025-10-23', '2025-10-25'); -- Future
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (2, 2, 2, 'Checked-In', '2025-10-21', '2025-10-22', '2025-10-24'); -- Present
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (3, 3, 3, 'Checked-Out', '2024-10-01', '2024-10-10', '2024-10-12'); -- Past
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (4, 4, 4, 'Cancelled', '2025-11-01', '2025-11-05', '2025-11-07');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (5, 5, 5, 'Booked', '2025-12-01', '2025-12-10', '2025-12-15');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (6, 6, 6, 'Checked-In', '2025-10-15', '2025-10-20', '2025-10-25');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (7, 7, 7, 'Checked-Out', '2024-09-01', '2024-09-05', '2024-09-10');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (8, 8, 8, 'Cancelled', '2026-01-01', '2026-01-10', '2026-01-15'); -- Future
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (9, 9, 9, 'Booked', '2025-10-22', '2025-10-25', '2025-10-30');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (10, 10, 10, 'Checked-In', '2025-10-18', '2025-10-22', '2025-10-27');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (11, 11, 11, 'Checked-Out', '2024-08-01', '2024-08-15', '2024-08-20');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (12, 12, 12, 'Cancelled', '2025-11-15', '2025-11-20', '2025-11-25');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (13, 13, 13, 'Booked', '2026-02-01', '2026-02-05', '2026-02-10');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (14, 14, 14, 'Checked-In', '2025-10-10', '2025-10-22', '2025-10-28');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (15, 15, 15, 'Checked-Out', '2024-07-01', '2024-07-10', '2024-07-15');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (16, 16, 16, 'Cancelled', '2025-12-20', '2025-12-25', '2025-12-30');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (17, 17, 17, 'Booked', '2025-09-01', '2025-09-05', '2025-09-10'); -- Past relative to current but valid
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (18, 18, 18, 'Checked-In', '2025-10-20', '2025-10-22', '2025-10-26');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (19, 19, 19, 'Checked-Out', '2024-06-01', '2024-06-15', '2024-06-20');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (20, 20, 20, 'Cancelled', '2026-03-01', '2026-03-10', '2026-03-15');
--- Additional to reach 20+
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (1, 21, 21, 'Booked', '2025-10-25', '2025-10-28', '2025-10-30');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (2, 22, 22, 'Checked-In', '2025-10-19', '2025-10-22', '2025-10-25');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (3, 23, 23, 'Checked-Out', '2024-05-01', '2024-05-10', '2024-05-15');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (4, 1, 24, 'Cancelled', '2025-11-10', '2025-11-15', '2025-11-20');
-INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (5, 2, 25, 'Booked', '2026-04-01', '2026-04-05', '2026-04-10');
+-- Insert into staff (depends on branch)
+-- Testing: FK to branch, salary >0, real names/emails/phones
+-- Coverage: Multiple per branch, various job_titles
+-- Scenarios: Boundary salaries min 30000 max 100000
+INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES
+(1, 'Manager Mike', 2125550001, 'mike@hotel.com', 'Manager', 80000.00),
+(1, 'Receptionist Rita', 2125550002, 'rita@hotel.com', 'Receptionist', 40000.00),
+(2, 'Concierge Carl', 3055550001, 'carl@resort.com', 'Concierge', 45000.00),
+(2, 'Housekeeper Helen', 3055550002, 'helen@resort.com', 'Housekeeper', 35000.00),
+(3, 'Guide Gary', 3035550001, 'gary@lodge.com', 'Guide', 42000.00),
+(4, 'Driver Dana', 3125550001, 'dana@inn.com', 'Driver', 38000.00),
+(5, 'Instructor Ian', 2135550001, 'ian@beach.com', 'Instructor', 46000.00),
+(6, 'Tour Guide Tina', 6175550001, 'tina@manor.com', 'Tour Guide', 41000.00),
+(7, 'Dealer Dave', 7025550001, 'dave@mirage.com', 'Dealer', 50000.00),
+(8, 'Rental Staff Ryan', 5035550001, 'ryan@suites.com', 'Rental Staff', 37000.00);
 
--- -- Example invalid for testing trigger: INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES (1, 1, 1, 'Booked', '2025-10-20', '2025-10-24', '2025-10-26'); -- Overlaps first, should fail
+-- Additional (total 15 >10), boundary salaries
+INSERT INTO public.staff (branch_id, name, contact_no, email, job_title, salary) VALUES
+(9, 'Captain Chris', 2065550001, 'chris@retreat.com', 'Captain', 48000.00),
+(10, 'Mechanic Matt', 4155550001, 'matt@haven.com', 'Mechanic', 39000.00),
+(1, 'Janitor Joe', 2125550003, 'joe@hotel.com', 'Janitor', 30000.00),  -- Min salary
+(2, 'Executive Eve', 3055550003, 'eve@resort.com', 'Executive', 100000.00),  -- Max
+(3, 'Assistant Amy', 3035550002, 'amy@lodge.com', 'Assistant', 35000.00);
 
--- Insert queries for service_usage table
--- Testing: Foreign keys, trigger calc_service_total, positive quantity/total
--- Edge cases: Min quantity 1, max 10, various services per booking
--- At least 20 usages
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (1, 1, 2.00); -- Triggers total = 2*10=20
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (2, 2, 1.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (3, 3, 3.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (4, 4, 1.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (5, 5, 4.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (6, 6, 2.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (7, 7, 1.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (8, 8, 5.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (9, 9, 3.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (10, 10, 2.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (11, 11, 1.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (12, 12, 4.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (13, 13, 2.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (14, 14, 3.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (15, 15, 1.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (16, 16, 5.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (17, 17, 2.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (18, 18, 1.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (19, 19, 3.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (20, 20, 4.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (21, 21, 2.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (1, 22, 1.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (2, 23, 3.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (3, 24, 2.00);
-INSERT INTO public.service_usage (service_id, booking_id, quantity) VALUES (4, 25, 1.00);
+-- Insert into user (depends on staff)
+-- Testing: FK to staff (1:1), unique? No, but usernames unique implicitly for test
+-- Coverage: Password hash, most staff have users
+-- Scenarios: Various usernames
+INSERT INTO public."user" (staff_id, username, password_hash) VALUES
+(1, 'manager_mike', 'hash_80000'),
+(2, 'recep_rita', 'hash_40000'),
+(3, 'conci_carl', 'hash_45000'),
+(4, 'house_helen', 'hash_35000'),
+(5, 'guide_gary', 'hash_42000'),
+(6, 'driver_dana', 'hash_38000'),
+(7, 'instr_ian', 'hash_46000'),
+(8, 'tour_tina', 'hash_41000'),
+(9, 'dealer_dave', 'hash_50000'),
+(10, 'rental_ryan', 'hash_37000');
 
--- Insert queries for final_bill table
--- Testing: Foreign keys, defaults 0, check constraints >=0, triggers for charges, total, outstanding
--- Edge cases: Zero charges, max amounts, late checkout (assume now > check_out for some)
--- At least 20 bills
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (1, 1, 10.00); -- Triggers calculations
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (2, 2, 15.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (3, 3, 20.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (4, 4, 5.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (5, 5, 25.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (6, 6, 30.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (7, 7, 10.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (8, 8, 15.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (9, 9, 20.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (10, 10, 25.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (11, 11, 30.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (12, 12, 10.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (13, 13, 15.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (14, 14, 20.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (15, 15, 25.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (16, 16, 30.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (17, 17, 10.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (18, 18, 15.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (19, 19, 20.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (20, 20, 25.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (1, 21, 30.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (2, 22, 10.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (3, 23, 15.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (4, 24, 20.00);
-INSERT INTO public.final_bill (user_id, booking_id, total_tax) VALUES (5, 25, 25.00);
+-- Additional (total 15 >10)
+INSERT INTO public."user" (staff_id, username, password_hash) VALUES
+(11, 'capt_chris', 'hash_48000'),
+(12, 'mech_matt', 'hash_39000'),
+(13, 'jan_joe', 'hash_30000'),
+(14, 'exec_eve', 'hash_100000'),
+(15, 'asst_amy', 'hash_35000');
 
--- Insert queries for payment table
--- Testing: Foreign key to bill, positive paid_amount, various methods
--- Edge cases: Full payment, partial, zero (but check >=0 implied)
--- At least 20 payments
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (1, 'Credit Card', 100.00, 'Full payment');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (2, 'Cash', 50.00, 'Partial');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (3, 'Debit Card', 200.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (4, 'Bank Transfer', 0.00, 'Refund case');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (5, 'Credit Card', 150.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (6, 'Cash', 75.00, 'Partial');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (7, 'Debit Card', 100.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (8, 'Bank Transfer', 300.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (9, 'Credit Card', 80.00, 'Partial');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (10, 'Cash', 250.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (11, 'Debit Card', 120.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (12, 'Bank Transfer', 60.00, 'Partial');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (13, 'Credit Card', 180.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (14, 'Cash', 90.00, 'Partial');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (15, 'Debit Card', 220.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (16, 'Bank Transfer', 110.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (17, 'Credit Card', 70.00, 'Partial');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (18, 'Cash', 260.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (19, 'Debit Card', 130.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (20, 'Bank Transfer', 65.00, 'Partial');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (21, 'Credit Card', 190.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (22, 'Cash', 95.00, 'Partial');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (23, 'Debit Card', 230.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (24, 'Bank Transfer', 115.00, 'Full');
-INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES (25, 'Credit Card', 75.00, 'Partial');
+-- Insert into room (depends on branch, room_type)
+-- Testing: FKs, default room_status 'Available', enum
+-- Coverage: Multiple rooms per type/branch, set some 'Occupied' explicitly
+-- Scenarios: Various statuses for test
+INSERT INTO public.room (branch_id, type_id, room_status) VALUES
+(1, 1, 'Available'),  -- Standard Single
+(1, 2, 'Occupied'),
+(1, 3, 'Available'),
+(2, 4, 'Available'),
+(2, 5, 'Occupied'),
+(3, 6, 'Available'),
+(4, 7, 'Available'),
+(5, 8, 'Occupied'),
+(6, 9, 'Available'),
+(7, 10, 'Available');
 
--- Insert queries for revenue table
--- Testing: Foreign key to branch, check amount >=0, months 1-12
--- Edge cases: Zero revenue, high amounts, various months
--- At least 20 records
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (1, 1, 10000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (1, 2, 15000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (2, 3, 20000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (2, 4, 0.00); -- Zero
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (3, 5, 25000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (3, 6, 30000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (4, 7, 10000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (4, 8, 15000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (5, 9, 20000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (5, 10, 25000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (6, 11, 30000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (6, 12, 10000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (7, 1, 15000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (7, 2, 20000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (8, 3, 25000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (8, 4, 30000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (9, 5, 10000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (9, 6, 0.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (10, 7, 20000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (10, 8, 25000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (11, 9, 30000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (11, 10, 10000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (12, 11, 15000.00);
-INSERT INTO public.revenue (branch_id, month, amount) VALUES (12, 12, 20000.00);
+-- Additional (total 20 >10), more per branch
+INSERT INTO public.room (branch_id, type_id, room_status) VALUES
+(8, 11, 'Occupied'),
+(9, 12, 'Available'),
+(10, 13, 'Available'),
+(1, 14, 'Available'),  -- Budget
+(2, 15, 'Occupied'),  -- Premium
+(3, 16, 'Available'),
+(4, 17, 'Available'),
+(5, 18, 'Occupied'),
+(6, 19, 'Available'),
+(7, 20, 'Available');
 
--- Insert queries for log table
--- Testing: Foreign key to user, various actions
--- Edge cases: Different action_rec_id
--- At least 20 logs
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (1, 'Created booking', 1);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (2, 'Updated guest', 2);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (3, 'Processed payment', 3);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (4, 'Cancelled booking', 4);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (5, 'Added service', 5);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (6, 'Generated bill', 6);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (7, 'Updated room status', 7);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (8, 'Applied discount', 8);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (9, 'Logged revenue', 9);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (10, 'Staff update', 10);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (11, 'Guest registration', 11);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (12, 'Service usage', 12);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (13, 'Bill payment', 13);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (14, 'Booking check-in', 14);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (15, 'Booking check-out', 15);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (16, 'Discount creation', 16);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (17, 'Room addition', 17);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (18, 'Branch update', 18);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (19, 'User login', 19);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (20, 'System audit', 20);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (21, 'Error log', 21);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (22, 'Data export', 22);
-INSERT INTO public.log (user_id, action, action_rec_id) VALUES (23, 'Report generation', 23);
+-- Insert into booking (depends on user, guest, room)
+-- Testing: FKs, enum status, default date_time, trigger prevent_double_booking, update_room_status
+-- Coverage: Referential integrity, no overlaps for same room active statuses
+-- Scenarios: Past checked-out, current checked-in (occupied), future booked, cancelled; multiple per room non-overlap; boundary dates (min 1 day, long stay); multiple guests per booking? No, one guest_id but can imply
+-- Note: Use user_id 1-10, guest 1-10, room 1-10; dates around 2025-10-23
+-- For room 1: past, current, future, cancelled
+INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES
+(1, 1, 1, 'Checked-Out', '2024-09-01 00:00:00', '2024-09-10 00:00:00', '2024-09-15 00:00:00'),  -- Past
+(1, 2, 1, 'Checked-In', '2025-10-20 00:00:00', '2025-10-22 00:00:00', '2025-10-25 00:00:00'),  -- Current, triggers room to Occupied
+(1, 3, 1, 'Booked', '2025-10-23 00:00:00', '2025-11-01 00:00:00', '2025-11-05 00:00:00'),  -- Future
+(1, 4, 1, 'Cancelled', '2025-10-23 00:00:00', '2025-12-01 00:00:00', '2025-12-10 00:00:00'),  -- Cancelled, no overlap issue
+(2, 5, 2, 'Checked-Out', '2024-08-01 00:00:00', '2024-08-05 00:00:00', '2024-08-10 00:00:00'),
+(2, 6, 2, 'Checked-In', '2025-10-21 00:00:00', '2025-10-23 00:00:00', '2025-10-26 00:00:00'),
+(3, 7, 3, 'Booked', '2026-01-01 00:00:00', '2026-01-10 00:00:00', '2026-01-15 00:00:00'),
+(4, 8, 4, 'Cancelled', '2025-11-01 00:00:00', '2025-11-05 00:00:00', '2025-11-10 00:00:00'),
+(5, 9, 5, 'Checked-Out', '2024-10-01 00:00:00', '2024-10-10 00:00:00', '2024-10-15 00:00:00'),
+(6, 10, 6, 'Checked-In', '2025-10-15 00:00:00', '2025-10-23 00:00:00', '2025-10-28 00:00:00');
 
--- Note: schema_migrations not populated as it's for migration tracking, not data.
+-- Additional (total 15 >10), more scenarios: min 1 day stay, max 30 days, same guest multiple bookings
+-- Note: For overlap test, comment example: -- INSERT ... (1,11,1,'Booked','2025-10-23','2025-10-24','2025-10-26'); -- Would violate trigger
+INSERT INTO public.booking (user_id, guest_id, room_id, booking_status, date_time, check_in, check_out) VALUES
+(7, 1, 7, 'Booked', '2025-10-23 00:00:00', '2025-10-24 00:00:00', '2025-10-25 00:00:00'),  -- Min 1 day, same guest as first
+(8, 11, 8, 'Checked-Out', '2024-07-01 00:00:00', '2024-07-01 00:00:00', '2024-08-01 00:00:00'),  -- Long 30 days
+(9, 12, 9, 'Cancelled', '2025-12-01 00:00:00', '2025-12-10 00:00:00', '2025-12-20 00:00:00'),
+(10, 13, 10, 'Booked', '2026-02-01 00:00:00', '2026-02-05 00:00:00', '2026-02-10 00:00:00'),
+(1, 14, 1, 'Checked-In', '2025-11-06 00:00:00', '2025-11-06 00:00:00', '2025-11-10 00:00:00');  -- After previous future booked
+
+-- Insert into service_usage (depends on service, booking)
+-- Testing: FKs, trigger calc_total_price (quantity * unit_price)
+-- Coverage: Multiple per booking, quantity boundary 1/10, total calculated
+-- Scenarios: Various dates, for different booking statuses
+INSERT INTO public.service_usage (service_id, booking_id, date_time, quantity) VALUES
+(1, 1, '2024-09-12 00:00:00', 2.00),  -- Triggers total=20.00
+(2, 2, '2025-10-23 00:00:00', 1.00),  -- 25.00
+(3, 3, '2025-11-02 00:00:00', 3.00),  -- 45.00, future
+(4, 4, '2025-11-06 00:00:00', 1.00),  -- 50.00, cancelled
+(5, 5, '2024-08-06 00:00:00', 4.00),  -- 20.00
+(6, 6, '2025-10-24 00:00:00', 2.00),  -- 60.00
+(7, 7, '2026-01-11 00:00:00', 1.00),  -- 20.00
+(8, 8, '2024-07-02 00:00:00', 5.00),  -- 200.00
+(9, 9, '2024-10-11 00:00:00', 3.00),  -- 45.00
+(10, 10, '2025-10-24 00:00:00', 2.00);  -- 200.00
+
+-- Additional (total 15 >10), high quantity
+INSERT INTO public.service_usage (service_id, booking_id, date_time, quantity) VALUES
+(11, 11, '2025-10-24 00:00:00', 1.00),  -- 25.00
+(12, 12, '2024-07-02 00:00:00', 4.00),  -- 200.00
+(13, 13, '2025-12-11 00:00:00', 2.00),  -- 20.00
+(14, 14, '2026-02-06 00:00:00', 10.00),  -- High qty
+(15, 15, '2025-11-07 00:00:00', 1.00);  -- 200.00
+
+-- Insert into final_bill (depends on user, booking)
+-- Testing: FKs, defaults 0, check >=0, triggers for charges, discount, total, outstanding
+-- Coverage: Calculations via functions: room_charges (days*rate), services sum, discount conditions, late (if past check_out)
+-- Scenarios: Past bookings (late charge >0), future (0), loyalty (old guest), seasonal (if month match), min nights, early (days_before >30)
+-- Note: Insert minimal, triggers fill rest; assume insert on 2025-10-23, so past have late, current/future 0
+-- For booking 1 (past, old guest): expect discount loyalty if applicable, late hours many
+INSERT INTO public.final_bill (user_id, booking_id, total_tax, paid_amount) VALUES
+(1, 1, 10.00, 0.00),  -- Triggers calcs: room_charges=5*100=500 (assuming type1 rate100, but wait, adjust to schema), etc.
+(2, 2, 15.00, 100.00),  -- Partial paid, outstanding calc
+(3, 3, 20.00, 0.00),
+(4, 4, 5.00, 0.00),  -- Cancelled, but bill exists
+(5, 5, 25.00, 0.00),
+(6, 6, 30.00, 200.00),
+(7, 7, 10.00, 0.00),
+(8, 8, 15.00, 0.00),
+(9, 9, 20.00, 0.00),
+(10, 10, 25.00, 0.00);
+
+-- Additional (total 15 >10), test different discounts: e.g. booking3 future, if early days>30
+INSERT INTO public.final_bill (user_id, booking_id, total_tax, paid_amount) VALUES
+(1, 11, 30.00, 0.00),
+(2, 12, 10.00, 0.00),
+(3, 13, 15.00, 0.00),
+(4, 14, 20.00, 0.00),
+(5, 15, 25.00, 0.00);
+
+-- Insert into payment (depends on final_bill)
+-- Testing: FK to bill, paid_amount >0, notes, default date_time
+-- Coverage: Multiple per bill, various methods, full/partial
+-- Scenarios: Cash, card, transfer; notes for refunds on cancelled
+INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES
+(1, 'Credit Card', 500.00, 'Full payment for past booking'),
+(2, 'Cash', 200.00, 'Partial payment'),
+(2, 'Debit Card', 100.00, 'Additional partial'),
+(3, 'Bank Transfer', 300.00, 'Full'),
+(4, 'Credit Card', 0.00, 'Refund for cancelled'),
+(5, 'Cash', 400.00, 'Full'),
+(6, 'Debit Card', 500.00, 'Overpayment?'),
+(7, 'Bank Transfer', 200.00, 'Partial'),
+(8, 'Credit Card', 600.00, 'Full'),
+(9, 'Cash', 150.00, 'Partial'),
+(10, 'Debit Card', 250.00, 'Full');
+
+-- Additional (total 15 >10), more multiples
+INSERT INTO public.payment (bill_id, paid_method, paid_amount, notes) VALUES
+(11, 'Bank Transfer', 350.00, 'Full'),
+(12, 'Credit Card', 100.00, 'Partial'),
+(13, 'Cash', 450.00, 'Full'),
+(14, 'Debit Card', 300.00, 'Partial'),
+(15, 'Bank Transfer', 200.00, 'Additional');
+
+-- Insert into log (depends on user)
+-- Testing: FK to user, default date_time, action_rec_id optional
+-- Coverage: Various actions, timestamps past/present
+-- Scenarios: Logs for creates, updates, deletes (simulated), related to bookings etc.
+INSERT INTO public.log (user_id, action, date_time, action_rec_id) VALUES
+(1, 'Created booking', '2024-09-01 00:00:00', 1),
+(2, 'Updated guest info', '2025-10-23 00:00:00', 2),
+(3, 'Processed payment', '2025-11-01 00:00:00', 3),
+(4, 'Cancelled booking', '2025-11-05 00:00:00', 4),
+(5, 'Added service usage', '2024-08-06 00:00:00', 5),
+(6, 'Generated bill', '2025-10-24 00:00:00', 6),
+(7, 'Updated room status', '2026-01-11 00:00:00', 7),
+(8, 'Applied discount', '2024-07-02 00:00:00', 8),
+(9, 'Logged revenue', '2024-10-11 00:00:00', 9),
+(10, 'Staff update', '2025-10-24 00:00:00', 10);
+
+-- Additional (total 15 >10)
+INSERT INTO public.log (user_id, action, date_time, action_rec_id) VALUES
+(11, 'Guest registration', '2025-10-24 00:00:00', 11),
+(12, 'Service request', '2024-07-02 00:00:00', 12),
+(13, 'Bill payment', '2025-12-11 00:00:00', 13),
+(14, 'Check-in processed', '2026-02-06 00:00:00', 14),
+(15, 'Check-out completed', '2025-11-07 00:00:00', 15);
+
+-- Insert into revenue (depends on branch)
+-- Testing: FK to branch, check amount >=0, month 1-12, default calculated_data_time
+-- Coverage: Multiple per branch, various months past/present/future? But month int, probably current year assumed
+-- Scenarios: 0 amount (low month), high, for different branches
+INSERT INTO public.revenue (branch_id, month, amount) VALUES
+(1, 1, 10000.00),
+(1, 10, 15000.00),  -- Current month
+(2, 2, 20000.00),
+(2, 11, 0.00),  -- Min
+(3, 3, 25000.00),
+(4, 4, 30000.00),
+(5, 5, 35000.00),
+(6, 6, 40000.00),
+(7, 7, 45000.00),
+(8, 8, 50000.00);
+
+-- Additional (total 15 >10), more months
+INSERT INTO public.revenue (branch_id, month, amount) VALUES
+(9, 9, 55000.00),
+(10, 12, 60000.00),
+(1, 12, 120000.00),  -- High
+(2, 1, 5000.00),
+(3, 10, 18000.00);

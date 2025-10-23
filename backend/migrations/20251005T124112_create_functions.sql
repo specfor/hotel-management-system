@@ -50,12 +50,24 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION update_final_bill_total_amount()
 RETURNS TRIGGER AS $$
+DECLARE
+    subtotal NUMERIC;
+    tax_rate NUMERIC := 15.00;  
+    tax_amount NUMERIC;
 BEGIN
-    NEW.total_amount := COALESCE(NEW.room_charges,0) 
-                      + COALESCE(NEW.total_service_charges,0) 
-                      + COALESCE(NEW.total_tax,0) 
-                      + COALESCE(NEW.late_checkout_charge,0) 
-                      - COALESCE(NEW.total_discount,0);
+    subtotal := COALESCE(NEW.room_charges,0) 
+              + COALESCE(NEW.total_service_charges,0) 
+              + COALESCE(NEW.late_checkout_charge,0) 
+              - COALESCE(NEW.total_discount,0);
+    
+    tax_amount := subtotal * (tax_rate / 100);
+    
+    NEW.total_tax := tax_amount;
+    
+    NEW.total_amount := subtotal + tax_amount;
+    
+    NEW.outstanding_amount := NEW.total_amount - COALESCE(NEW.paid_amount,0);
+    
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
