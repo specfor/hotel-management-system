@@ -64,6 +64,11 @@ class BookingApiService extends BaseApiService {
     return this.put<{ booking: Booking }>(`${this.endpoint}/${bookingId}`, backendData);
   }
 
+  // Update booking status
+  async updateBookingStatus(bookingId: number, status: string): Promise<ApiResponse<{ booking: Booking }>> {
+    return this.put<{ booking: Booking }>(`${this.endpoint}/${bookingId}`, { bookingStatus: status });
+  }
+
   // Delete booking
   async deleteBooking(bookingId: number): Promise<ApiResponse<void>> {
     return this.delete<void>(`${this.endpoint}/${bookingId}`);

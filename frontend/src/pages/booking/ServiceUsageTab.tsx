@@ -41,36 +41,29 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
     try {
       const response = await serviceUsageApi.getServiceUsageByBookingId(bookingId);
       if (response.success && response.data) {
-        // Transform backend response to match frontend interface
-        const usageArray = Array.isArray(response.data) ? response.data : response.data.usageRecords || [];
-        interface BackendUsage {
-          recordId: number;
-          serviceId: number;
-          bookingId: number;
-          dateTime: string;
-          quantity: number;
-          totalPrice: number;
-          notes?: string;
-        }
+        // Handle the new backend response format
+        const servicesArray = response.data.services || [];
 
-        const transformedUsages: ServiceUsage[] = (usageArray as unknown as BackendUsage[]).map((usage) => ({
-          usage_id: usage.recordId,
-          service_id: usage.serviceId,
-          booking_id: usage.bookingId,
-          usage_date: usage.dateTime.split("T")[0], // Extract date part
-          usage_time: usage.dateTime.split("T")[1]?.split(".")[0] || "00:00:00", // Extract time part
-          quantity: usage.quantity,
+        const transformedUsages: ServiceUsage[] = servicesArray.map((service) => ({
+          usage_id: service.recordId,
+          service_id: service.serviceId,
+          booking_id: bookingId,
+          usage_date: service.dateTime.split("T")[0], // Extract date part
+          usage_time: service.dateTime.split("T")[1]?.split(".")[0] || "00:00:00", // Extract time part
+          quantity: service.quantity,
           unit_price: 0, // Will be populated from service data
-          total_price: usage.totalPrice,
-          notes: usage.notes,
+          total_price: service.totalPrice,
+          notes: service.notes,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
+          service_name: service.serviceName, // Already included in response
         }));
-        console.log(response.data);
 
-        console.log(transformedUsages);
+        console.log("Backend response:", response.data);
+        console.log("Transformed usages:", transformedUsages);
 
         setServiceUsages(transformedUsages);
+        setAreServicesPopulated(false); // Reset flag when new data loads
       } else {
         showError(response.message || "Failed to load service usage records");
       }
@@ -84,21 +77,8 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
     try {
       const response = await chargeableServiceApi.getServices();
       if (response.success && response.data) {
-        // Transform backend response to match frontend interface
-        const transformedServices: ChargeableService[] = (response.data as unknown as ChargeableService[]).map(
-          (service) => ({
-            service_id: service.service_id,
-            service_name: service.service_name,
-            unit_price: service.unit_price,
-            unit_type: service.unit_type as ServiceUnitType,
-            branch_id: service.branch_id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-        );
-        console.log(transformedServices);
-
-        setServices(transformedServices);
+        console.log("Services response:", response.data);
+        setServices(response.data);
       } else {
         showError(response.message || "Failed to load available services");
       }
@@ -107,6 +87,7 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
       showError(apiError.message);
     }
   }, [showError]);
+  const [areServicesPopulated, setAreServicesPopulated] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -115,6 +96,25 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
     };
     loadData();
   }, [loadServiceUsages, loadServices]);
+
+  // Populate service details in usage records after both datasets are loaded
+  useEffect(() => {
+    if (serviceUsages.length > 0 && services.length > 0 && !areServicesPopulated) {
+      const updatedUsages = serviceUsages.map((usage) => {
+        const service = services.find((s) => s.service_id === usage.service_id);
+        if (service) {
+          return {
+            ...usage,
+            unit_price: service.unit_price,
+            unit_type: service.unit_type,
+          };
+        }
+        return usage;
+      });
+      setServiceUsages(updatedUsages);
+      setAreServicesPopulated(true);
+    }
+  }, [serviceUsages, services, areServicesPopulated]);
 
   const filteredUsages = serviceUsages.filter(
     (usage) =>
@@ -356,7 +356,7 @@ const ServiceUsageTab: React.FC<ServiceUsageTabProps> = ({ bookingId }) => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{usage.quantity}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${usage.unit_price.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${usage.unit_price}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     ${usage.total_price.toFixed(2)}
                   </td>
