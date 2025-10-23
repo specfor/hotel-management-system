@@ -19,6 +19,20 @@ export interface ServiceUsageUpdateRequest {
   notes?: string;
 }
 
+export interface BookingServicesResponse {
+  bookingId: number;
+  services: Array<{
+    recordId: number;
+    serviceId: number;
+    serviceName: string;
+    quantity: number;
+    dateTime: string;
+    totalPrice: number;
+    notes?: string;
+  }>;
+  totalServices: number;
+}
+
 class ServiceUsageApiService extends BaseApiService {
   constructor() {
     super("/service-usage");
@@ -29,8 +43,13 @@ class ServiceUsageApiService extends BaseApiService {
     return this.get<{ usageRecords: ServiceUsage[] }>(this.endpoint);
   }
 
-  // Get service usage by booking ID (filtering client-side for now)
-  async getServiceUsageByBookingId(bookingId: number): Promise<ApiResponse<{ usageRecords: ServiceUsage[] }>> {
+  // Get service usage by booking ID (using the dedicated backend endpoint)
+  async getServiceUsageByBookingId(bookingId: number): Promise<ApiResponse<BookingServicesResponse>> {
+    return this.get<BookingServicesResponse>(`/booking/${bookingId}/services`);
+  }
+
+  // Get service usage by booking ID (filtering client-side for now) - DEPRECATED
+  async getServiceUsageByBookingIdLegacy(bookingId: number): Promise<ApiResponse<{ usageRecords: ServiceUsage[] }>> {
     const response = await this.getAllServiceUsage();
     if (response.success && response.data.usageRecords) {
       const filteredRecords = response.data.usageRecords.filter((usage) => usage.booking_id === bookingId);

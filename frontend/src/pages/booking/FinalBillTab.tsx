@@ -4,7 +4,7 @@ import Card from "../../components/primary/Card";
 import Badge from "../../components/primary/Badge";
 import Button from "../../components/primary/Button";
 import { useAlert } from "../../hooks/useAlert";
-import { type FinalBill, BookingStatusEnum, type Booking } from "../../types";
+import { type FinalBill, type Booking } from "../../types";
 import { finalBillApi, type FinalBillCreateRequest } from "../../api_connection/finalBill";
 import { bookingApi } from "../../api_connection/bookings";
 import { apiUtils } from "../../api_connection/base";
@@ -34,7 +34,7 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
       setBooking(bookingData);
 
       // Only load final bill if booking is checked out
-      if (bookingData.bookingStatus === BookingStatusEnum.CHECKED_OUT) {
+      if (bookingData.bookingStatus === "checked_out") {
         const billResponse = await finalBillApi.getFinalBillByBookingId(bookingId);
         if (billResponse.success && billResponse.data.finalBill) {
           setFinalBill(billResponse.data.finalBill);
@@ -118,7 +118,7 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
     );
   }
 
-  if (!booking || booking.bookingStatus !== BookingStatusEnum.CHECKED_OUT) {
+  if (!booking || booking.bookingStatus !== "checked_out") {
     return (
       <div className="text-center py-12">
         <Receipt className="mx-auto h-12 w-12 text-gray-400" />
