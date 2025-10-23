@@ -33,7 +33,7 @@ const mapToPublic = (row: BookingRow): BookingPublic => ({
  * Get all booking records. (READ All)
  */
 export async function getAllBookingsDB(
-  filters: { guestId?: number; roomId?: number; branchId?: number } = {}
+  filters: { guestId?: number, roomId?: number, branchId?: number } = {},
 ): Promise<BookingPublic[] | null> {
   let sql = `
             SELECT 
@@ -110,7 +110,7 @@ export async function getBookingByIDDB(bookingId: number): Promise<BookingPublic
 export async function getConflictingBookings(
   roomId: number,
   checkIn: Date,
-  checkOut: Date
+  checkOut: Date,
 ): Promise<BookingPublic[] | null> {
   const sql = `
             SELECT 

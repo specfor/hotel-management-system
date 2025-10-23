@@ -82,6 +82,37 @@ export async function getServiceUsageByID(req: Request, res: Response) {
   }
 }
 
+/**
+ * Get all services associated with a specific booking. (READ by Booking)
+ */
+export async function getServicesByBookingID(req: Request, res: Response) {
+  try {
+    const bookingIDInt: number = parseInt(req.params.bookingID, 10);
+
+    // Controller's Job: Basic parameter check
+    if (isNaN(bookingIDInt)) {
+      return jsonResponse(res, false, HttpStatusCodes.BAD_REQUEST, { message: "Booking ID must be a valid number" });
+    }
+
+    // Import the repo function directly since we don't need complex model logic
+    const { getServicesByBookingIDDB } = await import("@src/repos/serviceUsageRepo");
+    const services = await getServicesByBookingIDDB(bookingIDInt);
+
+    if (services === null) {
+      return jsonResponse(res, false, HttpStatusCodes.INTERNAL_SERVER_ERROR, { message: "Error retrieving services" });
+    }
+
+    return jsonResponse(res, true, HttpStatusCodes.OK, { 
+      bookingId: bookingIDInt,
+      services,
+      totalServices: services.length,
+    });
+
+  } catch (err) {
+    return handleError(res, err);
+  }
+}
+
 
 // --- MUTATION Endpoints ---
 
