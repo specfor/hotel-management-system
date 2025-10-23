@@ -138,6 +138,8 @@ apiRouter.post("/booking", bookingController.createBooking);
 apiRouter.get("/booking/:bookingID", bookingController.getBookingByID);
 apiRouter.put("/booking/:bookingID", bookingController.updateBooking);
 apiRouter.delete("/booking/:bookingID", bookingController.deleteBooking);
+apiRouter.get("/booking/:bookingID/services", serviceUsageController.getServicesByBookingID);
+
 
 // endpoints for service-usage
 apiRouter.get("/service-usage", serviceUsageController.getAllServiceUsage);
@@ -145,6 +147,8 @@ apiRouter.post("/service-usage", serviceUsageController.createServiceUsage);
 apiRouter.get("/service-usage/:usageID", serviceUsageController.getServiceUsageByID);
 apiRouter.put("/service-usage/:usageID", serviceUsageController.updateServiceUsage);
 apiRouter.delete("/service-usage/:usageID", serviceUsageController.deleteServiceUsage);
+
+// endpoint to get services associated with a booking
 
 // endpoints for monthly revenue reports
 apiRouter.get("/monthly-revenue", monthlyRevenueController.getMonthlyRevenue);
