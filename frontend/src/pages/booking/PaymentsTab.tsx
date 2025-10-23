@@ -6,7 +6,9 @@ import Badge from "../../components/primary/Badge";
 import Modal from "../../components/Modal";
 import Card from "../../components/primary/Card";
 import { useAlert } from "../../hooks/useAlert";
-import { PaymentMethodEnum, formatPaymentMethod, type Payment, type PaymentMethod } from "../../types";
+import { paymentApi, type Payment as ApiPayment, type PaymentCreateRequest } from "../../api_connection/payments";
+import { finalBillApi } from "../../api_connection/finalBill";
+import { apiUtils } from "../../api_connection/base";
 
 interface PaymentsTabProps {
   bookingId: number;
@@ -14,136 +16,135 @@ interface PaymentsTabProps {
 
 const PaymentsTab: React.FC<PaymentsTabProps> = ({ bookingId }) => {
   const { showSuccess, showError } = useAlert();
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<ApiPayment[]>([]);
+  const [finalBillId, setFinalBillId] = useState<number | null>(null);
+  const [isLoadingBill, setIsLoadingBill] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+  const [editingPayment, setEditingPayment] = useState<ApiPayment | null>(null);
   const [formData, setFormData] = useState<{
-    payment_amount: string;
-    payment_method: PaymentMethod | "";
-    payment_date: string;
-    payment_time: string;
-    transaction_reference: string;
+    paid_amount: string;
+    paid_method: "Cash" | "Card" | "Online" | "BankTransfer" | "";
+    date_time: string;
     notes: string;
   }>({
-    payment_amount: "",
-    payment_method: "",
-    payment_date: new Date().toISOString().split("T")[0],
-    payment_time: new Date().toTimeString().split(" ")[0].substring(0, 5),
-    transaction_reference: "",
+    paid_amount: "",
+    paid_method: "",
+    date_time: new Date().toISOString(),
     notes: "",
   });
 
-  const loadPayments = useCallback(async () => {
+  const loadFinalBillAndPayments = useCallback(async () => {
     try {
-      // TODO: Replace with actual API call
-      const mockPayments: Payment[] = [
-        {
-          payment_id: 1,
-          booking_id: bookingId,
-          payment_amount: 250.0,
-          payment_method: PaymentMethodEnum.CREDIT_CARD,
-          payment_date: "2024-01-21",
-          payment_time: "15:30",
-          transaction_reference: "TXN123456789",
-          notes: "Advance payment for booking",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          payment_id: 2,
-          booking_id: bookingId,
-          payment_amount: 150.0,
-          payment_method: PaymentMethodEnum.CASH,
-          payment_date: "2024-01-23",
-          payment_time: "11:15",
-          notes: "Additional service charges",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          payment_id: 3,
-          booking_id: bookingId,
-          payment_amount: 300.0,
-          payment_method: PaymentMethodEnum.BANK_TRANSFER,
-          payment_date: "2024-01-24",
-          payment_time: "09:45",
-          transaction_reference: "BT987654321",
-          notes: "Final settlement upon checkout",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ];
-      setPayments(mockPayments);
-    } catch {
-      showError("Failed to load payment records");
+      setIsLoadingBill(true);
+
+      // First get the final bill to get the bill_id
+      const billResponse = await finalBillApi.getFinalBillByBookingId(bookingId);
+      if (!billResponse.success || !billResponse.data.finalBill) {
+        // If no final bill exists, show empty state
+        setPayments([]);
+        setFinalBillId(null);
+        return;
+      }
+
+      const billId = billResponse.data.finalBill.bill_id;
+      setFinalBillId(billId);
+
+      // Now get payments for this bill
+      const paymentsResponse = await paymentApi.getPaymentsByBillId(billId);
+      if (paymentsResponse.success && paymentsResponse.data.Payments) {
+        setPayments(paymentsResponse.data.Payments);
+      } else {
+        setPayments([]);
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
+      setPayments([]);
+      setFinalBillId(null);
+    } finally {
+      setIsLoadingBill(false);
     }
   }, [bookingId, showError]);
 
   useEffect(() => {
-    loadPayments();
-  }, [loadPayments]);
+    loadFinalBillAndPayments();
+  }, [loadFinalBillAndPayments]);
 
-  const filteredPayments = payments.filter(
-    (payment) =>
-      payment.payment_method.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.transaction_reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPayments = payments.filter((payment) =>
+    payment.paid_method.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.payment_amount || !formData.payment_method) {
+    if (!formData.paid_amount || !formData.paid_method) {
       showError("Please enter payment amount and method");
       return;
     }
 
-    const amount = parseFloat(formData.payment_amount);
+    if (!finalBillId) {
+      showError("No final bill found for this booking");
+      return;
+    }
+
+    const amount = parseFloat(formData.paid_amount);
     if (isNaN(amount) || amount <= 0) {
       showError("Please enter a valid payment amount");
       return;
     }
 
     try {
-      const paymentData = {
-        payment_id: editingPayment ? editingPayment.payment_id : Math.max(...payments.map((p) => p.payment_id), 0) + 1,
-        booking_id: bookingId,
-        payment_amount: amount,
-        payment_method: formData.payment_method as PaymentMethod,
-        payment_date: formData.payment_date,
-        payment_time: formData.payment_time,
-        transaction_reference: formData.transaction_reference || undefined,
-        notes: formData.notes || undefined,
-        created_at: editingPayment?.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
       if (editingPayment) {
         // Update existing payment
-        setPayments(payments.map((p) => (p.payment_id === editingPayment.payment_id ? paymentData : p)));
-        showSuccess("Payment updated successfully");
+        const updateData = {
+          bill_id: finalBillId,
+          paid_method: formData.paid_method as "Cash" | "Card" | "Online" | "BankTransfer",
+          paid_amount: amount,
+          date_time: null,
+          notes: formData.notes || null,
+        };
+
+        const response = await paymentApi.updatePayment(editingPayment.payment_id!, updateData);
+        if (response.success) {
+          showSuccess("Payment updated successfully");
+          await loadFinalBillAndPayments(); // Reload payments
+        } else {
+          showError(response.message || "Failed to update payment");
+        }
       } else {
-        // Add new payment
-        setPayments([...payments, paymentData]);
-        showSuccess("Payment added successfully");
+        // Create new payment
+        const createData: PaymentCreateRequest = {
+          bill_id: finalBillId,
+          paid_method: formData.paid_method as "Cash" | "Card" | "Online" | "BankTransfer",
+          paid_amount: amount,
+          date_time: formData.date_time,
+          notes: formData.notes || null,
+        };
+
+        const response = await paymentApi.createPayment(createData);
+        if (response.success) {
+          showSuccess("Payment added successfully");
+          await loadFinalBillAndPayments(); // Reload payments
+        } else {
+          showError(response.message || "Failed to add payment");
+        }
       }
 
       resetForm();
-    } catch {
-      showError(editingPayment ? "Failed to update payment" : "Failed to add payment");
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   };
 
-  const handleEdit = (payment: Payment) => {
+  const handleEdit = (payment: ApiPayment) => {
     setEditingPayment(payment);
     setFormData({
-      payment_amount: payment.payment_amount.toString(),
-      payment_method: payment.payment_method,
-      payment_date: payment.payment_date,
-      payment_time: payment.payment_time,
-      transaction_reference: payment.transaction_reference || "",
+      paid_amount: payment.paid_amount,
+      paid_method: payment.paid_method,
+      date_time: payment.date_time || new Date().toISOString(),
       notes: payment.notes || "",
     });
     setIsEditModalOpen(true);
@@ -153,20 +154,24 @@ const PaymentsTab: React.FC<PaymentsTabProps> = ({ bookingId }) => {
     if (!confirm("Are you sure you want to delete this payment record?")) return;
 
     try {
-      setPayments(payments.filter((p) => p.payment_id !== paymentId));
-      showSuccess("Payment deleted successfully");
-    } catch {
-      showError("Failed to delete payment");
+      const response = await paymentApi.deletePayment(paymentId);
+      if (response.success) {
+        showSuccess("Payment deleted successfully");
+        await loadFinalBillAndPayments(); // Reload payments
+      } else {
+        showError(response.message || "Failed to delete payment");
+      }
+    } catch (error) {
+      const apiError = apiUtils.handleError(error);
+      showError(apiError.message);
     }
   };
 
   const resetForm = () => {
     setFormData({
-      payment_amount: "",
-      payment_method: "",
-      payment_date: new Date().toISOString().split("T")[0],
-      payment_time: new Date().toTimeString().split(" ")[0].substring(0, 5),
-      transaction_reference: "",
+      paid_amount: "",
+      paid_method: "",
+      date_time: new Date().toISOString(),
       notes: "",
     });
     setEditingPayment(null);
@@ -175,31 +180,57 @@ const PaymentsTab: React.FC<PaymentsTabProps> = ({ bookingId }) => {
   };
 
   const getTotalPaid = () => {
-    return payments.reduce((total, payment) => total + payment.payment_amount, 0);
+    return payments.reduce((total, payment) => total + parseFloat(payment.paid_amount), 0);
   };
 
-  const formatDateTime = (date: string, time: string) => {
-    return `${new Date(date).toLocaleDateString()} ${time}`;
+  const formatDateTime = (dateTime: string | null) => {
+    if (!dateTime) return "-";
+    return new Date(dateTime).toLocaleString();
   };
 
-  const getPaymentMethodBadgeColor = (method: PaymentMethod) => {
+  const getPaymentMethodBadgeColor = (method: string) => {
     switch (method) {
-      case PaymentMethodEnum.CASH:
+      case "Cash":
         return "bg-green-100 text-green-800";
-      case PaymentMethodEnum.CREDIT_CARD:
+      case "Card":
         return "bg-blue-100 text-blue-800";
-      case PaymentMethodEnum.DEBIT_CARD:
+      case "Online":
         return "bg-purple-100 text-purple-800";
-      case PaymentMethodEnum.BANK_TRANSFER:
+      case "BankTransfer":
         return "bg-indigo-100 text-indigo-800";
-      case PaymentMethodEnum.MOBILE_PAYMENT:
-        return "bg-orange-100 text-orange-800";
-      case PaymentMethodEnum.CHECK:
-        return "bg-yellow-100 text-yellow-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  // Show loading state
+  if (isLoadingBill) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading payment information...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no final bill exists
+  if (!finalBillId) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-12">
+          <CreditCard className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No Final Bill Available</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Payments will be available after the final bill is generated for this booking.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -224,7 +255,7 @@ const PaymentsTab: React.FC<PaymentsTabProps> = ({ bookingId }) => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               type="text"
-              placeholder="Search by payment method, reference, or notes..."
+              placeholder="Search by payment method..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -246,12 +277,6 @@ const PaymentsTab: React.FC<PaymentsTabProps> = ({ bookingId }) => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Method
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Reference
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Notes
-                </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -263,24 +288,16 @@ const PaymentsTab: React.FC<PaymentsTabProps> = ({ bookingId }) => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                      <div className="text-sm text-gray-900">
-                        {formatDateTime(payment.payment_date, payment.payment_time)}
-                      </div>
+                      <div className="text-sm text-gray-900">{formatDateTime(payment.date_time)}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-green-600">${payment.payment_amount.toFixed(2)}</div>
+                    <div className="text-sm font-semibold text-green-600">
+                      ${parseFloat(payment.paid_amount).toFixed(2)}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge className={getPaymentMethodBadgeColor(payment.payment_method)}>
-                      {formatPaymentMethod(payment.payment_method)}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{payment.transaction_reference || "-"}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500 max-w-xs truncate">{payment.notes || "-"}</div>
+                    <Badge className={getPaymentMethodBadgeColor(payment.paid_method)}>{payment.paid_method}</Badge>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end space-x-2">
@@ -295,7 +312,7 @@ const PaymentsTab: React.FC<PaymentsTabProps> = ({ bookingId }) => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(payment.payment_id)}
+                        onClick={() => handleDelete(payment.payment_id!)}
                         className="text-red-600 hover:text-red-900"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -327,8 +344,8 @@ const PaymentsTab: React.FC<PaymentsTabProps> = ({ bookingId }) => {
             <input
               type="number"
               step="0.01"
-              value={formData.payment_amount}
-              onChange={(e) => setFormData({ ...formData, payment_amount: e.target.value })}
+              value={formData.paid_amount}
+              onChange={(e) => setFormData({ ...formData, paid_amount: e.target.value })}
               placeholder="Enter amount"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
@@ -338,61 +355,29 @@ const PaymentsTab: React.FC<PaymentsTabProps> = ({ bookingId }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method *</label>
             <select
-              value={formData.payment_method}
-              onChange={(e) => setFormData({ ...formData, payment_method: e.target.value as PaymentMethod })}
+              value={formData.paid_method}
+              onChange={(e) =>
+                setFormData({ ...formData, paid_method: e.target.value as "Cash" | "Card" | "Online" | "BankTransfer" })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
               <option value="">Select Payment Method</option>
-              {Object.values(PaymentMethodEnum).map((method) => (
-                <option key={method} value={method}>
-                  {formatPaymentMethod(method)}
-                </option>
-              ))}
+              <option value="Cash">Cash</option>
+              <option value="Card">Card</option>
+              <option value="Online">Online</option>
+              <option value="BankTransfer">Bank Transfer</option>
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Date *</label>
-              <Input
-                type="date"
-                value={formData.payment_date}
-                onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Time *</label>
-              <input
-                type="time"
-                value={formData.payment_time}
-                onChange={(e) => setFormData({ ...formData, payment_time: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-          </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Transaction Reference</label>
-            <Input
-              type="text"
-              value={formData.transaction_reference}
-              onChange={(e) => setFormData({ ...formData, transaction_reference: e.target.value })}
-              placeholder="Transaction ID, check number, etc."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
+            <input
+              type="datetime-local"
+              value={formData.date_time.slice(0, 16)}
+              onChange={(e) => setFormData({ ...formData, date_time: new Date(e.target.value).toISOString() })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
-              placeholder="Any additional notes..."
+              required
             />
           </div>
 
@@ -413,8 +398,8 @@ const PaymentsTab: React.FC<PaymentsTabProps> = ({ bookingId }) => {
             <input
               type="number"
               step="0.01"
-              value={formData.payment_amount}
-              onChange={(e) => setFormData({ ...formData, payment_amount: e.target.value })}
+              value={formData.paid_amount}
+              onChange={(e) => setFormData({ ...formData, paid_amount: e.target.value })}
               placeholder="Enter amount"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
@@ -424,61 +409,29 @@ const PaymentsTab: React.FC<PaymentsTabProps> = ({ bookingId }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method *</label>
             <select
-              value={formData.payment_method}
-              onChange={(e) => setFormData({ ...formData, payment_method: e.target.value as PaymentMethod })}
+              value={formData.paid_method}
+              onChange={(e) =>
+                setFormData({ ...formData, paid_method: e.target.value as "Cash" | "Card" | "Online" | "BankTransfer" })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
               <option value="">Select Payment Method</option>
-              {Object.values(PaymentMethodEnum).map((method) => (
-                <option key={method} value={method}>
-                  {formatPaymentMethod(method)}
-                </option>
-              ))}
+              <option value="Cash">Cash</option>
+              <option value="Card">Card</option>
+              <option value="Online">Online</option>
+              <option value="BankTransfer">Bank Transfer</option>
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Date *</label>
-              <Input
-                type="date"
-                value={formData.payment_date}
-                onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Time *</label>
-              <input
-                type="time"
-                value={formData.payment_time}
-                onChange={(e) => setFormData({ ...formData, payment_time: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-          </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Transaction Reference</label>
-            <Input
-              type="text"
-              value={formData.transaction_reference}
-              onChange={(e) => setFormData({ ...formData, transaction_reference: e.target.value })}
-              placeholder="Transaction ID, check number, etc."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
+            <input
+              type="datetime-local"
+              value={formData.date_time.slice(0, 16)}
+              onChange={(e) => setFormData({ ...formData, date_time: new Date(e.target.value).toISOString() })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
-              placeholder="Any additional notes..."
+              required
             />
           </div>
 

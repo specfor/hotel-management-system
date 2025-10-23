@@ -182,16 +182,16 @@ export const formatPaymentMethod = (method: PaymentMethod): string => {
 };
 
 export const getBookingStatusColor = (status: string): string => {
-  switch (status) {
-    case "Booked":
+  switch (status.toLowerCase()) {
+    case "booked":
       return "bg-blue-100 text-blue-800";
     case BookingStatus.PENDING:
       return "bg-yellow-100 text-yellow-800";
     case BookingStatus.CONFIRMED:
       return "bg-blue-100 text-blue-800";
-    case BookingStatus.CHECKED_IN:
+    case "checked-in":
       return "bg-green-100 text-green-800";
-    case BookingStatus.CHECKED_OUT:
+    case "checked-out":
       return "bg-gray-100 text-gray-800";
     case BookingStatus.CANCELLED:
       return "bg-red-100 text-red-800";

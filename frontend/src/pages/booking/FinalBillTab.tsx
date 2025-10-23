@@ -220,12 +220,17 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
               </div>
 
               {/* Discount */}
-              {parseFloat(finalBill.total_discount) > 0 && (
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">Total Discount</span>
-                  <span className="font-medium text-green-600">-{formatCurrency(finalBill.total_discount)}</span>
-                </div>
-              )}
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Total Discount</span>
+                <span
+                  className={`font-medium ${
+                    parseFloat(finalBill.total_discount) > 0 ? "text-green-600" : "text-gray-500"
+                  }`}
+                >
+                  {parseFloat(finalBill.total_discount) > 0 ? "-" : ""}
+                  {formatCurrency(finalBill.total_discount)}
+                </span>
+              </div>
 
               {/* Total Amount */}
               <div className="flex justify-between items-center py-3 border-t-2 border-gray-200">
@@ -307,9 +312,7 @@ const FinalBillTab: React.FC<FinalBillTabProps> = ({ bookingId }) => {
             <p>• Room charges calculated based on nightly rate and duration of stay</p>
             <p>• Service charges include all additional services used during the stay</p>
             <p>• Tax calculated as applicable percentage on room and service charges</p>
-            {parseFloat(finalBill.total_discount) > 0 && (
-              <p>• Discounts applied as per promotional offers or guest loyalty program</p>
-            )}
+            <p>• Discounts applied as per promotional offers or guest loyalty program</p>
             {parseFloat(finalBill.late_checkout_charge) > 0 && (
               <p>• Late checkout charges applied for checkout after standard time</p>
             )}
